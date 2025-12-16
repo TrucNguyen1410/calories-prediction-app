@@ -19,8 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // ====== Kết nối MongoDB (QUAN TRỌNG: Đã sửa lỗi) ======
-// Logic: Ưu tiên đọc biến MONGODB_URI từ file .env (hoặc Render)
-// Nếu không tìm thấy thì mới dùng localhost (để chạy máy nhà)
+// Ưu tiên đọc biến MONGODB_URI từ Render. Nếu không có thì dùng Localhost.
 const mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/calorieDB";
 
 mongoose
@@ -33,7 +32,7 @@ app.use("/api/calories", calorieRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 
-// ====== Mặc định root (Để kiểm tra Server sống hay chết) ======
+// ====== Mặc định root ======
 app.get("/", (req, res) => {
   res.send("🔥 Calorie Prediction API đang chạy ngon lành!");
 });
