@@ -1,0 +1,25 @@
+1. CHẠY BACKEND
+cd D:\Flutter\do_an_chuyen_nganh\backend
+
+    Bước 1: Đảm bảo bạn đã cài Node modules
+    npm install
+    npm init -y
+    npm install express mongoose body-parser cors joblib-node
+
+    Bước 2: Khởi động MongoDB local
+
+    Bước 3: Khởi động server Node.js
+    node server.js hoặc npm run dev
+
+    Nếu mọi thứ ổn, bạn sẽ thấy log như:
+    🚀 Server running at http://localhost:3000
+    ✅ MongoDB connected
+
+2. CHẠY FRONTEND (Flutter app)
+cd D:\Flutter\do_an_chuyen_nganh
+
+    flutter clean
+    flutter pub get
+    flutter run
+
+
