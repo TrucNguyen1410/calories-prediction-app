@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/workout.dart';
 
 class ApiService {
-    static const String _baseUrl = 'http://10.0.2.2:3000/api';
+    static const String _baseUrl = 'https://calo-backend-api.onrender.com/api';
     
     static const String _tokenKey = 'authToken';
     static const String _userKey = 'userData';
