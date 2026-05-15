@@ -9,8 +9,13 @@ const UserSchema = new mongoose.Schema({
     
     // --- CÁC TRƯỜNG MỚI ĐƯỢC THÊM VÀO ---
     gender: { type: String, enum: ['Nam', 'Nữ', 'Khác'] },
-    height: { type: Number, default: 0 }, // Chiều cao (tính bằng cm)
-    weight: { type: Number, default: 0 }  // Cân nặng (tính bằng kg)
+    height: { type: Number, default: 0 }, 
+    weight: { type: Number, default: 0 },
+    
+    // --- GOOGLE OAUTH FIELDS ---
+    googleId: { type: String, unique: true, sparse: true },
+    googleAccessToken: { type: String },
+    googleRefreshToken: { type: String }
     // -------------------------
 
 }, { timestamps: true });

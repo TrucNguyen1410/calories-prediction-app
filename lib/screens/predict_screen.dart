@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/workout.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
+import '../theme.dart';
 import 'history_screen.dart';
 
 class PredictScreen extends StatefulWidget {
@@ -14,31 +16,19 @@ class _PredictScreenState extends State<PredictScreen> {
   final _formKey = GlobalKey<FormState>();
   final ApiService _apiService = ApiService();
 
-  // Controllers
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
   final TextEditingController _heartRateController = TextEditingController();
 
-  // Loại bài tập (Dropdown)
-  final List<String> _activities = [
-    "Gym",
-    "Chạy bộ",
-    "Đạp xe",
-    "Bơi lội",
-    "Yoga",
-    "Leo núi",
-    "Đi bộ nhanh"
-  ];
+  final List<String> _activities = ["Gym", "Chạy bộ", "Đạp xe", "Bơi lội", "Yoga", "Leo núi", "Đi bộ nhanh"];
   String? _selectedActivity;
-
   double? _predictedCalories;
   bool _isLoading = false;
 
   Future<void> _predictCalories() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     final workout = Workout(
@@ -52,29 +42,14 @@ class _PredictScreenState extends State<PredictScreen> {
       date: DateTime.now().toIso8601String(),
     );
 
-    // Gọi API
     final result = await _apiService.predictCalories(workout);
-
     setState(() {
       _isLoading = false;
       _predictedCalories = result;
     });
 
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('🔥 Dự đoán: ${result.toStringAsFixed(1)} kcal'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Dự đoán thất bại. Vui lòng thử lại!'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Dự đoán thất bại'), backgroundColor: Colors.red));
     }
   }
 
@@ -82,315 +57,155 @@ class _PredictScreenState extends State<PredictScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dự đoán Calo tiêu hao"),
+        title: const Text("Dự đoán Calo"),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // --- Header Card ---
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade50, Colors.blue.shade100],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blue.withOpacity(0.2)),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.calculate, color: Colors.white, size: 28),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Dự đoán Calo',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Nhập thông tin để dự đoán lượng calo tiêu hao',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // --- Form Fields ---
-              // Dropdown loại bài tập
-              DropdownButtonFormField<String>(
-                value: _selectedActivity,
-                items: _activities
-                    .map((a) => DropdownMenuItem(value: a, child: Text(a)))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedActivity = value),
-                decoration: InputDecoration(
-                  labelText: "Loại bài tập",
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  hintText: "Chọn loại bài tập",
-                  prefixIcon: Icon(Icons.fitness_center, color: Colors.blue.withOpacity(0.6)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.withOpacity(0.3)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.withOpacity(0.3), width: 1.5),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.blue, width: 2),
-                  ),
-                ),
-                validator: (value) => value == null ? "Hãy chọn loại bài tập" : null,
-              ),
-              const SizedBox(height: 16),
-
-              // --- Form Fields (stacked, full-width, equal height) ---
-              Column(
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
                 children: [
-                  SizedBox(
-                    height: 64,
-                    child: _buildCompactTextField("Cân nặng (kg)", _weightController, Icons.scale, true),
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  Responsive(
+                    mobile: _buildFormLayout(isMobile: true),
+                    tablet: _buildFormLayout(isMobile: false),
+                    desktop: _buildFormLayout(isMobile: false),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 64,
-                    child: _buildCompactTextField("Chiều cao (cm)", _heightController, Icons.height, true),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 64,
-                    child: _buildCompactTextField("Tuổi", _ageController, Icons.person, true),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 64,
-                    child: _buildCompactTextField("Thời gian (phút)", _durationController, Icons.schedule, true),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 64,
-                    child: _buildCompactTextField("Nhịp tim trung bình (bpm)", _heartRateController, Icons.favorite, true),
-                  ),
+                  const SizedBox(height: 32),
+                  _buildPredictButton(),
+                  if (_predictedCalories != null) _buildResultCard(),
+                  const SizedBox(height: 24),
+                  _buildHistoryButton(),
                 ],
               ),
-
-              const SizedBox(height: 24),
-
-              // --- Predict Button ---
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  icon: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.8)),
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.auto_graph, size: 22),
-                  label: Text(
-                    _isLoading ? "Đang tính toán..." : "🔥 Dự đoán Calo",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  onPressed: _isLoading ? null : _predictCalories,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[400],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // --- Result Card ---
-              if (_predictedCalories != null)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue.withOpacity(0.2)),
-                    boxShadow: [
-                      BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 12, offset: Offset(0, 4)),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.local_fire_department, color: Colors.red.shade400, size: 32),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Kết quả dự đoán",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "${_predictedCalories!.toStringAsFixed(1)} kcal",
-                        style: const TextStyle(
-                          fontSize: 28,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Lượng calo bạn sẽ tiêu hao",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildResultStat('Calo/Phút', '${(_predictedCalories! / (int.tryParse(_durationController.text) ?? 1)).toStringAsFixed(1)}'),
-                            Container(width: 1, height: 30, color: Colors.blue.withOpacity(0.2)),
-                            _buildResultStat('Calo/Kg', '${(_predictedCalories! / (double.tryParse(_weightController.text) ?? 1)).toStringAsFixed(1)}'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              // --- View History Button ---
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.history, color: Colors.blue.shade400, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Xem lịch sử tập luyện",
-                            style: TextStyle(color: Colors.blue.shade400, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCompactTextField(
-    String label,
-    TextEditingController controller,
-    IconData icon,
-    bool isNumber,
-  ) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.blue, fontSize: 11),
-        hintText: label,
-        hintStyle: TextStyle(fontSize: 11, color: Colors.grey[400]),
-        prefixIcon: Icon(icon, color: Colors.blue.withOpacity(0.6), size: 18),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue.withOpacity(0.3)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue.withOpacity(0.3), width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
       ),
-      style: const TextStyle(fontSize: 12),
-      validator: (value) {
-        if (value == null || value.isEmpty) return "Bắt buộc";
-        return null;
-      },
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: AppTheme.primary,
+            child: Icon(Icons.auto_graph, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Dự đoán Calo tiêu hao', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 18)),
+                Text('Nhập thông tin buổi tập để AI tính toán', style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildResultStat(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue),
-        ),
-      ],
+  Widget _buildFormLayout({required bool isMobile}) {
+    final fields = [
+      _buildDropdown(),
+      _buildTextField("Cân nặng (kg)", _weightController, Icons.scale),
+      _buildTextField("Chiều cao (cm)", _heightController, Icons.height),
+      _buildTextField("Tuổi", _ageController, Icons.person_outline),
+      _buildTextField("Thời gian (phút)", _durationController, Icons.timer_outlined),
+      _buildTextField("Nhịp tim (bpm)", _heartRateController, Icons.favorite_border),
+    ];
+
+    if (isMobile) {
+      return Column(children: fields.expand((f) => [f, const SizedBox(height: 16)]).toList());
+    } else {
+      return GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 4,
+        children: fields,
+      );
+    }
+  }
+
+  Widget _buildDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedActivity,
+      items: _activities.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+      onChanged: (val) => setState(() => _selectedActivity = val),
+      decoration: const InputDecoration(labelText: "Loại bài tập", prefixIcon: Icon(Icons.fitness_center)),
+      validator: (val) => val == null ? "Bắt buộc" : null,
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon)),
+      validator: (val) => val == null || val.isEmpty ? "Bắt buộc" : null,
+    );
+  }
+
+  Widget _buildPredictButton() {
+    return _isLoading
+        ? const CircularProgressIndicator()
+        : ElevatedButton(
+            onPressed: _predictCalories,
+            child: const Text('TÍNH TOÁN KẾT QUẢ'),
+          );
+  }
+
+  Widget _buildResultCard() {
+    return Container(
+      margin: const EdgeInsets.only(top: 32),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          const Text('KẾT QUẢ DỰ ĐOÁN', style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 16),
+          Text(
+            '${_predictedCalories!.toStringAsFixed(1)} kcal',
+            style: Theme.of(context).textTheme.displayLarge?.copyWith(color: AppTheme.primary),
+          ),
+          const SizedBox(height: 8),
+          const Text('Lượng calo bạn sẽ tiêu hao trong buổi tập này', textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryButton() {
+    return OutlinedButton.icon(
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+      icon: const Icon(Icons.history),
+      label: const Text('XEM LỊCH SỬ DỰ ĐOÁN'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 }

@@ -1,15 +1,15 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
 
 // Import routes
 import calorieRoutes from "./routes/calorieRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import mealRoutes from "./routes/mealRoutes.js";
-
-// Load environment variables
-dotenv.config();
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,23 +18,25 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// ====== Kết nối MongoDB (QUAN TRỌNG: Đã sửa lỗi) ======
-// Ưu tiên đọc biến MONGODB_URI từ Render. Nếu không có thì dùng Localhost.
-const mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/calorieDB";
+// ====== Kết nối MongoDB (Đã sửa lỗi db_user) ======
+const mongoURI = process.env.MONGODB_URI;
 
 mongoose
   .connect(mongoURI)
-  .then(() => console.log(`✅ MongoDB connected successfully to ${mongoURI.includes('127.0.0.1') ? 'Localhost' : 'Atlas Cloud'}`))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log(`✅ DATABASE CLOUD ĐÃ KẾT NỐI THÀNH CÔNG!`))
+  .catch((err) => {
+    console.error("❌ LỖI KẾT NỐI DATABASE:", err.message);
+  });
 
 // ====== Routes ======
 app.use("/api/calories", calorieRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ====== Mặc định root ======
 app.get("/", (req, res) => {
-  res.send("🔥 Calorie Prediction API đang chạy ngon lành!");
+  res.send("🔥 API Health Assistant đang chạy mượt mà!");
 });
 
 // ====== Server khởi chạy ======

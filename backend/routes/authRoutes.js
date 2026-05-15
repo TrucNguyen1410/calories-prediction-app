@@ -2,6 +2,8 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { syncGoogleFit } from '../controllers/googleFitController.js';
+
 
 const router = express.Router();
 
@@ -63,13 +65,28 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác' });
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác' });
+        let user = await User.findOne({ email });
+        
+        // --- GOOGLE AUTH AUTO-SIGNUP/LOGIN ---
+        if (password === 'GOOGLE_AUTH_EXTERNAL') {
+            if (!user) {
+                // Auto-create user if not exists
+                user = new User({
+                    name: email.split('@')[0],
+                    email: email,
+                    password: await bcrypt.hash(Math.random().toString(36), 10), // Random password
+                    gender: 'Khác'
+                });
+                await user.save();
+            }
+        } else {
+            if (!user) {
+                return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác' });
+            }
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Email hoặc mật khẩu không chính xác' });
+            }
         }
 
         // Tạo payload cho token
@@ -166,5 +183,9 @@ router.post('/change-password', async (req, res) => {
         return res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
     }
 });
+
+// --- API MỚI: ĐỒNG BỘ GOOGLE FIT ---
+router.post('/google-sync', syncGoogleFit);
+
 
 export default router;

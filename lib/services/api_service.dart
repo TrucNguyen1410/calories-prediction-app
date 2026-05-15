@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/workout.dart';
 
 class ApiService {
-    static const String _baseUrl = 'https://calo-backend-api.onrender.com/api';
+    static const String _baseUrl = 'http://127.0.0.1:3000/api';
+
+
     
     static const String _tokenKey = 'authToken';
     static const String _userKey = 'userData';
@@ -355,4 +357,136 @@ class ApiService {
             return false;
         }
     }
+
+    // --- AI Chat API ---
+
+    Future<String> sendMessageToAI(String message) async {
+        try {
+            final token = await getToken();
+            final userData = await getUserData();
+            
+            if (token == null || userData == null) {
+                throw Exception('Bạn cần đăng nhập để chat với AI');
+            }
+
+            final response = await http.post(
+                Uri.parse('$_baseUrl/ai/chat'),
+                headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({
+                    'userId': userData['id'] ?? userData['_id'],
+                    'message': message,
+                }),
+            );
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return body['reply'] ?? 'Không nhận được phản hồi từ AI';
+            } else {
+                // In ra lỗi chi tiết từ Backend
+                throw Exception('Backend Error [${response.statusCode}]: ${response.body}');
+            }
+        } catch (e) {
+            print('AI Chat Error Trace: $e');
+            throw Exception('Lỗi kết nối máy chủ AI: $e');
+        }
+
+    }
+
+    // --- AI Health Plan API ---
+    Future<Map<String, dynamic>> getHealthPlan() async {
+        try {
+            final token = await getToken();
+            final userData = await getUserData();
+            
+            if (token == null || userData == null) {
+                throw Exception('Bạn cần đăng nhập');
+            }
+
+            final response = await http.post(
+                Uri.parse('$_baseUrl/ai/generate-plan'),
+                headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({
+                    'userId': userData['id'] ?? userData['_id'],
+                }),
+            );
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return body['data'] ?? {};
+            } else {
+                throw Exception('Lỗi khi tạo kế hoạch: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('Health Plan Error: $e');
+            throw Exception('Không thể kết nối máy chủ: $e');
+        }
+    }
+
+    // --- AI Vision & Text Analysis ---
+    Future<Map<String, dynamic>> analyzeFood({String? text, List<int>? imageBytes, String? fileName}) async {
+        try {
+            final token = await getToken();
+            if (token == null) throw Exception('Chưa đăng nhập');
+
+            var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/ai/analyze-food'));
+            request.headers['Authorization'] = 'Bearer $token';
+
+            if (text != null) {
+                request.fields['text'] = text;
+            }
+
+            if (imageBytes != null) {
+                request.files.add(http.MultipartFile.fromBytes(
+                    'image',
+                    imageBytes,
+                    filename: fileName ?? 'food.jpg',
+                ));
+            }
+
+            final streamedResponse = await request.send();
+            final response = await http.Response.fromStream(streamedResponse);
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return body['data'];
+            } else {
+                throw Exception('Lỗi phân tích: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('Analyze Food Error: $e');
+            throw Exception('Không thể phân tích: $e');
+        }
+    }
+    
+    // --- Google Fit Sync ---
+    Future<Map<String, dynamic>> syncGoogleFit({required String userId, String? accessToken}) async {
+        try {
+            final response = await http.post(
+                Uri.parse('$_baseUrl/auth/google-sync'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                    'userId': userId,
+                    'accessToken': accessToken,
+                }),
+            );
+
+            if (response.statusCode == 200) {
+                return jsonDecode(response.body);
+            } else {
+                throw Exception('Lỗi đồng bộ Google Fit: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('Google Fit Sync Error: $e');
+            throw Exception('Không thể đồng bộ: $e');
+        }
+    }
 }
+
+
+
