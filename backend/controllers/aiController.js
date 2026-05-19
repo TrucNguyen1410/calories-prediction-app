@@ -8,7 +8,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: process.env.GROQ_API_KEY || "dummy_key_to_prevent_startup_crash",
 });
 
 // --- 1. CHAT VỚI AI (Dùng Groq Llama 3) ---
