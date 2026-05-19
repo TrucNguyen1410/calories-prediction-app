@@ -311,7 +311,7 @@ export const getWorkoutIntensityAHP = async (req, res) => {
 // --- 4. PHÂN TÍCH DINH DƯỠNG TỪ TEXT/IMAGE ---
 export const analyzeFood = async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text, remainingCalories, todayIntake, targetCalories } = req.body;
         const imageFile = req.file; 
 
         // Validate: phải có text hoặc image
@@ -326,11 +326,18 @@ export const analyzeFood = async (req, res) => {
             // dùng chung GROQ_API_KEY sẵn có mà không cần cấu hình thêm Gemini Key.
             const base64Image = imageFile.buffer.toString("base64");
             const prompt = `Nhiệm vụ của bạn là phân tích hình ảnh món ăn này.
+            
+            Thông tin calo hiện tại của người dùng hôm nay:
+            - Mục tiêu calo hàng ngày (TDEE): ${targetCalories || 2000} kcal
+            - Calo đã nạp: ${todayIntake || 0} kcal
+            - Calo còn lại: ${remainingCalories || 2000} kcal
+
             Điều kiện bắt buộc: Nếu nội dung trong hình KHÔNG PHẢI là thực phẩm, thức ăn, hoặc đồ uống, bạn KHÔNG ĐƯỢC tính toán Calo. Hãy lập tức trả về cấu trúc JSON chính xác như sau:
             {
                 "isFood": false,
                 "message": "Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!"
             }
+
             Nếu là thực phẩm/thức ăn hợp lệ, hãy trả về JSON chứa thông tin dinh dưỡng:
             {
                 "isFood": true,
@@ -340,6 +347,9 @@ export const analyzeFood = async (req, res) => {
                 "protein": số g đạm (number),
                 "carbs": số g tinh bột (number),
                 "fat": số g chất béo (number),
+                "macros": "Carb: [số g carbs]g • Protein: [số g protein]g • Fat: [số g fat]g",
+                "isReasonable": true hoặc false (boolean),
+                "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
@@ -370,11 +380,18 @@ export const analyzeFood = async (req, res) => {
             }
         } else if (text) {
             const prompt = `Nhiệm vụ của bạn là phân tích món ăn người dùng vừa nhập: "${text}".
+            
+            Thông tin calo hiện tại của người dùng hôm nay:
+            - Mục tiêu calo hàng ngày (TDEE): ${targetCalories || 2000} kcal
+            - Calo đã nạp: ${todayIntake || 0} kcal
+            - Calo còn lại: ${remainingCalories || 2000} kcal
+
             Điều kiện bắt buộc: Nếu nội dung nhập vào KHÔNG PHẢI là thực phẩm, thức ăn, hoặc đồ uống (Ví dụ: máy tính, bàn ghế, lập trình web...), bạn KHÔNG ĐƯỢC tính toán Calo. Hãy lập tức trả về cấu trúc JSON chính xác như sau:
             {
                 "isFood": false,
                 "message": "Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!"
             }
+
             Nếu là thức ăn hợp lệ: Trả về JSON chứa thông tin dinh dưỡng:
             {
                 "isFood": true,
@@ -384,6 +401,9 @@ export const analyzeFood = async (req, res) => {
                 "carbs": số g tinh bột (number),
                 "protein": số g đạm (number),
                 "fat": số g chất béo (number),
+                "macros": "Carb: [số g carbs]g • Protein: [số g protein]g • Fat: [số g fat]g",
+                "isReasonable": true hoặc false (boolean),
+                "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;

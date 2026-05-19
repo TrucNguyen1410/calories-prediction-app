@@ -263,9 +263,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  '${intake.toInt()}',
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return ScaleTransition(scale: animation, child: child);
+                  },
+                  child: Text(
+                    '${intake.toInt()}',
+                    key: ValueKey<int>(intake.toInt()),
+                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text('kcal', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),

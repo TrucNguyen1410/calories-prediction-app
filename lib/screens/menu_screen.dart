@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
@@ -264,7 +265,17 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Kế hoạch Ăn uống', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-            Text('Tổng Calo Nạp: ${healthState.todayIntake.toInt()} kcal', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Text(
+                'Tổng Calo Nạp: ${healthState.todayIntake.toInt()} kcal',
+                key: ValueKey<int>(healthState.todayIntake.toInt()),
+                style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -458,16 +469,41 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 15),
               ),
               const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => _showAddCustomMealDialog(meal['type'] ?? 'Bữa ăn', healthState),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showCustomMealDialog(
+                      mealType: meal['type'] ?? 'Bữa ăn',
+                      healthState: healthState,
+                      initialFoodName: meal['name'],
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B2D31) : Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.edit, size: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+                    ),
                   ),
-                  child: const Icon(Icons.add, size: 14, color: Colors.black54),
-                ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showCustomMealDialog(
+                      mealType: meal['type'] ?? 'Bữa ăn',
+                      healthState: healthState,
+                      initialFoodName: meal['name'],
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B2D31) : Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.add, size: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -476,192 +512,333 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     );
   }
 
-  // --- POPUP '+ THÊM MÓN' (AI CALORIE THRESHOLD WARNING THẬT) ---
-  void _showAddCustomMealDialog(String mealType, HealthState healthState) {
-    final foodController = TextEditingController();
+  // --- POPUP 'TÙY CHỈNH BỮA ĂN' (EDIT/ADD MODE WITH AI VERIFICATION) ---
+  void _showCustomMealDialog({
+    required String mealType,
+    required HealthState healthState,
+    String? initialFoodName,
+  }) {
+    final foodController = TextEditingController(text: initialFoodName);
     bool isAnalyzing = false;
+    bool isAnalyzed = false;
     bool showWarning = false;
     String warningMessage = '';
     String? validationErrorMessage;
     
-    double targetDailyCalories = 2000.0; 
+    double estimatedCalories = 0.0;
+    String detectedName = '';
+    double carbs = 0.0;
+    double protein = 0.0;
+    double fat = 0.0;
+    String macrosText = '';
+
+    double targetDailyCalories = 2000.0;
+    final double remainingCalories = targetDailyCalories - healthState.todayIntake;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Row(
-            children: [
-              const Icon(Icons.restaurant, color: AppTheme.primary, size: 22),
-              const SizedBox(width: 10),
-              Text('Thêm món vào $mealType', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Nhập tên món ăn cần thêm (AI sẽ tự động kiểm tra lượng Calo):', style: TextStyle(fontSize: 12, color: Colors.black54)),
-              const SizedBox(height: 12),
-              TextField(
-                controller: foodController,
-                decoration: InputDecoration(
-                  hintText: 'VD: "1 ly trà sữa trân đường đen"',
-                  hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                  filled: true,
-                  fillColor: Colors.grey[50],
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          
+          return AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                Icon(Icons.edit_note_rounded, color: AppTheme.primary, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  'Tùy chỉnh bữa ăn', 
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold, 
+                    color: isDark ? const Color(0xFFF2F3F5) : Colors.black87
+                  )
                 ),
-                onChanged: (val) {
-                  if (validationErrorMessage != null || showWarning) {
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Thay đổi món ăn cho bữa ${mealType.toLowerCase()}:',
+                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.black54),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: foodController,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                  decoration: InputDecoration(
+                    hintText: 'Nhập tên món ăn...',
+                    hintStyle: TextStyle(fontSize: 12, color: isDark ? Colors.grey[600] : Colors.grey[400]),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF2B2D31) : Colors.grey[50],
+                  ),
+                  onChanged: (val) {
+                    if (validationErrorMessage != null || showWarning || isAnalyzed) {
+                      setDialogState(() {
+                        validationErrorMessage = null;
+                        showWarning = false;
+                        isAnalyzed = false;
+                      });
+                    }
+                  },
+                ),
+                if (validationErrorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      validationErrorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+                if (isAnalyzing) ...[
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Column(
+                      children: [
+                        const CircularProgressIndicator(strokeWidth: 3, color: AppTheme.primary),
+                        const SizedBox(height: 8),
+                        Text(
+                          '🤖 AI đang phân tích dinh dưỡng...',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFF949BA4) : Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showWarning) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.orangeAccent.withOpacity(0.15) : Colors.orange[50],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            warningMessage,
+                            style: TextStyle(
+                              color: isDark ? Colors.orangeAccent : Colors.orange[900],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (isAnalyzed && !showWarning && validationErrorMessage == null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.greenAccent.withOpacity(0.15) : Colors.green[50],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle_outline, color: Colors.green, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '✅ Phân tích hoàn tất: $detectedName',
+                                style: TextStyle(
+                                  color: isDark ? Colors.greenAccent : Colors.green[900],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Năng lượng: ${estimatedCalories.toInt()} kcal',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                macrosText,
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF949BA4) : Colors.black54,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Hủy',
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFF949BA4) : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (!isAnalyzing)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    if (foodController.text.trim().isEmpty) return;
+
                     setDialogState(() {
+                      isAnalyzing = true;
                       validationErrorMessage = null;
                       showWarning = false;
+                      isAnalyzed = false;
                     });
-                  }
-                },
-              ),
-              if (validationErrorMessage != null) ...[
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    validationErrorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-              if (isAnalyzing) ...[
-                const SizedBox(height: 16),
-                const Center(
-                  child: Column(
-                    children: [
-                      CircularProgressIndicator(strokeWidth: 3, color: AppTheme.primary),
-                      SizedBox(height: 8),
-                      Text('🤖 AI đang phân tích dinh dưỡng...', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ],
-              if (showWarning) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.orange[50],
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 22),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          warningMessage,
-                          style: TextStyle(color: Colors.orange[900], fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            if (!showWarning && !isAnalyzing)
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                onPressed: () async {
-                  if (foodController.text.trim().isEmpty) return;
-                  
-                  setDialogState(() {
-                    isAnalyzing = true;
-                    validationErrorMessage = null;
-                  });
-                  
-                  try {
-                    // Gọi AI Endpoint thực tế
-                    final result = await _apiService.analyzeFood(text: foodController.text);
-                    
-                    if (result != null && result.isNotEmpty) {
+
+                    try {
+                      final result = await _apiService.analyzeFood(
+                        text: foodController.text,
+                        remainingCalories: remainingCalories,
+                        todayIntake: healthState.todayIntake,
+                        targetCalories: targetDailyCalories,
+                      );
+
+                      if (result != null && result.isNotEmpty) {
                         final bool isFood = result['isFood'] ?? true;
-                        
+
                         if (!isFood) {
-                           setDialogState(() {
-                             isAnalyzing = false;
-                             validationErrorMessage = result['message'] ?? 'Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!';
-                           });
-                           return;
+                          setDialogState(() {
+                            isAnalyzing = false;
+                            validationErrorMessage = result['message'] ??
+                                'Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!';
+                          });
+                          return;
                         }
 
-                        final double estimatedCalories = (result['estimatedCalories'] ?? result['calories'] ?? 0).toDouble();
-                        final String detectedName = result['foodName'] ?? foodController.text;
-                        
-                        // Tính toán so với hạn mức TDEE hôm nay
-                        final currentTotal = healthState.todayIntake + estimatedCalories;
-                        
-                        if (currentTotal > targetDailyCalories) {
-                           setDialogState(() {
-                             isAnalyzing = false;
-                             showWarning = true;
-                             warningMessage = '⚠️ Cảnh báo AI: Món "$detectedName" ước tính chứa ~${estimatedCalories.toInt()} kcal.\n\nNếu thêm món này, tổng calo nạp hôm nay sẽ là ${currentTotal.toInt()}/${targetDailyCalories.toInt()} kcal (Vượt mục tiêu). Hãy cân nhắc tập thể dục thêm nhé! 🔥';
-                           });
-                        } else {
-                           // Không vượt mục tiêu, giả lập lưu thành công
-                           Navigator.pop(context);
-                           ScaffoldMessenger.of(context).showSnackBar(
-                             SnackBar(
-                               content: Text('✅ Đã thêm "$detectedName" (${estimatedCalories.toInt()} kcal)!'),
-                               backgroundColor: Colors.green,
-                             ),
-                           );
-                        }
-                    } else {
+                        estimatedCalories = (result['estimatedCalories'] ?? result['calories'] ?? 0).toDouble();
+                        detectedName = result['foodName'] ?? foodController.text;
+                        carbs = (result['carbs'] ?? 0.0).toDouble();
+                        protein = (result['protein'] ?? 0.0).toDouble();
+                        fat = (result['fat'] ?? 0.0).toDouble();
+                        macrosText = result['macros'] ??
+                            'Carb: ${carbs.toInt()}g • Protein: ${protein.toInt()}g • Fat: ${fat.toInt()}g';
+
+                        final bool isReasonable = result['isReasonable'] ?? true;
+                        final String warnMsg = result['warningMessage'] ?? '';
+
+                        setDialogState(() {
+                          isAnalyzing = false;
+                          isAnalyzed = true;
+                          if (!isReasonable && warnMsg.isNotEmpty) {
+                            showWarning = true;
+                            warningMessage = warnMsg;
+                          }
+                        });
+                      } else {
                         setDialogState(() {
                           isAnalyzing = false;
                           validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
                         });
-                    }
-                  } catch (e) {
+                      }
+                    } catch (e) {
                       setDialogState(() {
                         isAnalyzing = false;
                         validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
                       });
-                  }
-                },
-                child: const Text('Kiểm tra AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            if (showWarning)
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                    }
+                  },
+                  child: const Text('Kiểm tra AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('⚠️ Đã thêm "${foodController.text}" (Ghi đè calo vượt hạn mức thành công!)'),
-                      backgroundColor: Colors.orangeAccent,
-                    ),
-                  );
-                },
-                child: const Text('Lưu bất chấp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-          ],
-        ),
+              if (isAnalyzed)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: showWarning ? Colors.orangeAccent : Colors.green,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('⏳ Đang cập nhật thực đơn và đồng bộ dữ liệu...'),
+                        duration: Duration(milliseconds: 800),
+                      ),
+                    );
+
+                    try {
+                      // 1. Lưu đè món mới vào thực đơn (Plan)
+                      await ref.read(healthProvider.notifier).updateMealInPlan(
+                        mealType: mealType,
+                        newName: detectedName,
+                        newCalories: estimatedCalories,
+                        carbs: carbs,
+                        protein: protein,
+                        fat: fat,
+                      );
+
+                      // 2. Lưu món ăn vào Database qua API để cập nhật tổng calo
+                      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                      await _apiService.addMeal(
+                        name: detectedName,
+                        calories: estimatedCalories,
+                        mealType: mealType,
+                        date: todayStr,
+                      );
+
+                      // 3. Ép ứng dụng tải lại dữ liệu mới nhất từ Server để đồng bộ hiển thị
+                      await ref.read(healthProvider.notifier).refreshAll();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('✅ Đã đồng bộ và cập nhật bữa ${mealType.toLowerCase()} thành món "$detectedName"!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (err) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('❌ Lỗi đồng bộ thực đơn: $err'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    showWarning ? 'Xác nhận' : 'Lưu',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -241,6 +241,74 @@ class HealthNotifier extends StateNotifier<HealthState> {
       rethrow; // Ném lỗi ra ngoài để UI catch được lỗi thật
     }
   }
+
+  Future<void> updateMealInPlan({
+    required String mealType,
+    required String newName,
+    required double newCalories,
+    required double carbs,
+    required double protein,
+    required double fat,
+  }) async {
+    if (state.currentPlan == null) return;
+
+    try {
+      final plan = Map<String, dynamic>.from(state.currentPlan!);
+      final weeklyPlan = List<dynamic>.from(plan['weeklyPlan'] ?? plan['meal_plan'] ?? []);
+      if (weeklyPlan.isEmpty) return;
+
+      final weekday = DateTime.now().weekday;
+      final Map<int, List<String>> weekdayNames = {
+        1: ['T2', 'THỨ 2', 'THỨ HAI', 'MONDAY'],
+        2: ['T3', 'THỨ 3', 'THỨ BA', 'TUESDAY'],
+        3: ['T4', 'THỨ 4', 'THỨ TƯ', 'WEDNESDAY'],
+        4: ['T5', 'THỨ 5', 'THỨ NĂM', 'THURSDAY'],
+        5: ['T6', 'THỨ 6', 'THỨ SÁU', 'FRIDAY'],
+        6: ['T7', 'THỨ 7', 'THỨ BẢY', 'SATURDAY'],
+        7: ['CN', 'CHỦ NHẬT', 'SUNDAY'],
+      };
+      final validNames = weekdayNames[weekday] ?? [];
+
+      int todayIndex = weeklyPlan.indexWhere((planItem) {
+        final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
+        return validNames.any((name) => planDay == name || planDay.contains(name));
+      });
+
+      if (todayIndex == -1) {
+        todayIndex = 0;
+      }
+
+      final todayPlan = Map<String, dynamic>.from(weeklyPlan[todayIndex]);
+      final meals = List<dynamic>.from(todayPlan['meals'] ?? []);
+
+      int mealIndex = meals.indexWhere((m) => m['type']?.toString().toLowerCase() == mealType.toLowerCase());
+      if (mealIndex != -1) {
+        final updatedMeal = Map<String, dynamic>.from(meals[mealIndex]);
+        updatedMeal['name'] = newName;
+        updatedMeal['calories'] = newCalories;
+        updatedMeal['carbs'] = carbs;
+        updatedMeal['protein'] = protein;
+        updatedMeal['fat'] = fat;
+        meals[mealIndex] = updatedMeal;
+      }
+
+      todayPlan['meals'] = meals;
+      
+      double newTotalCal = 0;
+      for (var m in meals) {
+        newTotalCal += (m['calories'] ?? 0).toDouble();
+      }
+      todayPlan['totalCalories'] = newTotalCal;
+      
+      weeklyPlan[todayIndex] = todayPlan;
+      plan['weeklyPlan'] = weeklyPlan;
+
+      state = state.copyWith(currentPlan: plan);
+      await _savePlanToCache(plan);
+    } catch (e) {
+      print('Error updating meal in plan: $e');
+    }
+  }
 }
 
 // Lắng nghe authProvider một cách reactive

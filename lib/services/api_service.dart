@@ -493,7 +493,14 @@ class ApiService {
     }
 
     // --- AI Vision & Text Analysis ---
-    Future<Map<String, dynamic>> analyzeFood({String? text, List<int>? imageBytes, String? fileName}) async {
+    Future<Map<String, dynamic>> analyzeFood({
+        String? text,
+        List<int>? imageBytes,
+        String? fileName,
+        double? remainingCalories,
+        double? todayIntake,
+        double? targetCalories,
+    }) async {
         try {
             var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/ai/analyze-food'));
             final tokenHeaders = await _getHeaders(isJson: false);
@@ -501,6 +508,15 @@ class ApiService {
 
             if (text != null) {
                 request.fields['text'] = text;
+            }
+            if (remainingCalories != null) {
+                request.fields['remainingCalories'] = remainingCalories.toString();
+            }
+            if (todayIntake != null) {
+                request.fields['todayIntake'] = todayIntake.toString();
+            }
+            if (targetCalories != null) {
+                request.fields['targetCalories'] = targetCalories.toString();
             }
 
             if (imageBytes != null) {
