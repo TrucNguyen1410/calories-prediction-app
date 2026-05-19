@@ -482,6 +482,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     bool isAnalyzing = false;
     bool showWarning = false;
     String warningMessage = '';
+    String? validationErrorMessage;
     
     double targetDailyCalories = 2000.0; 
 
@@ -512,7 +513,25 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   filled: true,
                   fillColor: Colors.grey[50],
                 ),
+                onChanged: (val) {
+                  if (validationErrorMessage != null || showWarning) {
+                    setDialogState(() {
+                      validationErrorMessage = null;
+                      showWarning = false;
+                    });
+                  }
+                },
               ),
+              if (validationErrorMessage != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    validationErrorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
               if (isAnalyzing) ...[
                 const SizedBox(height: 16),
                 const Center(
@@ -566,16 +585,28 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 onPressed: () async {
                   if (foodController.text.trim().isEmpty) return;
                   
-                  setDialogState(() => isAnalyzing = true);
+                  setDialogState(() {
+                    isAnalyzing = true;
+                    validationErrorMessage = null;
+                  });
                   
                   try {
                     // Gọi AI Endpoint thực tế
                     final result = await _apiService.analyzeFood(text: foodController.text);
                     
-                    if (result.containsKey('data')) {
-                        final data = result['data'];
-                        final double estimatedCalories = (data['estimatedCalories'] ?? 0).toDouble();
-                        final String detectedName = data['foodName'] ?? foodController.text;
+                    if (result != null && result.isNotEmpty) {
+                        final bool isFood = result['isFood'] ?? true;
+                        
+                        if (!isFood) {
+                           setDialogState(() {
+                             isAnalyzing = false;
+                             validationErrorMessage = result['message'] ?? 'Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!';
+                           });
+                           return;
+                        }
+
+                        final double estimatedCalories = (result['estimatedCalories'] ?? result['calories'] ?? 0).toDouble();
+                        final String detectedName = result['foodName'] ?? foodController.text;
                         
                         // Tính toán so với hạn mức TDEE hôm nay
                         final currentTotal = healthState.todayIntake + estimatedCalories;
@@ -597,11 +628,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                            );
                         }
                     } else {
-                        throw Exception('Data is empty');
+                        setDialogState(() {
+                          isAnalyzing = false;
+                          validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
+                        });
                     }
                   } catch (e) {
-                      setDialogState(() => isAnalyzing = false);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi gọi AI: $e'), backgroundColor: Colors.red));
+                      setDialogState(() {
+                        isAnalyzing = false;
+                        validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
+                      });
                   }
                 },
                 child: const Text('Kiểm tra AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

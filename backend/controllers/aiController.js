@@ -53,12 +53,16 @@ export const chatWithAI = async (req, res) => {
             content: msg.content,
         }));
 
-        const systemPrompt = `Bạn là một trợ lý sức khỏe và huấn luyện viên thể thao thông minh bằng tiếng Việt.
+        const systemPrompt = `Bạn là Trợ lý Sức khỏe AI (HealthAI) và huấn luyện viên thể thao thông minh bằng tiếng Việt.
 Hồ sơ thể chất người dùng:
 - Giới tính: ${gender}
 - Cân nặng: ${weight} kg
 - Chiều cao: ${height} cm
 - Tuổi: ${age} tuổi
+
+Quy định bảo mật nội dung (Guardrails):
+Bạn CHỈ ĐƯỢC PHÉP trả lời các câu hỏi liên quan đến sức khỏe, dinh dưỡng, tập luyện, chỉ số BMI, BMR.
+Nếu người dùng hỏi bất kỳ chủ đề nào khác ngoài phạm vi trên (Ví dụ: lập trình, toán học, tin tức xã hội, v.v.), bạn KHÔNG ĐƯỢC TRẢ LỜI nội dung đó. Hãy từ chối một cách lịch sự bằng câu chính xác: "Tôi là trợ lý sức khỏe và thể thao, tôi không thể giúp bạn giải đáp các vấn đề ngoài phạm vi này." và dừng lại ngay lập tức.
 
 Nhiệm vụ đặc biệt:
 1. Nếu người dùng kể hoặc chia sẻ về việc họ vừa hoàn thành một hoạt động vận động, thể thao, tập luyện hoặc hoạt động thể chất (ví dụ: "Tôi vừa chạy bộ 30 phút", "Nay đá bóng 1 tiếng", "Tôi mới tập gym 45 phút"), bạn BẮT BUỘC phải tính toán gần đúng lượng calo tiêu thụ của họ dựa trên hồ sơ thể chất (nặng ${weight}kg, tuổi ${age}) và loại hoạt động đó. Bạn chỉ được phép trả về DUY NHẤT một chuỗi JSON có cấu trúc chính xác như sau, không được phép kèm bất kỳ lời giải thích, chào hỏi hay ký tự thừa nào ngoài JSON:
@@ -70,7 +74,7 @@ Nhiệm vụ đặc biệt:
   "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt kèm con số calo vừa đốt cháy (ví dụ: Tuyệt vời! Bạn đã đốt cháy 320 kcal từ việc Chạy bộ.)"
 }
 
-2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng văn bản thông thường, ngắn gọn, thân thiện bằng tiếng Việt. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
+2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường trong phạm vi sức khỏe và thể chất (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng văn bản thông thường, ngắn gọn, thân thiện bằng tiếng Việt. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
 
         // Gọi API Groq
         const completion = await groq.chat.completions.create({
@@ -321,13 +325,22 @@ export const analyzeFood = async (req, res) => {
             // Sử dụng Groq Vision (llama-3.2-11b-vision-preview) cực kỳ ổn định,
             // dùng chung GROQ_API_KEY sẵn có mà không cần cấu hình thêm Gemini Key.
             const base64Image = imageFile.buffer.toString("base64");
-            const prompt = `Hãy phân tích hình ảnh món ăn này và trả về JSON chuẩn chứa thông tin dinh dưỡng:
+            const prompt = `Nhiệm vụ của bạn là phân tích hình ảnh món ăn này.
+            Điều kiện bắt buộc: Nếu nội dung trong hình KHÔNG PHẢI là thực phẩm, thức ăn, hoặc đồ uống, bạn KHÔNG ĐƯỢC tính toán Calo. Hãy lập tức trả về cấu trúc JSON chính xác như sau:
             {
+                "isFood": false,
+                "message": "Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!"
+            }
+            Nếu là thực phẩm/thức ăn hợp lệ, hãy trả về JSON chứa thông tin dinh dưỡng:
+            {
+                "isFood": true,
                 "foodName": "tên món ăn bằng tiếng Việt",
                 "estimatedCalories": số calo (number),
+                "calories": số calo (number),
                 "protein": số g đạm (number),
                 "carbs": số g tinh bột (number),
-                "fat": số g chất béo (number)
+                "fat": số g chất béo (number),
+                "message": "Phân tích dinh dưỡng món ăn"
             }
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
@@ -356,14 +369,22 @@ export const analyzeFood = async (req, res) => {
                 nutritionData.imageUrl = `data:${imageFile.mimetype};base64,${base64Image}`;
             }
         } else if (text) {
-            const prompt = `Hãy phân tích mô tả món ăn sau: "${text}". 
-            Trả về JSON chuẩn chứa thông tin dinh dưỡng:
+            const prompt = `Nhiệm vụ của bạn là phân tích món ăn người dùng vừa nhập: "${text}".
+            Điều kiện bắt buộc: Nếu nội dung nhập vào KHÔNG PHẢI là thực phẩm, thức ăn, hoặc đồ uống (Ví dụ: máy tính, bàn ghế, lập trình web...), bạn KHÔNG ĐƯỢC tính toán Calo. Hãy lập tức trả về cấu trúc JSON chính xác như sau:
             {
+                "isFood": false,
+                "message": "Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!"
+            }
+            Nếu là thức ăn hợp lệ: Trả về JSON chứa thông tin dinh dưỡng:
+            {
+                "isFood": true,
                 "foodName": "tên món ăn bằng tiếng Việt",
                 "estimatedCalories": số calo (number),
-                "protein": số g đạm (number),
+                "calories": số calo (number),
                 "carbs": số g tinh bột (number),
-                "fat": số g chất béo (number)
+                "protein": số g đạm (number),
+                "fat": số g chất béo (number),
+                "message": "Phân tích dinh dưỡng món ăn"
             }
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
