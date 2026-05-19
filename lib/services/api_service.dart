@@ -585,6 +585,7 @@ class ApiService {
         required double height,
         required double weight,
         required String gender,
+        required int age,
     }) async {
         try {
             final userData = await getUserData();
@@ -599,6 +600,7 @@ class ApiService {
                     'height': height,
                     'weight': weight,
                     'gender': gender,
+                    'age': age,
                 }),
             );
 

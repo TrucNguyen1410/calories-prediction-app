@@ -8,6 +8,7 @@ import 'screens/chat_screen.dart';
 import 'screens/health_plan_screen.dart';
 import 'theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 
 
 void main() {
@@ -25,6 +26,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final themeMode = ref.watch(themeProvider);
 
     Widget getHomeWidget() {
       switch (authState.status) {
@@ -44,7 +46,9 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Health Management & AI Assistant',
+      themeMode: themeMode,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
 
       // 🧭 Màn hình mở đầu dựa trên trạng thái Auth
       home: getHomeWidget(),

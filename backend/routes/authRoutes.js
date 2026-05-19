@@ -101,7 +101,8 @@ router.post('/login', async (req, res) => {
             email: user.email,
             gender: user.gender,
             height: user.height,
-            weight: user.weight
+            weight: user.weight,
+            dob: user.dob
         };
 
         jwt.sign(
@@ -125,7 +126,7 @@ router.post('/login', async (req, res) => {
 // --- API MỚI: CẬP NHẬT CHIỀU CAO/CÂN NẶNG ---
 // PUT /api/auth/profile/:id (Giả sử bạn gắn route này trong server.js)
 router.put('/profile/:id', async (req, res) => {
-    const { height, weight, gender } = req.body;
+    const { height, weight, gender, age } = req.body;
     
     try {
         let user = await User.findById(req.params.id);
@@ -137,6 +138,10 @@ router.put('/profile/:id', async (req, res) => {
         user.height = height ?? user.height;
         user.weight = weight ?? user.weight;
         user.gender = gender ?? user.gender;
+        if (age !== undefined && age !== null) {
+            const birthYear = new Date().getFullYear() - parseInt(age);
+            user.dob = new Date(`${birthYear}-01-01`);
+        }
         
         await user.save();
         
@@ -147,7 +152,8 @@ router.put('/profile/:id', async (req, res) => {
             email: user.email,
             gender: user.gender,
             height: user.height,
-            weight: user.weight
+            weight: user.weight,
+            dob: user.dob
         });
         
     } catch (err) {

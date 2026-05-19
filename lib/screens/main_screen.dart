@@ -181,20 +181,22 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Widget _buildChatPopup(chatState) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: 350,
       height: 550,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.15),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [
@@ -204,7 +206,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           // Body - Danh sách tin nhắn
           Expanded(
             child: Container(
-              color: Colors.grey[50],
+              color: isDark ? const Color(0xFF1E1F22) : Colors.grey[50],
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(12),
@@ -273,13 +275,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   Widget _buildChatBubble(ChatMessage message) {
     final isUser = message.isUser;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isUser ? AppTheme.primary : Colors.white,
+          color: isUser ? AppTheme.primary : (isDark ? const Color(0xFF35373C) : Colors.white),
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomRight: isUser ? Radius.zero : null,
             bottomLeft: !isUser ? Radius.zero : null,
@@ -294,7 +298,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           children: [
             Text(
               message.text,
-              style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 14),
+              style: TextStyle(
+                color: isUser ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                fontSize: 14,
+              ),
             ),
             if (message.actionData != null && message.actionData!['action'] == 'LOG_WORKOUT') ...[
               const SizedBox(height: 8),
@@ -303,7 +310,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             const SizedBox(height: 2),
             Text(
               DateFormat('HH:mm').format(message.timestamp),
-              style: TextStyle(color: isUser ? Colors.white70 : Colors.black45, fontSize: 9),
+              style: TextStyle(
+                color: isUser ? Colors.white70 : (isDark ? const Color(0xFF949BA4) : Colors.black45),
+                fontSize: 9,
+              ),
             ),
           ],
         ),
@@ -427,11 +437,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Widget _buildInputArea() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        color: theme.cardColor,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
         borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
       ),
       child: Row(
@@ -439,11 +451,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           Expanded(
             child: TextField(
               controller: _chatController,
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Hỏi AI...',
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
               ),

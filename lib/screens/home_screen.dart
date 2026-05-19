@@ -32,14 +32,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final healthState = ref.watch(healthProvider);
 
     if (healthState.isLoading && healthState.userData == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF8F9FA),
-        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      return Scaffold(
+        body: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
       body: RefreshIndicator(
         color: AppTheme.primary,
         onRefresh: () => ref.read(healthProvider.notifier).refreshAll(),
@@ -64,6 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildHeader(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -71,11 +70,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Chào mừng trở lại 👋,', style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500)),
+              Text('Chào mừng trở lại 👋,', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               Text(
                 state.userData?['name'] ?? 'Người dùng', 
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.5),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87, letterSpacing: -0.5),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -86,9 +85,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                border: Border.all(color: Theme.of(context).dividerColor),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
               ),
               child: IconButton(
@@ -100,15 +99,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                border: Border.all(color: Theme.of(context).dividerColor),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
               ),
               child: Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications_none_outlined, size: 22), 
+                    icon: Icon(Icons.notifications_none_outlined, size: 22, color: isDark ? const Color(0xFFF2F3F5) : Colors.black), 
                     onPressed: () {},
                   ),
                   Positioned(
@@ -206,7 +205,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return _buildBentoCard(
       title: 'CHỈ SỐ BMI CỦA BẠN',
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Expanded(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -221,7 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
                 ),
                 const SizedBox(width: 4),
-                const Text('kg/m²', style: TextStyle(color: Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+                Text('kg/m²', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
             const SizedBox(height: 8),
@@ -239,7 +238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 8),
             Text(
               height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
-              style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -254,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return _buildBentoCard(
       title: 'CALORIES HÔM NAY',
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Expanded(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -269,7 +268,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
                 ),
                 const SizedBox(width: 4),
-                const Text('kcal', style: TextStyle(color: Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+                Text('kcal', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
             const SizedBox(height: 12),
@@ -278,14 +277,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
-                backgroundColor: Colors.grey[200],
+                backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF35373C) : Colors.grey[200],
                 color: Colors.orangeAccent,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Mục tiêu: ${calTarget.toInt()} kcal',
-              style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -298,7 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return _buildBentoCard(
       title: 'NHẬT KÝ DINH DƯỠNG AI',
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Expanded(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -357,9 +356,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildLineChartCard(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
       title: 'XU HƯỚNG CALO NẠP VÀO (7 NGÀY QUA)',
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Container(
         height: 220,
         padding: const EdgeInsets.only(top: 24, right: 16, bottom: 8),
@@ -370,7 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.08), strokeWidth: 1),
+              getDrawingHorizontalLine: (value) => FlLine(color: isDark ? const Color(0xFF35373C) : Colors.grey.withOpacity(0.08), strokeWidth: 1),
             ),
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
@@ -382,7 +382,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
                     return SideTitleWidget(
                       axisSide: meta.axisSide,
-                      child: Text(days[val.toInt()], style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      child: Text(days[val.toInt()], style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontWeight: FontWeight.bold)),
                     );
                   },
                 ),
@@ -417,9 +417,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBarChartCard(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
       title: 'NẠP VS ĐỐT (KCAL)',
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Container(
         height: 220,
         padding: const EdgeInsets.only(top: 24, bottom: 8),
@@ -438,7 +439,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
                     return SideTitleWidget(
                       axisSide: meta.axisSide,
-                      child: Text(days[val.toInt()], style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      child: Text(days[val.toInt()], style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontWeight: FontWeight.bold)),
                     );
                   },
                 ),
@@ -660,7 +661,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 4)),
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.08)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: InkWell(
         onTap: onTap,
@@ -670,7 +671,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 11, color: Colors.grey[400], fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+              Text(title, style: TextStyle(fontSize: 11, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[400], fontWeight: FontWeight.bold, letterSpacing: 1.1)),
               const SizedBox(height: 12),
               child,
             ],
@@ -681,10 +682,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildRecentWorkoutsHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Lịch sử tập luyện', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text('Lịch sử tập luyện', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
         TextButton(
           onPressed: () {}, 
           child: const Row(
@@ -699,14 +701,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildWorkoutList(List<Workout> workouts) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (workouts.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withOpacity(0.08)),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: const Center(
           child: Text('Chưa có lịch sử tập luyện hôm nay', style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -724,9 +727,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withOpacity(0.08)),
+            border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: [
               BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10, offset: const Offset(0, 4)),
             ],
@@ -746,11 +749,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(w.activityType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
+                    Text(w.activityType, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
                     const SizedBox(height: 4),
                     Text(
                       '${w.duration.toInt()} phút • ${DateFormat('dd/MM HH:mm').format(DateTime.parse(w.date))}', 
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),

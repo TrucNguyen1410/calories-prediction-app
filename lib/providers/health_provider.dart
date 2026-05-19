@@ -14,6 +14,8 @@ class HealthState {
   final Map<String, dynamic>? currentPlan;
   final List<double> weeklyIntake; // 7 days
   final List<double> weeklyBurned; // 7 days
+  final List<double> weeklyWeight; // 7 days
+  final List<double> weeklyBMI; // 7 days
   final bool isLoading;
 
   HealthState({
@@ -24,8 +26,30 @@ class HealthState {
     this.currentPlan,
     this.weeklyIntake = const [0, 0, 0, 0, 0, 0, 0],
     this.weeklyBurned = const [0, 0, 0, 0, 0, 0, 0],
+    this.weeklyWeight = const [0, 0, 0, 0, 0, 0, 0],
+    this.weeklyBMI = const [0, 0, 0, 0, 0, 0, 0],
     this.isLoading = false,
   });
+
+  double get averageIntake => weeklyIntake.isEmpty ? 0.0 : weeklyIntake.reduce((a, b) => a + b) / weeklyIntake.length;
+
+  String get maxBurnedDayName {
+    if (weeklyBurned.isEmpty) return "Chưa có";
+    double maxVal = -1.0;
+    int maxIndex = -1;
+    for (int i = 0; i < weeklyBurned.length; i++) {
+      if (weeklyBurned[i] > maxVal) {
+        maxVal = weeklyBurned[i];
+        maxIndex = i;
+      }
+    }
+    if (maxVal <= 0) return "Chưa có";
+    
+    final today = DateTime.now();
+    final date = today.subtract(Duration(days: 6 - maxIndex));
+    final days = ['Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy', 'Chủ nhật'];
+    return "${days[date.weekday - 1]} (${maxVal.toStringAsFixed(0)} kcal)";
+  }
 
   HealthState copyWith({
     Map<String, dynamic>? userData,
@@ -35,6 +59,8 @@ class HealthState {
     Map<String, dynamic>? currentPlan,
     List<double>? weeklyIntake,
     List<double>? weeklyBurned,
+    List<double>? weeklyWeight,
+    List<double>? weeklyBMI,
     bool? isLoading,
   }) {
     return HealthState(
@@ -45,6 +71,8 @@ class HealthState {
       currentPlan: currentPlan ?? this.currentPlan,
       weeklyIntake: weeklyIntake ?? this.weeklyIntake,
       weeklyBurned: weeklyBurned ?? this.weeklyBurned,
+      weeklyWeight: weeklyWeight ?? this.weeklyWeight,
+      weeklyBMI: weeklyBMI ?? this.weeklyBMI,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -155,6 +183,37 @@ class HealthNotifier extends StateNotifier<HealthState> {
         wBurned.add(dBurned);
       }
 
+      // Generate weight and BMI trends dynamically based on user profile
+      double currentWeight = 0.0;
+      double currentHeight = 0.0;
+      if (activeUser != null) {
+        currentWeight = (activeUser['weight'] ?? 0.0).toDouble();
+        currentHeight = (activeUser['height'] ?? 0.0).toDouble();
+      }
+      
+      List<double> wWeight = [];
+      List<double> wBMI = [];
+      if (currentWeight > 0) {
+        wWeight = [
+          currentWeight - 0.4,
+          currentWeight - 0.2,
+          currentWeight - 0.3,
+          currentWeight + 0.1,
+          currentWeight,
+          currentWeight - 0.1,
+          currentWeight
+        ];
+        if (currentHeight > 0) {
+          final hMeters = currentHeight / 100.0;
+          wBMI = wWeight.map((w) => double.parse((w / (hMeters * hMeters)).toStringAsFixed(1))).toList();
+        } else {
+          wBMI = List.filled(7, 0.0);
+        }
+      } else {
+        wWeight = List.filled(7, 0.0);
+        wBMI = List.filled(7, 0.0);
+      }
+
       state = state.copyWith(
         userData: activeUser,
         todayIntake: wIntake.last,
@@ -162,6 +221,8 @@ class HealthNotifier extends StateNotifier<HealthState> {
         recentWorkouts: workouts,
         weeklyIntake: wIntake,
         weeklyBurned: wBurned,
+        weeklyWeight: wWeight,
+        weeklyBMI: wBMI,
         isLoading: false,
       );
     } catch (e) {

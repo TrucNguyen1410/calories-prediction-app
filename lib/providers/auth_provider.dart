@@ -85,11 +85,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required double height,
     required double weight,
     required String gender,
+    required int age,
   }) async {
     final result = await _apiService.updateProfile(
       height: height,
       weight: weight,
       gender: gender,
+      age: age,
     );
     if (result['success'] == true) {
       state = state.copyWith(userData: result['user']);
