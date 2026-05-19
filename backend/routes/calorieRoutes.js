@@ -122,4 +122,40 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
+// ===========================
+// 🔹 API: LƯU TRỰC TIẾP HOẠT ĐỘNG (Từ Chatbot AI)
+// ===========================
+router.post("/add", verifyToken, async (req, res) => {
+  try {
+    const { activityName, duration, caloriesBurned } = req.body;
+
+    if (!activityName || !duration || !caloriesBurned) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu thông tin hoạt động!",
+      });
+    }
+
+    const record = new CalorieRecord({
+      userId: req.userId,
+      activityType: activityName,
+      duration: duration,
+      calories: caloriesBurned,
+      date: new Date().toISOString(),
+    });
+
+    await record.save();
+    console.log(`✅ Đã lưu hoạt động ${activityName} (${caloriesBurned} kcal) vào DB!`);
+
+    res.json({
+      success: true,
+      message: "Lưu hoạt động thành công!",
+      data: record
+    });
+  } catch (err) {
+    console.error("❌ Lỗi /add:", err);
+    res.status(500).json({ success: false, message: "Lỗi server khi lưu hoạt động." });
+  }
+});
+
 export default router;

@@ -23,7 +23,7 @@ const verifyToken = (req, res, next) => {
 // POST /api/meals
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { name, calories, mealType, date } = req.body;
+    const { name, calories, mealType, date, imageUrl } = req.body;
     if (!name || !calories || !mealType || !date) {
       return res.status(400).json({ success: false, message: 'Thiếu thông tin' });
     }
@@ -34,6 +34,7 @@ router.post('/', verifyToken, async (req, res) => {
       calories: parseFloat(calories),
       mealType,
       date,
+      imageUrl: imageUrl || "",
       timestamp: new Date().toISOString(),
     });
 
@@ -46,16 +47,17 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// API: Lấy bữa ăn theo ngày
-// GET /api/meals?date=YYYY-MM-DD
+// API: Lấy bữa ăn (nếu có date thì lọc theo ngày, nếu không thì lấy toàn bộ lịch sử)
+// GET /api/meals
 router.get('/', verifyToken, async (req, res) => {
   try {
     const { date } = req.query;
-    if (!date) {
-      return res.status(400).json({ success: false, message: 'Thiếu tham số date' });
+    const query = { userId: req.userId };
+    if (date) {
+      query.date = date;
     }
 
-    const meals = await Meal.find({ userId: req.userId, date }).sort({ timestamp: -1 });
+    const meals = await Meal.find(query).sort({ timestamp: -1 });
     res.json({ success: true, data: meals });
   } catch (err) {
     console.error('❌ Lỗi GET /meals:', err);

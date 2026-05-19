@@ -1,9 +1,24 @@
 import express from 'express';
-import { chatWithAI, generateHealthPlan, getWorkoutIntensityAHP, analyzeFood } from '../controllers/aiController.js';
+import { 
+    chatWithAI, 
+    generateHealthPlan, 
+    getWorkoutIntensityAHP, 
+    analyzeFood,
+    getUserSessions,
+    getSessionDetail,
+    createNewSession,
+    deleteSession
+} from '../controllers/aiController.js';
 import multer from 'multer';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
+
+// --- CÁC ROUTE PHIÊN CHAT (SESSIONS) ---
+router.get('/sessions', getUserSessions);
+router.get('/sessions/:sessionId', getSessionDetail);
+router.post('/sessions', createNewSession);
+router.delete('/sessions/:sessionId', deleteSession);
 
 // Route chat với AI
 router.post('/chat', chatWithAI);

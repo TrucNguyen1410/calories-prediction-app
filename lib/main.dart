@@ -7,6 +7,7 @@ import 'screens/main_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/health_plan_screen.dart';
 import 'theme.dart';
+import 'providers/auth_provider.dart';
 
 
 void main() {
@@ -18,18 +19,35 @@ void main() {
 }
 
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    Widget getHomeWidget() {
+      switch (authState.status) {
+        case AuthStatus.unknown:
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        case AuthStatus.authenticated:
+          return MainScreen(userData: authState.userData);
+        case AuthStatus.unauthenticated:
+          return const LoginScreen();
+      }
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Health Management & AI Assistant',
       theme: AppTheme.lightTheme,
 
-      // 🧭 Màn hình mở đầu
-      home: const LoginScreen(),
+      // 🧭 Màn hình mở đầu dựa trên trạng thái Auth
+      home: getHomeWidget(),
 
       // 🔗 Định nghĩa route
       routes: {
@@ -38,8 +56,6 @@ class MyApp extends StatelessWidget {
         '/main': (context) => const MainScreen(),
         '/health-plan': (context) => const HealthPlanScreen(),
       },
-
-
     );
   }
 }

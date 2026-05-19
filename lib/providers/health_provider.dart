@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../services/api_service.dart';
 import '../models/workout.dart';
 import 'package:intl/intl.dart';
+import 'auth_provider.dart';
 
 class HealthState {
   final Map<String, dynamic>? userData;
@@ -48,16 +51,88 @@ class HealthState {
 }
 
 class HealthNotifier extends StateNotifier<HealthState> {
+  final Ref _ref;
   final ApiService _apiService = ApiService();
+  static const String _planKey = 'cached_meal_plan';
 
-  HealthNotifier() : super(HealthState());
+  HealthNotifier(this._ref) : super(HealthState()) {
+    // Khôi phục thực đơn đã lưu từ bộ nhớ cục bộ khi khởi động
+    _loadCachedPlan();
+  }
 
-  Future<void> refreshAll() async {
+  // Khôi phục thực đơn từ SharedPreferences
+  Future<void> _loadCachedPlan() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final planJson = prefs.getString(_planKey);
+      if (planJson != null && planJson.isNotEmpty) {
+        final plan = jsonDecode(planJson) as Map<String, dynamic>;
+        state = state.copyWith(currentPlan: plan);
+      }
+    } catch (e) {
+      // Bỏ qua lỗi cache
+    }
+  }
+
+  // Lưu thực đơn vào SharedPreferences để persist qua reload
+  Future<void> _savePlanToCache(Map<String, dynamic> plan) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_planKey, jsonEncode(plan));
+    } catch (e) {
+      // Bỏ qua lỗi cache
+    }
+  }
+
+  // Xoá thực đơn đã cache (dùng khi tạo mới)
+  Future<void> clearCachedPlan() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_planKey);
+    } catch (e) {
+      // Bỏ qua lỗi cache
+    }
+  }
+
+  // Trực tiếp gọi khi thông tin tĩnh của user thay đổi trong authProvider
+  Future<void> refreshWithUserData(Map<String, dynamic>? userData) async {
+    if (userData == null) return;
+    
+    // Nếu userData không thay đổi đáng kể so với state hiện tại, bỏ qua để tránh gọi API lặp
+    final currentH = state.userData?['height'];
+    final currentW = state.userData?['weight'];
+    final newH = userData['height'];
+    final newW = userData['weight'];
+    
+    if (currentH == newH && currentW == newW && state.userData != null) {
+      // Chỉ cập nhật user metadata thông thường mà không cần refresh nặng từ API
+      state = state.copyWith(userData: userData);
+      return;
+    }
+
+    state = state.copyWith(userData: userData, isLoading: true);
+    await refreshAll(user: userData);
+  }
+
+  Future<void> refreshAll({Map<String, dynamic>? user}) async {
     state = state.copyWith(isLoading: true);
     final today = DateTime.now();
     
     try {
-      final user = await _apiService.getUserData();
+      final activeUser = user ?? await _apiService.getUserData();
+      
+      // Tự động đồng bộ với Google Fit API trước khi tải danh sách bài tập!
+      if (activeUser != null) {
+        final userId = activeUser['id'] ?? activeUser['_id'] ?? '';
+        if (userId.isNotEmpty) {
+          try {
+            await _apiService.syncGoogleFit(userId: userId);
+          } catch (e) {
+            // Google Fit sync errors are non-critical
+          }
+        }
+      }
+
       final workouts = await _apiService.getWorkouts();
       
       List<double> wIntake = [];
@@ -81,7 +156,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
       }
 
       state = state.copyWith(
-        userData: user,
+        userData: activeUser,
         todayIntake: wIntake.last,
         todayBurned: wBurned.last,
         recentWorkouts: workouts,
@@ -94,15 +169,27 @@ class HealthNotifier extends StateNotifier<HealthState> {
     }
   }
 
-  Future<void> loadPlan() async {
-    if (state.currentPlan != null) return;
+  Future<void> loadPlan({String? allergies, bool forceRefresh = false}) async {
+    if (!forceRefresh && state.currentPlan != null) return;
     try {
-      final plan = await _apiService.getHealthPlan();
+      final plan = await _apiService.getHealthPlan(allergies: allergies);
+      await _savePlanToCache(plan);
       state = state.copyWith(currentPlan: plan);
-    } catch (e) {}
+    } catch (e) {
+      print('Load Plan Error: $e');
+      rethrow; // Ném lỗi ra ngoài để UI catch được lỗi thật
+    }
   }
 }
 
+// Lắng nghe authProvider một cách reactive
 final healthProvider = StateNotifierProvider<HealthNotifier, HealthState>((ref) {
-  return HealthNotifier();
+  final authState = ref.watch(authProvider);
+  final notifier = HealthNotifier(ref);
+  
+  if (authState.status == AuthStatus.authenticated && authState.userData != null) {
+    Future.microtask(() => notifier.refreshWithUserData(authState.userData));
+  }
+  
+  return notifier;
 });

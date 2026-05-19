@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import ChatMessage from "../models/ChatMessage.js";
+import ChatSession from "../models/ChatSession.js";
 import User from "../models/User.js";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -11,22 +12,70 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY || "dummy_key_to_prevent_startup_crash",
 });
 
-// --- 1. CHAT VỚI AI (Dùng Groq Llama 3) ---
+// --- 1. CHAT VỚI AI (Hỗ trợ Đa phiên Chat Sessions) ---
 export const chatWithAI = async (req, res) => {
     try {
-        const { userId, message } = req.body;
+        const { userId, message, sessionId } = req.body;
 
-        // Lấy lịch sử 10 tin nhắn gần nhất
-        const history = await ChatMessage.find({ userId }).sort({ createdAt: -1 }).limit(10);
-        const chatHistory = history.reverse().map(msg => ({
+        // Lấy thông tin thể chất của người dùng từ Database để cá nhân hóa
+        const user = await User.findById(userId);
+        let weight = 65;
+        let height = 170;
+        let gender = "Nam";
+        let age = 25;
+
+        if (user) {
+            weight = user.weight || 65;
+            height = user.height || 170;
+            gender = user.gender || "Nam";
+            if (user.dob) {
+                age = new Date().getFullYear() - new Date(user.dob).getFullYear();
+            }
+        }
+
+        // Tìm hoặc khởi tạo phiên chat (ChatSession)
+        let session;
+        if (sessionId) {
+            session = await ChatSession.findById(sessionId);
+        }
+        
+        if (!session) {
+            session = new ChatSession({
+                userId,
+                sessionTitle: "Cuộc trò chuyện mới",
+                messages: []
+            });
+        }
+
+        // Lấy lịch sử 10 tin nhắn gần nhất từ phiên chat này
+        const chatHistory = session.messages.slice(-10).map(msg => ({
             role: msg.role === 'user' ? 'user' : 'assistant',
             content: msg.content,
         }));
 
+        const systemPrompt = `Bạn là một trợ lý sức khỏe và huấn luyện viên thể thao thông minh bằng tiếng Việt.
+Hồ sơ thể chất người dùng:
+- Giới tính: ${gender}
+- Cân nặng: ${weight} kg
+- Chiều cao: ${height} cm
+- Tuổi: ${age} tuổi
+
+Nhiệm vụ đặc biệt:
+1. Nếu người dùng kể hoặc chia sẻ về việc họ vừa hoàn thành một hoạt động vận động, thể thao, tập luyện hoặc hoạt động thể chất (ví dụ: "Tôi vừa chạy bộ 30 phút", "Nay đá bóng 1 tiếng", "Tôi mới tập gym 45 phút"), bạn BẮT BUỘC phải tính toán gần đúng lượng calo tiêu thụ của họ dựa trên hồ sơ thể chất (nặng ${weight}kg, tuổi ${age}) và loại hoạt động đó. Bạn chỉ được phép trả về DUY NHẤT một chuỗi JSON có cấu trúc chính xác như sau, không được phép kèm bất kỳ lời giải thích, chào hỏi hay ký tự thừa nào ngoài JSON:
+{
+  "action": "LOG_WORKOUT",
+  "activityName": "Tên môn thể thao/hoạt động bằng tiếng Việt (ví dụ: Chạy bộ, Đá bóng, Thể hình...)",
+  "duration": số phút vận động (number, ví dụ: 30),
+  "caloriesBurned": số calo đốt cháy ước tính (number, ví dụ: 320),
+  "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt kèm con số calo vừa đốt cháy (ví dụ: Tuyệt vời! Bạn đã đốt cháy 320 kcal từ việc Chạy bộ.)"
+}
+
+2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng văn bản thông thường, ngắn gọn, thân thiện bằng tiếng Việt. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
+
         // Gọi API Groq
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Bạn là một trợ lý sức khỏe thông minh. Hãy trả lời ngắn gọn, hữu ích bằng tiếng Việt." },
+                { role: "system", content: systemPrompt },
                 ...chatHistory,
                 { role: "user", content: message }
             ],
@@ -35,52 +84,202 @@ export const chatWithAI = async (req, res) => {
             max_tokens: 1024,
         });
 
-        const reply = completion.choices[0]?.message?.content || "Xin lỗi, mình không thể trả lời lúc này.";
+        let reply = completion.choices[0]?.message?.content || "Xin lỗi, mình không thể trả lời lúc này.";
 
-        // Lưu vào DB
-        await ChatMessage.create({ userId, role: 'user', content: message });
-        await ChatMessage.create({ userId, role: 'model', content: reply });
+        // Làm sạch chuỗi markdown codeblock nếu AI tự bao bọc
+        let cleanedReply = reply.trim();
+        if (cleanedReply.startsWith("```json")) {
+            cleanedReply = cleanedReply.replace(/^```json/, "").replace(/```$/, "").trim();
+            reply = cleanedReply;
+        } else if (cleanedReply.startsWith("```")) {
+            cleanedReply = cleanedReply.replace(/^```/, "").replace(/```$/, "").trim();
+            reply = cleanedReply;
+        }
 
-        res.status(200).json({ success: true, reply });
+        // Phân tích xem phản hồi có phải là Actionable LOG_WORKOUT JSON không
+        let isActionable = false;
+        let actionType = null;
+        let actionData = null;
+        
+        try {
+            const parsedJson = JSON.parse(reply);
+            if (parsedJson.action === "LOG_WORKOUT") {
+                isActionable = true;
+                actionType = "LOG_WORKOUT";
+                actionData = parsedJson;
+            }
+        } catch (e) {
+            // Không phải JSON, xử lý như tin nhắn thường
+        }
+
+        // Tự động đặt tiêu đề cuộc hội thoại nếu đang ở trạng thái mặc định và là câu chat đầu tiên
+        if (session.sessionTitle === "Cuộc trò chuyện mới" && session.messages.length === 0) {
+            session.sessionTitle = message.substring(0, 30) + (message.length > 30 ? "..." : "");
+        }
+
+        // Lưu tin nhắn của User vào danh sách
+        session.messages.push({
+            id: Date.now().toString(),
+            role: "user",
+            content: message,
+            timestamp: new Date()
+        });
+
+        // Lưu tin nhắn phản hồi của AI vào danh sách
+        session.messages.push({
+            id: (Date.now() + 1).toString(),
+            role: "model",
+            content: reply,
+            isActionable,
+            actionType,
+            actionData,
+            timestamp: new Date()
+        });
+
+        // Lưu phiên chat vào MongoDB
+        await session.save();
+
+        res.status(200).json({ 
+            success: true, 
+            reply, 
+            sessionId: session._id,
+            sessionTitle: session.sessionTitle
+        });
     } catch (error) {
         console.error("GROQ ERROR:", error);
         res.status(500).json({ success: false, message: "Lỗi kết nối AI (Groq)" });
     }
 };
 
+// --- LẤY DANH SÁCH PHIÊN CHAT CỦA USER ---
+export const getUserSessions = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
+        
+        const sessions = await ChatSession.find({ userId })
+            .select("sessionTitle updatedAt")
+            .sort({ updatedAt: -1 });
+            
+        res.status(200).json({ success: true, sessions });
+    } catch (error) {
+        console.error("GET SESSIONS ERROR:", error);
+        res.status(500).json({ success: false, message: "Lỗi lấy danh sách phiên chat" });
+    }
+};
+
+// --- LẤY CHI TIẾT PHIÊN CHAT (LỊCH SỬ TIN NHẮN) ---
+export const getSessionDetail = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const session = await ChatSession.findById(sessionId);
+        if (!session) return res.status(404).json({ success: false, message: "Không tìm thấy phiên chat" });
+        
+        res.status(200).json({ 
+            success: true, 
+            sessionTitle: session.sessionTitle, 
+            messages: session.messages 
+        });
+    } catch (error) {
+        console.error("GET SESSION DETAIL ERROR:", error);
+        res.status(500).json({ success: false, message: "Lỗi lấy chi tiết phiên chat" });
+    }
+};
+
+// --- TẠO MỚI PHIÊN CHAT TRỐNG ---
+export const createNewSession = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
+        
+        const session = new ChatSession({
+            userId,
+            sessionTitle: "Cuộc trò chuyện mới",
+            messages: []
+        });
+        await session.save();
+        res.status(201).json({ success: true, session });
+    } catch (error) {
+        console.error("CREATE SESSION ERROR:", error);
+        res.status(500).json({ success: false, message: "Lỗi tạo phiên chat mới" });
+    }
+};
+
+// --- XÓA PHIÊN CHAT ---
+export const deleteSession = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        await ChatSession.findByIdAndDelete(sessionId);
+        res.status(200).json({ success: true, message: "Đã xóa phiên chat thành công" });
+    } catch (error) {
+        console.error("DELETE SESSION ERROR:", error);
+        res.status(500).json({ success: false, message: "Lỗi xóa phiên chat" });
+    }
+};
+
 // --- 2. TẠO THỰC ĐƠN & BÀI TẬP ---
 export const generateHealthPlan = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const { userId, userInput } = req.body;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
 
         const { name, gender, height, weight, dob } = user;
-        const age = new Date().getFullYear() - new Date(dob).getFullYear();
+        let age = 25;
+        if (dob) {
+            age = new Date().getFullYear() - new Date(dob).getFullYear();
+        }
         const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+        
+        let specialRequest = userInput ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: "${userInput}". \nBẮT BUỘC: Bạn phải phân tích yêu cầu này (nếu họ muốn ăn món gì, hãy cố gắng sắp xếp hợp lý món đó vào thực đơn; nếu họ kiêng cữ/dị ứng, tuyệt đối loại bỏ).` : "";
 
         const prompt = `
-            Dựa trên thông tin: Tên ${name}, ${gender}, ${age} tuổi, BMI ${bmi}.
-            Hãy tạo thực đơn 7 ngày và 5 bài tập.
-            TRẢ VỀ ĐỊNH DẠNG JSON:
+            Dựa trên thông tin: Tên ${name || 'Khách'}, Giới tính ${gender || 'Nam'}, ${age} tuổi, BMI ${bmi}.
+            ${specialRequest}
+            Hãy thiết kế một thực đơn dinh dưỡng 7 ngày chuẩn khoa học.
+            TRẢ VỀ ĐỊNH DẠNG JSON CHUẨN XÁC THEO CẤU TRÚC SAU (KHÔNG BỌC TRONG MARKDOWN CODEBLOCK):
             {
-                "bmi_status": "...",
-                "advice": "...",
-                "meal_plan": [{ "day": 1, "breakfast": "...", "lunch": "...", "dinner": "...", "snack": "..." }],
-                "exercises": [{ "name": "...", "sets": 3, "reps": 12, "benefit": "..." }]
+              "action": "GENERATE_MEAL_PLAN",
+              "bmi_status": "Phân loại BMI",
+              "advice": "Lời khuyên dinh dưỡng tổng quan ngắn gọn",
+              "weeklyPlan": [
+                {
+                  "day": "T2",
+                  "totalCalories": 1500,
+                  "daily_desc": "Mô tả ngắn gọn (VD: Ức gà & Salad)",
+                  "meals": [
+                    {"type": "Bữa sáng", "name": "Tên món", "calories": 350, "carbs": 48, "protein": 12, "fat": 6},
+                    {"type": "Bữa trưa", "name": "Tên món", "calories": 500, "carbs": 55, "protein": 25, "fat": 15},
+                    {"type": "Bữa tối", "name": "Tên món", "calories": 450, "carbs": 30, "protein": 10, "fat": 12},
+                    {"type": "Bữa phụ", "name": "Tên món", "calories": 200, "carbs": 20, "protein": 5, "fat": 8}
+                  ]
+                }
+              ]
             }
-            CHỈ TRẢ VỀ JSON.
+            QUAN TRỌNG: Mỗi ngày phải có tổng calo KHÁC NHAU tùy theo các món ăn thực tế (dao động 1200-2000 kcal).
+            Tính totalCalories = tổng cộng calories của TẤT CẢ các meals trong ngày đó.
+            CHỈ TRẢ VỀ JSON. KHÔNG GIẢI THÍCH GÌ THÊM.
         `;
 
         const completion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
             response_format: { type: "json_object" }
         });
 
-        const data = JSON.parse(completion.choices[0].message.content);
+        let content = completion.choices[0].message.content.trim();
+        
+        // Dùng Regex trích xuất chính xác khối JSON giữa {} để tránh lỗi parse khi AI trả về văn bản thừa
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            content = jsonMatch[0];
+        }
+
+        const data = JSON.parse(content);
         res.status(200).json({ success: true, data });
     } catch (error) {
+        console.error("GENERATE PLAN ERROR:", error);
         res.status(500).json({ success: false, message: "Lỗi khi tạo kế hoạch sức khỏe" });
     }
 };
@@ -111,26 +310,63 @@ export const analyzeFood = async (req, res) => {
         const { text } = req.body;
         const imageFile = req.file; 
 
+        // Validate: phải có text hoặc image
+        if (!imageFile && (!text || text.trim() === '')) {
+            return res.status(400).json({ success: false, message: "Vui lòng nhập tên món ăn hoặc tải ảnh lên" });
+        }
+
         let nutritionData = null;
 
         if (imageFile) {
-            const genAI = new GoogleGenerativeAI(process.env.SUPER_GEMINI_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            // Sử dụng Groq Vision (llama-3.2-11b-vision-preview) cực kỳ ổn định,
+            // dùng chung GROQ_API_KEY sẵn có mà không cần cấu hình thêm Gemini Key.
+            const base64Image = imageFile.buffer.toString("base64");
+            const prompt = `Hãy phân tích hình ảnh món ăn này và trả về JSON chuẩn chứa thông tin dinh dưỡng:
+            {
+                "foodName": "tên món ăn bằng tiếng Việt",
+                "estimatedCalories": số calo (number),
+                "protein": số g đạm (number),
+                "carbs": số g tinh bột (number),
+                "fat": số g chất béo (number)
+            }
+            Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
-            const imageData = {
-                inlineData: {
-                    data: imageFile.buffer.toString("base64"),
-                    mimeType: imageFile.mimetype,
-                },
-            };
+            const completion = await groq.chat.completions.create({
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:${imageFile.mimetype};base64,${base64Image}`,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                response_format: { type: "json_object" }
+            });
 
-            const prompt = "Hãy phân tích hình ảnh món ăn này và trả về JSON: { \"foodName\": \"...\", \"estimatedCalories\": 0, \"protein\": 0, \"carbs\": 0, \"fat\": 0 }. Chỉ trả về JSON.";
-            const result = await model.generateContent([prompt, imageData]);
-            const response = await result.response;
-            const textResponse = response.text().replace(/```json|```/g, "").trim();
-            nutritionData = JSON.parse(textResponse);
+            const content = completion.choices[0]?.message?.content;
+            nutritionData = JSON.parse(content);
+            if (nutritionData) {
+                nutritionData.imageUrl = `data:${imageFile.mimetype};base64,${base64Image}`;
+            }
         } else if (text) {
-            const prompt = `Hãy phân tích mô tả món ăn sau: "${text}". Trả về JSON: { "foodName": "...", "estimatedCalories": 0, "protein": 0, "carbs": 0, "fat": 0 }. Chỉ trả về JSON.`;
+            const prompt = `Hãy phân tích mô tả món ăn sau: "${text}". 
+            Trả về JSON chuẩn chứa thông tin dinh dưỡng:
+            {
+                "foodName": "tên món ăn bằng tiếng Việt",
+                "estimatedCalories": số calo (number),
+                "protein": số g đạm (number),
+                "carbs": số g tinh bột (number),
+                "fat": số g chất béo (number)
+            }
+            Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
+
             const completion = await groq.chat.completions.create({
                 messages: [{ role: "user", content: prompt }],
                 model: "llama-3.3-70b-versatile",

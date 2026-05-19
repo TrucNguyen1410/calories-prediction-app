@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
@@ -6,15 +7,16 @@ import '../utils/responsive.dart';
 import 'register_screen.dart';
 import 'main_screen.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -52,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
           accessToken: googleAuth.accessToken ?? googleAuth.idToken,
         );
         if (mounted) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(userData: response["user"])));
+          await ref.read(authProvider.notifier).loginWithGoogle(response["user"], response["token"]);
         }
       }
       setState(() => _isLoading = false);
@@ -245,13 +247,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
-    final response = await _apiService.loginUser(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+    final response = await ref.read(authProvider.notifier).login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
     );
     setState(() => _isLoading = false);
     if (response["success"] == true) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen(userData: response["user"])));
+      // Riverpod automatically handles switching home to MainScreen, no Navigator.push needed!
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response["message"] ?? "Lỗi đăng nhập")));
     }

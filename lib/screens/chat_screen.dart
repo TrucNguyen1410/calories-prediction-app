@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../models/chat_message.dart';
+import '../services/api_service.dart';
+import '../providers/health_provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -46,15 +49,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            tooltip: 'Lịch sử trò chuyện',
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
         title: const Text('Trợ lý Sức khỏe AI (Gemini)'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_comment_outlined),
+            tooltip: 'Cuộc trò chuyện mới',
+            onPressed: () {
+              ref.read(chatProvider.notifier).startNewChat();
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_outline),
+            tooltip: 'Xóa lịch sử chat hiện tại',
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
           )
         ],
+      ),
+      drawer: Drawer(
+        child: _buildChatHistorySidebar(chatState),
       ),
       body: Center(
         child: Container(
@@ -70,18 +93,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               // 1. Danh sách tin nhắn
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: chatState.messages.length + (chatState.isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == chatState.messages.length) {
-                      return _buildTypingIndicator();
-                    }
-                    final message = chatState.messages[index];
-                    return _buildChatBubble(message);
-                  },
-                ),
+                child: chatState.messages.isEmpty && !chatState.isLoading
+                    ? _buildWelcomeScreen()
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: chatState.messages.length + (chatState.isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == chatState.messages.length) {
+                            return _buildTypingIndicator();
+                          }
+                          final message = chatState.messages[index];
+                          return _buildChatBubble(message);
+                        },
+                      ),
               ),
 
               // Hiển thị lỗi nếu có
@@ -98,6 +123,192 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               _buildInputArea(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Giao diện chào mừng khi chưa có tin nhắn
+  Widget _buildWelcomeScreen() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                size: 48,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Chào mừng bạn đến với Trợ lý Sức khỏe AI!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Hãy hỏi tôi bất kỳ câu hỏi nào về sức khỏe, dinh dưỡng hoặc gõ bài tập luyện của bạn (Ví dụ: "Tôi chạy bộ 30 phút") để lưu vào nhật ký nhé.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Sidebar danh sách lịch sử hội thoại (Drawer)
+  Widget _buildChatHistorySidebar(ChatState chatState) {
+    return Container(
+      color: const Color(0xFF1E1E2E), // Giao diện tối sang trọng
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Nút Thêm cuộc trò chuyện mới
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(chatProvider.notifier).startNewChat();
+                  Navigator.of(context).pop(); // Đóng Drawer
+                },
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text(
+                  'Cuộc trò chuyện mới',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            
+            const Divider(color: Colors.white24, height: 1),
+            
+            // Tiêu đề phần lịch sử
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'LỊCH SỬ TRÒ CHUYỆN',
+                  style: TextStyle(
+                    color: Colors.white30,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ),
+            
+            // Danh sách các cuộc trò chuyện cũ
+            Expanded(
+              child: chatState.isSessionsLoading
+                  ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+                  : chatState.sessions.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Chưa có cuộc trò chuyện nào',
+                            style: TextStyle(color: Colors.white38, fontSize: 13),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          itemCount: chatState.sessions.length,
+                          itemBuilder: (context, index) {
+                            final session = chatState.sessions[index];
+                            final sessionId = session['_id'] ?? '';
+                            final title = session['sessionTitle'] ?? 'Cuộc trò chuyện mới';
+                            final isActive = sessionId == chatState.activeSessionId;
+                            
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isActive 
+                                      ? Colors.blueAccent.withOpacity(0.2)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: isActive
+                                      ? Border.all(color: Colors.blueAccent.withOpacity(0.4))
+                                      : null,
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    Icons.chat_bubble_outline,
+                                    size: 16,
+                                    color: isActive ? Colors.blueAccent : Colors.white70,
+                                  ),
+                                  title: Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: isActive ? Colors.white : Colors.white70,
+                                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
+                                    onPressed: () {
+                                      // Hiện dialog xác nhận xóa
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Xóa cuộc trò chuyện'),
+                                          content: const Text('Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?'),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text('Hủy'),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                            ),
+                                            TextButton(
+                                              child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                                              onPressed: () {
+                                                ref.read(chatProvider.notifier).deleteSession(sessionId);
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  onTap: () {
+                                    ref.read(chatProvider.notifier).selectSession(sessionId);
+                                    Navigator.of(context).pop(); // Đóng Drawer
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
         ),
       ),
     );
@@ -140,6 +351,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 fontSize: 15,
               ),
             ),
+            if (message.actionData != null && message.actionData!['action'] == 'LOG_WORKOUT') ...[
+              const SizedBox(height: 8),
+              _buildWorkoutActionWidget(message),
+            ],
             const SizedBox(height: 4),
             Text(
               DateFormat('HH:mm').format(message.timestamp),
@@ -154,29 +369,141 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  // Hiệu ứng AI đang trả lời
+  // Nút hành động Lưu Kcal đã đốt
+  Widget _buildWorkoutActionWidget(ChatMessage message) {
+    final actionData = message.actionData;
+    if (actionData == null) return const SizedBox.shrink();
+
+    final activityName = actionData['activityName'] ?? 'Vận động';
+    final duration = (actionData['duration'] is num) 
+        ? (actionData['duration'] as num).toDouble() 
+        : double.tryParse(actionData['duration']?.toString() ?? '0') ?? 0.0;
+    final caloriesBurned = (actionData['caloriesBurned'] is num) 
+        ? (actionData['caloriesBurned'] as num).toDouble() 
+        : double.tryParse(actionData['caloriesBurned']?.toString() ?? '0') ?? 0.0;
+
+    final isSaved = message.isSaved;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      child: isSaved
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'Đã lưu vào nhật ký',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+
+                  // 1. Gọi API lưu trực tiếp vào MongoDB
+                  final apiService = ApiService();
+                  await apiService.logWorkout(
+                    activityName: activityName,
+                    duration: duration,
+                    caloriesBurned: caloriesBurned,
+                  );
+
+                  // 2. Cập nhật trạng thái tin nhắn là đã lưu
+                  ref.read(chatProvider.notifier).markMessageAsSaved(message.id);
+
+                  // 3. Cập nhật số calo đốt trên Dashboard thông qua Riverpod ngay lập tức
+                  await ref.read(healthProvider.notifier).refreshAll();
+
+                  // Ẩn loading
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('🔥 Đã lưu thành công $caloriesBurned kcal!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Ẩn loading
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Lỗi: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.local_fire_department, size: 16, color: Colors.white),
+              label: Text('Lưu ${caloriesBurned.toStringAsFixed(0)} kcal đã đốt'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orangeAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                elevation: 0,
+              ),
+            ),
+    );
+  }
+
+  // Hiệu ứng AI đang trả lời: Waving Three Dots cực kỳ cao cấp
   Widget _buildTypingIndicator() {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 8),
+            ThreeDotsIndicator(),
+            SizedBox(width: 12),
             Text(
-              'Gemini đang suy nghĩ...',
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              'Trợ lý đang phân tích...',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -195,7 +522,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'Hỏi về sức khỏe, calo...',
+                hintText: 'Hỏi về sức khỏe, calo hoặc nhập bài tập (Ví dụ: "chạy bộ 30 phút")...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -226,5 +553,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ref.read(chatProvider.notifier).sendMessage(text);
       _controller.clear();
     }
+  }
+}
+
+// Widget hiệu ứng 3 chấm động (Three Dots Typing Animation)
+class ThreeDotsIndicator extends StatefulWidget {
+  const ThreeDotsIndicator({super.key});
+
+  @override
+  State<ThreeDotsIndicator> createState() => _ThreeDotsIndicatorState();
+}
+
+class _ThreeDotsIndicatorState extends State<ThreeDotsIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final delay = index * 0.2;
+            final double value = (sin((_controller.value * 2 * pi) - delay) + 1) / 2;
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2.0),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.3 + (value * 0.7)),
+                shape: BoxShape.circle,
+              ),
+            );
+          },
+        );
+      }),
+    );
   }
 }

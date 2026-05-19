@@ -8,10 +8,64 @@ import '../models/workout.dart';
 class ApiService {
     static const String _baseUrl = 'http://127.0.0.1:3000/api';
 
-
-    
     static const String _tokenKey = 'authToken';
     static const String _userKey = 'userData';
+
+    // Callback to trigger Riverpod state update on 401
+    static void Function()? onUnauthorized;
+
+    // Helper to get authorization headers automatically
+    Future<Map<String, String>> _getHeaders({bool isJson = true}) async {
+        final token = await getToken();
+        final headers = <String, String>{};
+        if (isJson) {
+            headers['Content-Type'] = 'application/json; charset=UTF-8';
+        }
+        if (token != null) {
+            headers['Authorization'] = 'Bearer $token';
+        }
+        return headers;
+    }
+
+    // Interceptor helper to check for 401 and force logout
+    Future<http.Response> _checkResponse(http.Response response) async {
+        if (response.statusCode == 401) {
+            await logout();
+            if (onUnauthorized != null) {
+                onUnauthorized!();
+            }
+            throw Exception('UNAUTHORIZED_ACCESS');
+        }
+        return response;
+    }
+
+    Future<http.Response> _get(String path) async {
+        final response = await http.get(Uri.parse('$_baseUrl$path'), headers: await _getHeaders());
+        return _checkResponse(response);
+    }
+
+    Future<http.Response> _post(String path, dynamic body) async {
+        final response = await http.post(
+            Uri.parse('$_baseUrl$path'),
+            headers: await _getHeaders(),
+            body: jsonEncode(body),
+        );
+        return _checkResponse(response);
+    }
+
+    Future<http.Response> _put(String path, dynamic body) async {
+        final response = await http.put(
+            Uri.parse('$_baseUrl$path'),
+            headers: await _getHeaders(),
+            body: jsonEncode(body),
+        );
+        return _checkResponse(response);
+    }
+
+    Future<http.Response> _delete(String path) async {
+        final response = await http.delete(Uri.parse('$_baseUrl$path'), headers: await _getHeaders());
+        return _checkResponse(response);
+    }
 
 
     // --- Hàm lưu trữ nội bộ (Auth) ---
@@ -134,13 +188,7 @@ class ApiService {
             if (weight != null) body['weight'] = weight;
             if (gender != null) body['gender'] = gender;
 
-            final response = await http.put(
-                Uri.parse('$_baseUrl/auth/profile/$userId'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                },
-                body: jsonEncode(body),
-            );
+            final response = await _put('/auth/profile/$userId', body);
 
             if (response.statusCode == 200) {
                 // Cập nhật thành công, LƯU LẠI user data mới vào SharedPreferences
@@ -159,18 +207,7 @@ class ApiService {
     // --- Các hàm quản lý Workout ---
     Future<List<Workout>> getWorkouts() async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return [];
-            }
-            
-            final response = await http.get(
-                Uri.parse('$_baseUrl/calories/history'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-            );
+            final response = await _get('/calories/history');
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -193,26 +230,14 @@ class ApiService {
 
     Future<double?> predictCalories(Workout workout) async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return null;
-            }
-
-            final response = await http.post(
-                Uri.parse('$_baseUrl/calories/predict'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode({
-                    'activityType': workout.activityType,
-                    'weight': workout.weight,
-                    'height': workout.height,
-                    'age': workout.age,
-                    'duration': workout.duration,
-                    'heartRate': workout.heartRate,
-                }),
-            );
+            final response = await _post('/calories/predict', {
+                'activityType': workout.activityType,
+                'weight': workout.weight,
+                'height': workout.height,
+                'age': workout.age,
+                'duration': workout.duration,
+                'heartRate': workout.heartRate,
+            });
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -233,23 +258,11 @@ class ApiService {
         required String newPassword,
     }) async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return {'success': false, 'message': 'Chưa đăng nhập'};
-            }
-
-            final response = await http.post(
-                Uri.parse('$_baseUrl/auth/change-password'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode({
-                    'userId': userId,
-                    'oldPassword': oldPassword,
-                    'newPassword': newPassword,
-                }),
-            );
+            final response = await _post('/auth/change-password', {
+                'userId': userId,
+                'oldPassword': oldPassword,
+                'newPassword': newPassword,
+            });
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -271,26 +284,16 @@ class ApiService {
         required double calories,
         required String mealType,
         required String date,
+        String? imageUrl,
     }) async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return {'success': false, 'message': 'Chưa đăng nhập'};
-            }
-
-            final response = await http.post(
-                Uri.parse('$_baseUrl/meals'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode({
-                    'name': name,
-                    'calories': calories,
-                    'mealType': mealType,
-                    'date': date,
-                }),
-            );
+            final response = await _post('/meals', {
+                'name': name,
+                'calories': calories,
+                'mealType': mealType,
+                'date': date,
+                'imageUrl': imageUrl ?? '',
+            });
 
             if (response.statusCode == 201) {
                 final body = jsonDecode(response.body);
@@ -304,21 +307,11 @@ class ApiService {
         }
     }
 
-    // Get meals for a specific date
-    Future<List<Map<String, dynamic>>> getMeals(String date) async {
+    // Get meals for a specific date (or all history if date is omitted)
+    Future<List<Map<String, dynamic>>> getMeals([String? date]) async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return [];
-            }
-
-            final response = await http.get(
-                Uri.parse('$_baseUrl/meals?date=$date'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-            );
+            final path = date != null ? '/meals?date=$date' : '/meals';
+            final response = await _get(path);
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -338,19 +331,7 @@ class ApiService {
     // Delete a meal
     Future<bool> deleteMeal(String mealId) async {
         try {
-            final token = await getToken();
-            if (token == null) {
-                return false;
-            }
-
-            final response = await http.delete(
-                Uri.parse('$_baseUrl/meals/$mealId'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-            );
-
+            final response = await _delete('/meals/$mealId');
             return response.statusCode == 200;
         } catch (e) {
             print('Error deleting meal: $e');
@@ -360,61 +341,138 @@ class ApiService {
 
     // --- AI Chat API ---
 
-    Future<String> sendMessageToAI(String message) async {
+    Future<Map<String, dynamic>> sendMessageToAI(String message, {String? sessionId}) async {
         try {
-            final token = await getToken();
             final userData = await getUserData();
-            
-            if (token == null || userData == null) {
+            if (userData == null) {
                 throw Exception('Bạn cần đăng nhập để chat với AI');
             }
 
-            final response = await http.post(
-                Uri.parse('$_baseUrl/ai/chat'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode({
-                    'userId': userData['id'] ?? userData['_id'],
-                    'message': message,
-                }),
-            );
+            final bodyData = {
+                'userId': userData['id'] ?? userData['_id'],
+                'message': message,
+            };
+            if (sessionId != null) {
+                bodyData['sessionId'] = sessionId;
+            }
+
+            final response = await _post('/ai/chat', bodyData);
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
-                return body['reply'] ?? 'Không nhận được phản hồi từ AI';
+                return {
+                    'reply': body['reply'] ?? 'Không nhận được phản hồi từ AI',
+                    'sessionId': body['sessionId'],
+                    'sessionTitle': body['sessionTitle'],
+                };
             } else {
-                // In ra lỗi chi tiết từ Backend
                 throw Exception('Backend Error [${response.statusCode}]: ${response.body}');
             }
         } catch (e) {
             print('AI Chat Error Trace: $e');
             throw Exception('Lỗi kết nối máy chủ AI: $e');
         }
+    }
 
+    // --- Lấy danh sách phiên chat ---
+    Future<List<Map<String, dynamic>>> getChatSessions() async {
+        try {
+            final userData = await getUserData();
+            if (userData == null) throw Exception('Chưa đăng nhập');
+
+            final userId = userData['id'] ?? userData['_id'];
+            final response = await _get('/ai/sessions?userId=$userId');
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                if (body['success'] == true && body['sessions'] != null) {
+                    return List<Map<String, dynamic>>.from(body['sessions']);
+                }
+                return [];
+            } else {
+                throw Exception('Lỗi lấy danh sách phiên chat: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('getChatSessions Error: $e');
+            return [];
+        }
+    }
+
+    // --- Lấy chi tiết phiên chat ---
+    Future<Map<String, dynamic>> getChatSessionDetail(String sessionId) async {
+        try {
+            final response = await _get('/ai/sessions/$sessionId');
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return body;
+            } else {
+                throw Exception('Lỗi lấy chi tiết phiên chat: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('getChatSessionDetail Error: $e');
+            throw Exception('Không thể tải chi tiết phiên chat: $e');
+        }
+    }
+
+    // --- Tạo mới phiên chat trống ---
+    Future<Map<String, dynamic>> createChatSession() async {
+        try {
+            final userData = await getUserData();
+            if (userData == null) throw Exception('Chưa đăng nhập');
+
+            final userId = userData['id'] ?? userData['_id'];
+            final response = await _post('/ai/sessions', {
+                'userId': userId,
+            });
+
+            if (response.statusCode == 201 || response.statusCode == 200) {
+                return jsonDecode(response.body);
+            } else {
+                throw Exception('Lỗi tạo phiên chat: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('createChatSession Error: $e');
+            throw Exception('Không thể tạo phiên chat mới: $e');
+        }
+    }
+
+    // --- Xóa phiên chat ---
+    Future<bool> deleteChatSession(String sessionId) async {
+        try {
+            final headers = await _getHeaders(isJson: true);
+            final response = await http.delete(
+                Uri.parse('$_baseUrl/ai/sessions/$sessionId'),
+                headers: headers,
+            );
+
+            if (response.statusCode == 200) {
+                return true;
+            } else {
+                throw Exception('Lỗi xóa phiên chat: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('deleteChatSession Error: $e');
+            throw Exception('Không thể xóa phiên chat: $e');
+        }
     }
 
     // --- AI Health Plan API ---
-    Future<Map<String, dynamic>> getHealthPlan() async {
+    Future<Map<String, dynamic>> getHealthPlan({String? allergies}) async {
         try {
-            final token = await getToken();
             final userData = await getUserData();
-            
-            if (token == null || userData == null) {
+            if (userData == null) {
                 throw Exception('Bạn cần đăng nhập');
             }
 
-            final response = await http.post(
-                Uri.parse('$_baseUrl/ai/generate-plan'),
-                headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Authorization': 'Bearer $token',
-                },
-                body: jsonEncode({
-                    'userId': userData['id'] ?? userData['_id'],
-                }),
-            );
+            final body = <String, dynamic>{
+                'userId': userData['id'] ?? userData['_id'],
+            };
+            if (allergies != null && allergies.isNotEmpty) {
+                body['userInput'] = allergies;
+            }
+
+            final response = await _post('/ai/plan', body);
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -431,11 +489,9 @@ class ApiService {
     // --- AI Vision & Text Analysis ---
     Future<Map<String, dynamic>> analyzeFood({String? text, List<int>? imageBytes, String? fileName}) async {
         try {
-            final token = await getToken();
-            if (token == null) throw Exception('Chưa đăng nhập');
-
             var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/ai/analyze-food'));
-            request.headers['Authorization'] = 'Bearer $token';
+            final tokenHeaders = await _getHeaders(isJson: false);
+            request.headers.addAll(tokenHeaders);
 
             if (text != null) {
                 request.fields['text'] = text;
@@ -451,6 +507,7 @@ class ApiService {
 
             final streamedResponse = await request.send();
             final response = await http.Response.fromStream(streamedResponse);
+            await _checkResponse(response);
 
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
@@ -484,6 +541,74 @@ class ApiService {
         } catch (e) {
             print('Google Fit Sync Error: $e');
             throw Exception('Không thể đồng bộ: $e');
+        }
+    }
+
+    // --- Log Workout directly ---
+    Future<Map<String, dynamic>> logWorkout({
+        required String activityName,
+        required double duration,
+        required double caloriesBurned,
+    }) async {
+        try {
+            final headers = await _getHeaders(isJson: true);
+            final response = await http.post(
+                Uri.parse('$_baseUrl/calories/add'),
+                headers: headers,
+                body: jsonEncode({
+                    'activityName': activityName,
+                    'duration': duration,
+                    'caloriesBurned': caloriesBurned,
+                }),
+            );
+
+            if (response.statusCode == 200 || response.statusCode == 201) {
+                return jsonDecode(response.body);
+            } else {
+                final body = jsonDecode(response.body);
+                throw Exception(body['message'] ?? 'Lỗi lưu hoạt động');
+            }
+        } catch (e) {
+            print('Log Workout Error: $e');
+            throw Exception('Không thể lưu hoạt động: $e');
+        }
+    }
+
+    // --- Cập nhật thông tin chiều cao, cân nặng, giới tính ---
+    Future<Map<String, dynamic>> updateProfile({
+        required double height,
+        required double weight,
+        required String gender,
+    }) async {
+        try {
+            final userData = await getUserData();
+            if (userData == null) throw Exception('Chưa đăng nhập');
+
+            final userId = userData['id'] ?? userData['_id'];
+            final headers = await _getHeaders(isJson: true);
+            final response = await http.put(
+                Uri.parse('$_baseUrl/auth/profile/$userId'),
+                headers: headers,
+                body: jsonEncode({
+                    'height': height,
+                    'weight': weight,
+                    'gender': gender,
+                }),
+            );
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                // Cập nhật lại dữ liệu user lưu trong cache SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                final currentToken = prefs.getString(_tokenKey) ?? '';
+                await _saveAuthData(currentToken, body);
+                return {'success': true, 'user': body};
+            } else {
+                throw Exception('Lỗi cập nhật: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('updateProfile Error: $e');
+            return {'success': false, 'message': e.toString()};
         }
     }
 }
