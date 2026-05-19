@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../providers/health_provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
+import '../theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -410,7 +411,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ],
               ),
             )
-          : ElevatedButton.icon(
+          : PurpleGradientButton(
+              height: 38,
               onPressed: () async {
                 try {
                   // Show loading dialog
@@ -459,16 +461,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   }
                 }
               },
-              icon: const Icon(Icons.local_fire_department, size: 16, color: Colors.white),
-              label: Text('Lưu ${caloriesBurned.toStringAsFixed(0)} kcal đã đốt'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orangeAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                elevation: 0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_fire_department, size: 16, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Lưu ${caloriesBurned.toStringAsFixed(0)} kcal đã đốt',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
               ),
             ),
     );

@@ -452,56 +452,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
+              PurpleGradientButton(
                 height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final h = double.tryParse(heightController.text) ?? 0.0;
-                          final w = double.tryParse(weightController.text) ?? 0.0;
-                          final ageVal = int.tryParse(ageController.text) ?? 0;
+                onPressed: isSaving
+                    ? () {}
+                    : () async {
+                        final h = double.tryParse(heightController.text) ?? 0.0;
+                        final w = double.tryParse(weightController.text) ?? 0.0;
+                        final ageVal = int.tryParse(ageController.text) ?? 0;
 
-                          if (h <= 0 || w <= 0 || ageVal <= 0) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚠️ Chiều cao, cân nặng và tuổi phải lớn hơn 0'), backgroundColor: Colors.orangeAccent),
-                            );
-                            return;
-                          }
+                        if (h <= 0 || w <= 0 || ageVal <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('⚠️ Chiều cao, cân nặng và tuổi phải lớn hơn 0'), backgroundColor: Colors.orangeAccent),
+                          );
+                          return;
+                        }
 
-                          setDialogState(() => isSaving = true);
-                          final res = await ref.read(authProvider.notifier).updateProfile(
-                                height: h,
-                                weight: w,
-                                gender: selectedGender,
-                                age: ageVal,
-                              );
-                          
-                          // Refresh health state BMI/Weight trends reactively
-                          await ref.read(healthProvider.notifier).refreshAll();
-                          setDialogState(() => isSaving = false);
+                        setDialogState(() => isSaving = true);
+                        final res = await ref.read(authProvider.notifier).updateProfile(
+                              height: h,
+                              weight: w,
+                              gender: selectedGender,
+                              age: ageVal,
+                            );
+                        
+                        // Refresh health state BMI/Weight trends reactively
+                        await ref.read(healthProvider.notifier).refreshAll();
+                        setDialogState(() => isSaving = false);
 
-                          if (res['success'] == true) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('🎯 Chỉ số sinh thể đã được cập nhật thành công!'), backgroundColor: Colors.green),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('❌ Cập nhật thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
-                            );
-                          }
-                        },
-                  child: isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Lưu thông tin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+                        if (res['success'] == true) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('🎯 Chỉ số sinh thể đã được cập nhật thành công!'), backgroundColor: Colors.green),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('❌ Cập nhật thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
+                          );
+                        }
+                      },
+                child: isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Lưu thông tin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ],
           ),
@@ -561,62 +553,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
+              PurpleGradientButton(
                 height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final oldP = oldPasswordController.text;
-                          final newP = newPasswordController.text;
+                onPressed: isSaving
+                    ? () {}
+                    : () async {
+                        final oldP = oldPasswordController.text;
+                        final newP = newPasswordController.text;
 
-                          if (oldP.isEmpty || newP.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚠️ Vui lòng nhập đầy đủ mật khẩu cũ và mới'), backgroundColor: Colors.orangeAccent),
-                            );
-                            return;
-                          }
+                        if (oldP.isEmpty || newP.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('⚠️ Vui lòng nhập đầy đủ mật khẩu cũ và mới'), backgroundColor: Colors.orangeAccent),
+                          );
+                          return;
+                        }
 
-                          setDialogState(() => isSaving = true);
-                          final user = ref.read(authProvider).userData;
-                          final userId = user?['id'] ?? user?['_id'] ?? '';
-                          final apiService = ApiService();
+                        setDialogState(() => isSaving = true);
+                        final user = ref.read(authProvider).userData;
+                        final userId = user?['id'] ?? user?['_id'] ?? '';
+                        final apiService = ApiService();
+                        
+                        try {
+                          final res = await apiService.changePassword(
+                            userId: userId,
+                            oldPassword: oldP,
+                            newPassword: newP,
+                          );
+                          setDialogState(() => isSaving = false);
                           
-                          try {
-                            final res = await apiService.changePassword(
-                              userId: userId,
-                              oldPassword: oldP,
-                              newPassword: newP,
-                            );
-                            setDialogState(() => isSaving = false);
-                            
-                            if (res['success'] == true) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('🔑 Đổi mật khẩu thành công!'), backgroundColor: Colors.green),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('❌ Đổi mật khẩu thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
-                              );
-                            }
-                          } catch (e) {
-                            setDialogState(() => isSaving = false);
+                          if (res['success'] == true) {
+                            Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('❌ Lỗi kết nối: $e'), backgroundColor: Colors.redAccent),
+                              const SnackBar(content: Text('🔑 Đổi mật khẩu thành công!'), backgroundColor: Colors.green),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('❌ Đổi mật khẩu thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
                             );
                           }
-                        },
-                  child: isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Đổi mật khẩu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+                        } catch (e) {
+                          setDialogState(() => isSaving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('❌ Lỗi kết nối: $e'), backgroundColor: Colors.redAccent),
+                          );
+                        }
+                      },
+                child: isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Đổi mật khẩu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ],
           ),
@@ -677,45 +661,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
+              PurpleGradientButton(
                 height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final text = feedbackController.text.trim();
-                          if (text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('⚠️ Vui lòng nhập nội dung góp ý'), backgroundColor: Colors.orangeAccent),
-                            );
-                            return;
-                          }
+                onPressed: isSaving
+                    ? () {}
+                    : () async {
+                        final text = feedbackController.text.trim();
+                        if (text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('⚠️ Vui lòng nhập nội dung góp ý'), backgroundColor: Colors.orangeAccent),
+                          );
+                          return;
+                        }
 
-                          setDialogState(() => isSaving = true);
-                          // Giả lập gửi feedback thành công
-                          await Future.delayed(const Duration(milliseconds: 800));
-                          setDialogState(() => isSaving = false);
+                        setDialogState(() => isSaving = true);
+                        // Giả lập gửi feedback thành công
+                        await Future.delayed(const Duration(milliseconds: 800));
+                        setDialogState(() => isSaving = false);
 
-                          if (mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('💖 Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        },
-                  child: isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Gửi phản hồi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+                        if (mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('💖 Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                child: isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Gửi phản hồi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ],
           ),

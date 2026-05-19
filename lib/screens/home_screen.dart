@@ -20,11 +20,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ApiService _apiService = ApiService();
+  final TextEditingController _quickLogController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(healthProvider.notifier).refreshAll());
+  }
+
+  @override
+  void dispose() {
+    _quickLogController.dispose();
+    super.dispose();
   }
 
   @override
@@ -137,6 +144,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         int crossAxisCount = Responsive.isDesktop(context) ? 3 : (Responsive.isTablet(context) ? 2 : 1);
         double aspectRatio = Responsive.isMobile(context) ? 2.2 : 1.7;
         
+        if (Responsive.isMobile(context)) {
+          return Column(
+            children: [
+              _buildBMICard(state),
+              const SizedBox(height: 20),
+              _buildCaloriesCard(state),
+              const SizedBox(height: 20),
+              _buildAICard(),
+              const SizedBox(height: 24),
+              _buildLineChartCard(state),
+              const SizedBox(height: 20),
+              _buildBarChartCard(state),
+            ],
+          );
+        }
+
         return Column(
           children: [
             // Row 1: Bento Overview Cards
@@ -155,20 +178,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 24),
             // Row 2: fl_chart Visual Dashboards
-            if (Responsive.isMobile(context)) ...[
-              _buildLineChartCard(state),
-              const SizedBox(height: 20),
-              _buildBarChartCard(state),
-            ] else ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 2, child: _buildLineChartCard(state)),
-                  const SizedBox(width: 20),
-                  Expanded(flex: 1, child: _buildBarChartCard(state)),
-                ],
-              ),
-            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 2, child: _buildLineChartCard(state)),
+                const SizedBox(width: 20),
+                Expanded(flex: 1, child: _buildBarChartCard(state)),
+              ],
+            ),
           ],
         );
       },
@@ -188,60 +205,141 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (height > 0 && weight > 0) {
         bmi = weight / ((height / 100) * (height / 100));
         if (bmi < 18.5) {
-          status = "Thiếu cân";
-          statusColor = Colors.orangeAccent;
-        } else if (bmi < 24.9) {
+          status = "Gầy";
+          statusColor = Colors.blue;
+        } else if (bmi >= 18.5 && bmi <= 22.9) {
           status = "Bình thường";
           statusColor = Colors.green;
-        } else if (bmi < 29.9) {
-          status = "Thừa cân";
-          statusColor = Colors.deepOrangeAccent;
-        } else {
-          status = "Béo phì";
+        } else if (bmi >= 23.0 && bmi <= 24.9) {
+          status = "Thừa cân nhẹ";
+          statusColor = Colors.orangeAccent;
+        } else if (bmi >= 25.0 && bmi <= 29.9) {
+          status = "Béo phì độ 1";
           statusColor = Colors.redAccent;
+        } else {
+          status = "Béo phì độ 2";
+          statusColor = const Color(0xFFB71C1C);
         }
       }
     }
 
     return _buildBentoCard(
-      title: 'CHỈ SỐ BMI CỦA BẠN',
+      title: 'Chỉ số BMI của bạn',
       color: Theme.of(context).cardColor,
-      child: Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  bmi > 0 ? bmi.toStringAsFixed(1) : '--',
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      bmi > 0 ? bmi.toStringAsFixed(1) : '--',
+                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
+                    ),
+                    const SizedBox(width: 4),
+                    Text('kg/m²', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text('kg/m²', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
+                  style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          ),
+          const SizedBox(width: 16),
+          _buildBMIGauge(bmi, statusColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBMIGauge(double bmi, Color statusColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final double percent = bmi > 0 ? ((bmi - 15.0) / (35.0 - 15.0)).clamp(0.0, 1.0) : 0.0;
+
+    return Container(
+      height: 90,
+      width: 24,
+      alignment: Alignment.center,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Background/gradient track of the gauge
+          Positioned(
+            left: 8,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 8,
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                borderRadius: BorderRadius.circular(4),
+                gradient: bmi > 0
+                    ? const LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.blue,          // Gầy
+                          Colors.green,         // Bình thường
+                          Colors.orangeAccent,  // Thừa cân nhẹ
+                          Colors.redAccent,     // Béo phì độ 1
+                          Color(0xFFB71C1C),    // Béo phì độ 2
+                        ],
+                        stops: [
+                          0.0,
+                          0.175,
+                          0.4,
+                          0.5,
+                          0.75,
+                        ],
+                      )
+                    : null,
+                color: bmi > 0 ? null : (isDark ? const Color(0xFF35373C) : Colors.grey[200]),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
-              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+          // Current status indicator dot
+          if (bmi > 0)
+            Positioned(
+              bottom: (percent * 90) - 8,
+              left: 4,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: statusColor, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -252,111 +350,160 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress = (intake / calTarget).clamp(0.0, 1.0);
 
     return _buildBentoCard(
-      title: 'CALORIES HÔM NAY',
+      title: 'Calories hôm nay',
       color: Theme.of(context).cardColor,
-      child: Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return ScaleTransition(scale: animation, child: child);
-                  },
-                  child: Text(
-                    '${intake.toInt()}',
-                    key: ValueKey<int>(intake.toInt()),
-                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return ScaleTransition(scale: animation, child: child);
+                },
+                child: Text(
+                  '${intake.toInt()}',
+                  key: ValueKey<int>(intake.toInt()),
+                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
                 ),
-                const SizedBox(width: 4),
-                Text('kcal', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF35373C) : Colors.grey[200],
-                color: Colors.orangeAccent,
               ),
+              const SizedBox(width: 4),
+              Text('kcal', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF35373C) : Colors.grey[200],
+              color: Colors.orangeAccent,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Mục tiêu: ${calTarget.toInt()} kcal',
-              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mục tiêu: ${calTarget.toInt()} kcal',
+            style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildAICard() {
-    final TextEditingController quickLogController = TextEditingController();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
-      title: 'NHẬT KÝ DINH DƯỠNG AI',
+      title: 'Nhật ký dinh dưỡng AI',
       color: Theme.of(context).cardColor,
-      child: Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: quickLogController,
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Bạn vừa ăn gì hôm nay?',
-                hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.camera_alt_outlined, color: Colors.purpleAccent, size: 18),
-                      onPressed: _handleImagePick,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 18),
-                      onPressed: () => _handleQuickLog(quickLogController.text),
-                    ),
-                  ],
-                ),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: Colors.purple.withOpacity(0.04),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              ),
-              onSubmitted: (val) => _handleQuickLog(val),
-            ),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MealHistoryScreen()),
-                );
-                ref.read(healthProvider.notifier).refreshAll();
-              },
-              child: const Row(
+      action: TextButton(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MealHistoryScreen()),
+          );
+          ref.read(healthProvider.notifier).refreshAll();
+        },
+        child: const Text(
+          'Lịch sử 🕒',
+          style: TextStyle(
+            color: AppTheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _quickLogController,
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Bạn vừa ăn gì hôm nay?',
+              hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.history, size: 14, color: Colors.purpleAccent),
-                  SizedBox(width: 4),
-                  Text(
-                    'Xem lịch sử nhật ký ăn uống',
-                    style: TextStyle(color: Colors.purpleAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                  IconButton(
+                    icon: const Icon(Icons.camera_alt_outlined, color: Colors.purpleAccent, size: 18),
+                    onPressed: _handleImagePick,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 18),
+                    onPressed: () => _handleQuickLog(_quickLogController.text),
                   ),
                 ],
               ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E1F22) : Colors.purple.withOpacity(0.04),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-          ],
+            onSubmitted: (val) => _handleQuickLog(val),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildQuickTag('🥣 Ăn sáng'),
+                const SizedBox(width: 8),
+                _buildQuickTag('🥗 Ăn trưa'),
+                const SizedBox(width: 8),
+                _buildQuickTag('🥩 Ăn tối'),
+                const SizedBox(width: 8),
+                _buildQuickTag('🍎 Ăn nhẹ'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickTag(String tagText) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () {
+        final currentText = _quickLogController.text;
+        if (currentText.isEmpty) {
+          _quickLogController.text = tagText;
+        } else {
+          _quickLogController.text = currentText.endsWith(' ') ? '$currentText$tagText' : '$currentText $tagText';
+        }
+        _quickLogController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _quickLogController.text.length),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          tagText,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFFDBDEE1) : Colors.black87,
+          ),
         ),
       ),
     );
@@ -365,7 +512,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildLineChartCard(HealthState state) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
-      title: 'XU HƯỚNG CALO NẠP VÀO (7 NGÀY QUA)',
+      title: 'Xu hướng calo nạp vào (7 ngày qua)',
       color: Theme.of(context).cardColor,
       child: Container(
         height: 220,
@@ -426,7 +573,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildBarChartCard(HealthState state) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
-      title: 'NẠP VS ĐỐT (KCAL)',
+      title: 'Nạp vs Đốt (kcal)',
       color: Theme.of(context).cardColor,
       child: Container(
         height: 220,
@@ -660,7 +807,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildBentoCard({required String title, required Widget child, required Color color, VoidCallback? onTap}) {
+  Widget _buildBentoCard({
+    required String title,
+    required Widget child,
+    required Color color,
+    Widget? action,
+    VoidCallback? onTap,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: color,
@@ -674,11 +827,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: TextStyle(fontSize: 11, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[400], fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
+                      ),
+                    ),
+                  ),
+                  if (action != null) action,
+                ],
+              ),
               const SizedBox(height: 12),
               child,
             ],

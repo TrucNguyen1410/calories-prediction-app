@@ -249,6 +249,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
     required double carbs,
     required double protein,
     required double fat,
+    String? dayName,
   }) async {
     if (state.currentPlan == null) return;
 
@@ -257,28 +258,39 @@ class HealthNotifier extends StateNotifier<HealthState> {
       final weeklyPlan = List<dynamic>.from(plan['weeklyPlan'] ?? plan['meal_plan'] ?? []);
       if (weeklyPlan.isEmpty) return;
 
-      final weekday = DateTime.now().weekday;
-      final Map<int, List<String>> weekdayNames = {
-        1: ['T2', 'THỨ 2', 'THỨ HAI', 'MONDAY'],
-        2: ['T3', 'THỨ 3', 'THỨ BA', 'TUESDAY'],
-        3: ['T4', 'THỨ 4', 'THỨ TƯ', 'WEDNESDAY'],
-        4: ['T5', 'THỨ 5', 'THỨ NĂM', 'THURSDAY'],
-        5: ['T6', 'THỨ 6', 'THỨ SÁU', 'FRIDAY'],
-        6: ['T7', 'THỨ 7', 'THỨ BẢY', 'SATURDAY'],
-        7: ['CN', 'CHỦ NHẬT', 'SUNDAY'],
-      };
-      final validNames = weekdayNames[weekday] ?? [];
-
-      int todayIndex = weeklyPlan.indexWhere((planItem) {
-        final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
-        return validNames.any((name) => planDay == name || planDay.contains(name));
-      });
-
-      if (todayIndex == -1) {
-        todayIndex = 0;
+      int targetIndex = -1;
+      if (dayName != null) {
+        final searchName = dayName.toUpperCase().trim();
+        targetIndex = weeklyPlan.indexWhere((planItem) {
+          final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
+          return planDay == searchName || planDay.contains(searchName);
+        });
       }
 
-      final todayPlan = Map<String, dynamic>.from(weeklyPlan[todayIndex]);
+      if (targetIndex == -1) {
+        // Fallback to today
+        final weekday = DateTime.now().weekday;
+        final Map<int, List<String>> weekdayNames = {
+          1: ['T2', 'THỨ 2', 'THỨ HAI', 'MONDAY'],
+          2: ['T3', 'THỨ 3', 'THỨ BA', 'TUESDAY'],
+          3: ['T4', 'THỨ 4', 'THỨ TƯ', 'WEDNESDAY'],
+          4: ['T5', 'THỨ 5', 'THỨ NĂM', 'THURSDAY'],
+          5: ['T6', 'THỨ 6', 'THỨ SÁU', 'FRIDAY'],
+          6: ['T7', 'THỨ 7', 'THỨ BẢY', 'SATURDAY'],
+          7: ['CN', 'CHỦ NHẬT', 'SUNDAY'],
+        };
+        final validNames = weekdayNames[weekday] ?? [];
+        targetIndex = weeklyPlan.indexWhere((planItem) {
+          final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
+          return validNames.any((name) => planDay == name || planDay.contains(name));
+        });
+      }
+
+      if (targetIndex == -1) {
+        targetIndex = 0;
+      }
+
+      final todayPlan = Map<String, dynamic>.from(weeklyPlan[targetIndex]);
       final meals = List<dynamic>.from(todayPlan['meals'] ?? []);
 
       int mealIndex = meals.indexWhere((m) => m['type']?.toString().toLowerCase() == mealType.toLowerCase());
@@ -300,13 +312,88 @@ class HealthNotifier extends StateNotifier<HealthState> {
       }
       todayPlan['totalCalories'] = newTotalCal;
       
-      weeklyPlan[todayIndex] = todayPlan;
+      weeklyPlan[targetIndex] = todayPlan;
       plan['weeklyPlan'] = weeklyPlan;
 
       state = state.copyWith(currentPlan: plan);
       await _savePlanToCache(plan);
     } catch (e) {
       print('Error updating meal in plan: $e');
+    }
+  }
+
+  Future<void> removeMealFromPlan({
+    required String mealType,
+    String? dayName,
+  }) async {
+    if (state.currentPlan == null) return;
+
+    try {
+      final plan = Map<String, dynamic>.from(state.currentPlan!);
+      final weeklyPlan = List<dynamic>.from(plan['weeklyPlan'] ?? plan['meal_plan'] ?? []);
+      if (weeklyPlan.isEmpty) return;
+
+      int targetIndex = -1;
+      if (dayName != null) {
+        final searchName = dayName.toUpperCase().trim();
+        targetIndex = weeklyPlan.indexWhere((planItem) {
+          final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
+          return planDay == searchName || planDay.contains(searchName);
+        });
+      }
+
+      if (targetIndex == -1) {
+        // Fallback to today
+        final weekday = DateTime.now().weekday;
+        final Map<int, List<String>> weekdayNames = {
+          1: ['T2', 'THỨ 2', 'THỨ HAI', 'MONDAY'],
+          2: ['T3', 'THỨ 3', 'THỨ BA', 'TUESDAY'],
+          3: ['T4', 'THỨ 4', 'THỨ TƯ', 'WEDNESDAY'],
+          4: ['T5', 'THỨ 5', 'THỨ NĂM', 'THURSDAY'],
+          5: ['T6', 'THỨ 6', 'THỨ SÁU', 'FRIDAY'],
+          6: ['T7', 'THỨ 7', 'THỨ BẢY', 'SATURDAY'],
+          7: ['CN', 'CHỦ NHẬT', 'SUNDAY'],
+        };
+        final validNames = weekdayNames[weekday] ?? [];
+        targetIndex = weeklyPlan.indexWhere((planItem) {
+          final planDay = planItem['day']?.toString().toUpperCase().trim() ?? '';
+          return validNames.any((name) => planDay == name || planDay.contains(name));
+        });
+      }
+
+      if (targetIndex == -1) {
+        targetIndex = 0;
+      }
+
+      final todayPlan = Map<String, dynamic>.from(weeklyPlan[targetIndex]);
+      final meals = List<dynamic>.from(todayPlan['meals'] ?? []);
+
+      int mealIndex = meals.indexWhere((m) => m['type']?.toString().toLowerCase() == mealType.toLowerCase());
+      if (mealIndex != -1) {
+        final updatedMeal = Map<String, dynamic>.from(meals[mealIndex]);
+        updatedMeal['name'] = 'Chưa chọn món';
+        updatedMeal['calories'] = 0;
+        updatedMeal['carbs'] = 0;
+        updatedMeal['protein'] = 0;
+        updatedMeal['fat'] = 0;
+        meals[mealIndex] = updatedMeal;
+      }
+
+      todayPlan['meals'] = meals;
+      
+      double newTotalCal = 0;
+      for (var m in meals) {
+        newTotalCal += (m['calories'] ?? 0).toDouble();
+      }
+      todayPlan['totalCalories'] = newTotalCal;
+      
+      weeklyPlan[targetIndex] = todayPlan;
+      plan['weeklyPlan'] = weeklyPlan;
+
+      state = state.copyWith(currentPlan: plan);
+      await _savePlanToCache(plan);
+    } catch (e) {
+      print('Error removing meal from plan: $e');
     }
   }
 }

@@ -69,8 +69,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   Widget build(BuildContext context) {
     final healthState = ref.watch(healthProvider);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -94,14 +96,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
+            colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF8E24AA).withOpacity(0.3),
+              color: const Color(0xFF7B1FA2).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -185,10 +187,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   }
 
   Widget _buildSegmentedControl() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: isDark ? const Color(0xFF2B2D31) : Colors.grey[200],
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -205,7 +208,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 child: Text(
                   'Hôm nay',
                   style: TextStyle(
-                    color: _activeSegment == 0 ? Colors.white : Colors.black54,
+                    color: _activeSegment == 0 ? Colors.white : (isDark ? const Color(0xFFB5BAC1) : Colors.black54),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -225,7 +228,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 child: Text(
                   'Tuần này',
                   style: TextStyle(
-                    color: _activeSegment == 1 ? Colors.white : Colors.black54,
+                    color: _activeSegment == 1 ? Colors.white : (isDark ? const Color(0xFFB5BAC1) : Colors.black54),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -240,6 +243,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
 
   Widget _buildDailyListSection(HealthState healthState) {
     final todaysMeals = _getTodaysMeals(healthState);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (todaysMeals.isEmpty) {
       return Center(
@@ -264,7 +268,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Kế hoạch Ăn uống', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+            Text(
+              'Kế hoạch Ăn uống', 
+              style: TextStyle(
+                fontSize: 18, 
+                fontWeight: FontWeight.bold, 
+                color: isDark ? const Color(0xFFF2F3F5) : Colors.black87
+              )
+            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               transitionBuilder: (Widget child, Animation<double> animation) {
@@ -293,6 +304,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   }
 
   Widget _buildWeeklyListSection(HealthState healthState) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (healthState.currentPlan == null) {
       return Center(
         child: Padding(
@@ -303,13 +316,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               const SizedBox(height: 16),
               const Text('Bạn chưa tạo thực đơn 7 ngày từ AI', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              ElevatedButton(
+              PurpleGradientButton(
                 onPressed: () => _showAIChatbotDialog(healthState),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
+                width: 200,
                 child: const Text('Tạo Thực Đơn Ngay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -323,7 +332,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Thực đơn 7 ngày AI', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(
+          'Thực đơn 7 ngày AI', 
+          style: TextStyle(
+            fontSize: 18, 
+            fontWeight: FontWeight.bold, 
+            color: isDark ? const Color(0xFFF2F3F5) : Colors.black87
+          )
+        ),
         const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
@@ -331,53 +347,195 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           itemCount: mealPlanList.length,
           itemBuilder: (context, index) {
             final plan = mealPlanList[index];
+            final dayName = plan['day']?.toString() ?? 'T${index + 2}';
             
-            // Xử lý mô tả từ cấu trúc cũ hoặc mới
-            String desc = plan['daily_desc'] ?? 'Thực đơn dinh dưỡng';
-            String mealText = '';
-            
-            if (plan.containsKey('meals')) {
-               final mList = plan['meals'] as List<dynamic>;
-               if (mList.isNotEmpty) {
-                 mealText = mList.map((e) => e['name'].toString()).join(' • ');
-               }
-            } else {
-               mealText = 'Sáng: ${plan['breakfast']} • Trưa: ${plan['lunch']} • Tối: ${plan['dinner']}';
-            }
+            // Lấy danh sách món ăn trong ngày này
+            final List<dynamic> meals = plan['meals'] as List<dynamic>? ?? [];
+            final double totalCal = (plan['totalCalories'] ?? plan['daily_calories'] ?? 0).toDouble();
+            final String desc = plan['daily_desc'] ?? 'Thực đơn dinh dưỡng';
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(18),
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.withOpacity(0.08)),
+                color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: isDark ? const Color(0xFF35373C) : Colors.grey.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.01),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    backgroundColor: AppTheme.primary.withOpacity(0.1),
-                    child: Text(
-                      plan['day']?.toString().replaceAll('Thứ ', 'T') ?? '${index + 1}',
-                      style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
+                  // Day Header Row
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: AppTheme.primary.withOpacity(0.15),
+                        child: Text(
+                          dayName.replaceAll('Thứ ', 'T'),
+                          style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          desc,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${totalCal.toInt()} kcal',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent, fontSize: 14),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(desc, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
-                        const SizedBox(height: 4),
-                        Text(mealText, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
+                  const SizedBox(height: 12),
+                  Divider(color: isDark ? const Color(0xFF35373C) : Colors.grey[200], height: 1),
+                  const SizedBox(height: 8),
+                  
+                  // Render each meal inside this day card
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: meals.length,
+                    itemBuilder: (context, mIndex) {
+                      final meal = meals[mIndex];
+                      
+                      Color color = Colors.orangeAccent;
+                      IconData icon = Icons.wb_sunny_outlined;
+                      String timeStr = "07:30 AM";
+                      String mealTypeStr = meal['type']?.toString().toLowerCase() ?? '';
+
+                      if (mealTypeStr.contains('trưa')) {
+                        color = Colors.blueAccent;
+                        icon = Icons.wb_twilight;
+                        timeStr = "12:15 PM";
+                      } else if (mealTypeStr.contains('tối')) {
+                        color = Colors.indigoAccent;
+                        icon = Icons.nights_stay_outlined;
+                        timeStr = "06:45 PM";
+                      } else if (mealTypeStr.contains('phụ')) {
+                        color = Colors.greenAccent;
+                        icon = Icons.spa_outlined;
+                        timeStr = "03:00 PM";
+                      }
+
+                      String macros = 'Carb: ${meal['carbs']}g • Protein: ${meal['protein']}g • Fat: ${meal['fat']}g';
+                      if (meal['carbs'] == null) macros = 'Thông tin dinh dưỡng đang cập nhật';
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(icon, color: color, size: 18),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        meal['type'] ?? 'Bữa ăn', 
+                                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        timeStr, 
+                                        style: const TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.w500)
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    meal['name'] ?? 'Món ăn',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    macros,
+                                    style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${meal['calories']} kcal',
+                              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            const SizedBox(width: 12),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _showCustomMealDialog(
+                                    mealType: meal['type'] ?? 'Bữa ăn',
+                                    healthState: healthState,
+                                    initialFoodName: meal['name'],
+                                    dayName: dayName,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(Icons.edit, size: 12, color: isDark ? Colors.white70 : Colors.black54),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                                        title: const Text('Xóa món ăn'),
+                                        content: Text('Bạn có chắc chắn muốn xóa bữa ${meal['type']?.toLowerCase()} này của ${dayName.toLowerCase()}?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+                                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa', style: TextStyle(color: Colors.red))),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await ref.read(healthProvider.notifier).removeMealFromPlan(
+                                        mealType: meal['type'] ?? 'Bữa ăn',
+                                        dayName: dayName,
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.delete_outline, size: 12, color: Colors.redAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  if (plan['totalCalories'] != null || plan['daily_calories'] != null)
-                    Text(
-                      '${plan['totalCalories'] ?? plan['daily_calories']}'.replaceAll(' kcal', '') + ' kcal',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent, fontSize: 14),
-                    ),
                 ],
               ),
             );
@@ -388,7 +546,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal, HealthState healthState) {
-    // Dynamic styling based on AI Meal Type string
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     Color color = Colors.orangeAccent;
     IconData icon = Icons.wb_sunny_outlined;
     String timeStr = "07:30 AM";
@@ -415,9 +574,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2B2D31) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.08)),
+        border: Border.all(color: isDark ? const Color(0xFF35373C) : Colors.grey.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.01),
@@ -451,7 +610,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 const SizedBox(height: 6),
                 Text(
                   meal['name'] ?? 'Món ăn',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 14, 
+                    color: isDark ? const Color(0xFFF2F3F5) : Colors.black87
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -481,10 +644,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B2D31) : Colors.grey[100],
+                        color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.edit, size: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+                      child: Icon(Icons.edit, size: 14, color: isDark ? Colors.white70 : Colors.black54),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -497,10 +660,40 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B2D31) : Colors.grey[100],
+                        color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.add, size: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+                      child: Icon(Icons.add, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                          title: const Text('Xóa món ăn'),
+                          content: Text('Bạn có chắc chắn muốn xóa bữa ${meal['type']?.toLowerCase()} này?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa', style: TextStyle(color: Colors.red))),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await ref.read(healthProvider.notifier).removeMealFromPlan(
+                          mealType: meal['type'] ?? 'Bữa ăn',
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.delete_outline, size: 14, color: Colors.redAccent),
                     ),
                   ),
                 ],
@@ -517,6 +710,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     required String mealType,
     required HealthState healthState,
     String? initialFoodName,
+    String? dayName,
   }) {
     final foodController = TextEditingController(text: initialFoodName);
     bool isAnalyzing = false;
@@ -546,7 +740,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Row(
               children: [
-                Icon(Icons.edit_note_rounded, color: AppTheme.primary, size: 24),
+                const Icon(Icons.edit_note_rounded, color: AppTheme.primary, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   'Tùy chỉnh bữa ăn', 
@@ -569,6 +763,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: foodController,
+                  maxLines: 3,
+                  keyboardType: TextInputType.multiline,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     hintText: 'Nhập tên món ăn...',
@@ -694,148 +890,156 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 ],
               ],
             ),
+            actionsPadding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'Hủy',
-                  style: TextStyle(
-                    color: isDark ? const Color(0xFF949BA4) : Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (!isAnalyzing)
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    if (foodController.text.trim().isEmpty) return;
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isAnalyzing)
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primary, width: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        if (foodController.text.trim().isEmpty) return;
 
-                    setDialogState(() {
-                      isAnalyzing = true;
-                      validationErrorMessage = null;
-                      showWarning = false;
-                      isAnalyzed = false;
-                    });
+                        setDialogState(() {
+                          isAnalyzing = true;
+                          validationErrorMessage = null;
+                          showWarning = false;
+                          isAnalyzed = false;
+                        });
 
-                    try {
-                      final result = await _apiService.analyzeFood(
-                        text: foodController.text,
-                        remainingCalories: remainingCalories,
-                        todayIntake: healthState.todayIntake,
-                        targetCalories: targetDailyCalories,
-                      );
+                        try {
+                          final result = await _apiService.analyzeFood(
+                            text: foodController.text,
+                            remainingCalories: remainingCalories,
+                            todayIntake: healthState.todayIntake,
+                            targetCalories: targetDailyCalories,
+                          );
 
-                      if (result != null && result.isNotEmpty) {
-                        final bool isFood = result['isFood'] ?? true;
+                          if (result != null && result.isNotEmpty) {
+                            final bool isFood = result['isFood'] ?? true;
 
-                        if (!isFood) {
+                            if (!isFood) {
+                              setDialogState(() {
+                                isAnalyzing = false;
+                                validationErrorMessage = result['message'] ??
+                                    'Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!';
+                              });
+                              return;
+                            }
+
+                            estimatedCalories = (result['estimatedCalories'] ?? result['calories'] ?? 0).toDouble();
+                            detectedName = result['foodName'] ?? foodController.text;
+                            carbs = (result['carbs'] ?? 0.0).toDouble();
+                            protein = (result['protein'] ?? 0.0).toDouble();
+                            fat = (result['fat'] ?? 0.0).toDouble();
+                            macrosText = result['macros'] ??
+                                'Carb: ${carbs.toInt()}g • Protein: ${protein.toInt()}g • Fat: ${fat.toInt()}g';
+
+                            final bool isReasonable = result['isReasonable'] ?? true;
+                            final String warnMsg = result['warningMessage'] ?? '';
+
+                            setDialogState(() {
+                              isAnalyzing = false;
+                              isAnalyzed = true;
+                              if (!isReasonable && warnMsg.isNotEmpty) {
+                                showWarning = true;
+                                warningMessage = warnMsg;
+                              }
+                            });
+                          } else {
+                            setDialogState(() {
+                              isAnalyzing = false;
+                              validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
+                            });
+                          }
+                        } catch (e) {
                           setDialogState(() {
                             isAnalyzing = false;
-                            validationErrorMessage = result['message'] ??
-                                'Đây không phải là thức ăn hoặc đồ uống hợp lệ. Vui lòng nhập lại!';
+                            validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
                           });
-                          return;
                         }
+                      },
+                      child: const Text('Kiểm tra AI', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                    ),
+                  if (isAnalyzed) ...[
+                    const SizedBox(height: 12),
+                    PurpleGradientButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('⏳ Đang cập nhật thực đơn và đồng bộ dữ liệu...'),
+                            duration: Duration(milliseconds: 800),
+                          ),
+                        );
 
-                        estimatedCalories = (result['estimatedCalories'] ?? result['calories'] ?? 0).toDouble();
-                        detectedName = result['foodName'] ?? foodController.text;
-                        carbs = (result['carbs'] ?? 0.0).toDouble();
-                        protein = (result['protein'] ?? 0.0).toDouble();
-                        fat = (result['fat'] ?? 0.0).toDouble();
-                        macrosText = result['macros'] ??
-                            'Carb: ${carbs.toInt()}g • Protein: ${protein.toInt()}g • Fat: ${fat.toInt()}g';
+                        try {
+                          // 1. Lưu đè món mới vào thực đơn (Plan)
+                          await ref.read(healthProvider.notifier).updateMealInPlan(
+                            mealType: mealType,
+                            newName: detectedName,
+                            newCalories: estimatedCalories,
+                            carbs: carbs,
+                            protein: protein,
+                            fat: fat,
+                            dayName: dayName,
+                          );
 
-                        final bool isReasonable = result['isReasonable'] ?? true;
-                        final String warnMsg = result['warningMessage'] ?? '';
-
-                        setDialogState(() {
-                          isAnalyzing = false;
-                          isAnalyzed = true;
-                          if (!isReasonable && warnMsg.isNotEmpty) {
-                            showWarning = true;
-                            warningMessage = warnMsg;
+                          // 2. Lưu món ăn vào Database qua API để cập nhật tổng calo (chỉ khi là hôm nay)
+                          final isToday = dayName == null || dayName == 'Hôm nay';
+                          if (isToday) {
+                            final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                            await _apiService.addMeal(
+                              name: detectedName,
+                              calories: estimatedCalories,
+                              mealType: mealType,
+                              date: todayStr,
+                            );
                           }
-                        });
-                      } else {
-                        setDialogState(() {
-                          isAnalyzing = false;
-                          validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
-                        });
-                      }
-                    } catch (e) {
-                      setDialogState(() {
-                        isAnalyzing = false;
-                        validationErrorMessage = 'Không thể phân tích món ăn này. Vui lòng thử lại!';
-                      });
-                    }
-                  },
-                  child: const Text('Kiểm tra AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              if (isAnalyzed)
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: showWarning ? Colors.orangeAccent : Colors.green,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('⏳ Đang cập nhật thực đơn và đồng bộ dữ liệu...'),
-                        duration: Duration(milliseconds: 800),
+
+                          // 3. Ép ứng dụng tải lại dữ liệu mới nhất từ Server để đồng bộ hiển thị
+                          await ref.read(healthProvider.notifier).refreshAll();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('✅ Đã đồng bộ và cập nhật bữa ${mealType.toLowerCase()} thành món "$detectedName"!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (err) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Lỗi đồng bộ thực đơn: $err'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      child: Text(
+                        showWarning ? 'Xác nhận' : 'Lưu',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
-                    );
-
-                    try {
-                      // 1. Lưu đè món mới vào thực đơn (Plan)
-                      await ref.read(healthProvider.notifier).updateMealInPlan(
-                        mealType: mealType,
-                        newName: detectedName,
-                        newCalories: estimatedCalories,
-                        carbs: carbs,
-                        protein: protein,
-                        fat: fat,
-                      );
-
-                      // 2. Lưu món ăn vào Database qua API để cập nhật tổng calo
-                      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-                      await _apiService.addMeal(
-                        name: detectedName,
-                        calories: estimatedCalories,
-                        mealType: mealType,
-                        date: todayStr,
-                      );
-
-                      // 3. Ép ứng dụng tải lại dữ liệu mới nhất từ Server để đồng bộ hiển thị
-                      await ref.read(healthProvider.notifier).refreshAll();
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('✅ Đã đồng bộ và cập nhật bữa ${mealType.toLowerCase()} thành món "$detectedName"!'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } catch (err) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('❌ Lỗi đồng bộ thực đơn: $err'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: Text(
-                    showWarning ? 'Xác nhận' : 'Lưu',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Hủy',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF949BA4) : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ),
             ],
           );
         },
@@ -943,47 +1147,37 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 const SizedBox(height: 16),
               ],
 
-              if (!isGenerating)
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purpleAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    onPressed: () async {
-                      setDialogState(() => isGenerating = true);
-                      
-                      try {
-                         await ref.read(healthProvider.notifier).loadPlan(
-                             allergies: allergyController.text, 
-                             forceRefresh: true
-                         );
-                         
-                         setDialogState(() => isGenerating = false);
-                         Navigator.pop(context);
-                         
-                         setState(() {
-                            _activeSegment = 0; // Chuyển về tab Hôm nay để xem bữa ăn mới tạo
-                         });
-                         
-                         ScaffoldMessenger.of(context).showSnackBar(
-                           const SnackBar(
-                             content: Text('🎉 Thực đơn 7 ngày của bạn đã được AI tạo thành công!'),
-                             backgroundColor: Colors.green,
-                           ),
-                         );
-                      } catch (e) {
-                         setDialogState(() => isGenerating = false);
-                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi tạo thực đơn: $e'), backgroundColor: Colors.red));
-                      }
-                    },
-                    child: const Text(
-                      'Tạo thực đơn ngay',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
+                PurpleGradientButton(
+                  onPressed: () async {
+                    setDialogState(() => isGenerating = true);
+                    
+                    try {
+                       await ref.read(healthProvider.notifier).loadPlan(
+                           allergies: allergyController.text, 
+                           forceRefresh: true
+                       );
+                       
+                       setDialogState(() => isGenerating = false);
+                       Navigator.pop(context);
+                       
+                       setState(() {
+                          _activeSegment = 0; // Chuyển về tab Hôm nay để xem bữa ăn mới tạo
+                       });
+                       
+                       ScaffoldMessenger.of(context).showSnackBar(
+                         const SnackBar(
+                           content: Text('🎉 Thực đơn 7 ngày của bạn đã được AI tạo thành công!'),
+                           backgroundColor: Colors.green,
+                         ),
+                       );
+                    } catch (e) {
+                       setDialogState(() => isGenerating = false);
+                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi tạo thực đơn: $e'), backgroundColor: Colors.red));
+                    }
+                  },
+                  child: const Text(
+                    'Tạo thực đơn ngay',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
             ],

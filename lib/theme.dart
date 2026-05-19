@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // 1. Color Palette (Material 3)
-  static const Color primary = Color(0xFF1565C0); // Xanh dương đậm (Blue 800)
-  static const Color secondary = Color(0xFF64B5F6);
+  static const Color primary = Color(0xFF9C27B0); // Màu tím chủ đạo (Purple 500)
+  static const Color secondary = Color(0xFFE1BEE7); // Màu tím nhạt
   static const Color background = Color(0xFFF8F9FA); // Nền xám nhạt sáng chuẩn Apple Health
   static const Color cardColor = Colors.white;
   static const Color error = Color(0xFFD32F2F);
@@ -197,9 +196,9 @@ class AppTheme {
   }
 
   // --- Members for backward compatibility with existing screens ---
-  static const Color primaryDark = Color(0xFF0D47A1);
+  static const Color primaryDark = Color(0xFF7B1FA2);
   static const LinearGradient mainGradient = LinearGradient(
-    colors: [Color(0xFFBEE7FF), Color(0xFFDFF3FF)],
+    colors: [Color(0xFFE1BEE7), Color(0xFFF3E5F5)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -210,4 +209,64 @@ class AppTheme {
       BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
     ],
   );
+}
+
+class PurpleGradientButton extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onPressed;
+  final double? width;
+  final double height;
+  final BorderRadius? borderRadius;
+
+  const PurpleGradientButton({
+    Key? key,
+    required this.child,
+    required this.onPressed,
+    this.width,
+    this.height = 52.0,
+    this.borderRadius,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isEnabled = onPressed != null;
+    return Container(
+      width: width ?? double.infinity,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: isEnabled
+            ? const LinearGradient(
+                colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: isEnabled ? null : Colors.grey[400],
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        boxShadow: isEnabled
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF7B1FA2).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : null,
+      ),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          disabledForegroundColor: Colors.white60,
+          shape: RoundedRectangleBorder(
+            borderRadius: borderRadius ?? BorderRadius.circular(16),
+          ),
+        ),
+        onPressed: onPressed,
+        child: child,
+      ),
+    );
+  }
 }
