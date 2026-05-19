@@ -688,18 +688,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         }
 
                         setDialogState(() => isSaving = true);
-                        // Giả lập gửi feedback thành công
-                        await Future.delayed(const Duration(milliseconds: 800));
+                        final apiService = ApiService();
+                        final res = await apiService.submitFeedback(content: text);
                         setDialogState(() => isSaving = false);
 
                         if (mounted) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('💖 Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                          if (res['success'] == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('💖 ${res['message'] ?? 'Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.'}'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('❌ Gửi phản hồi thất bại: ${res['message'] ?? 'Không rõ lý do'}'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
                         }
                       },
                 child: isSaving

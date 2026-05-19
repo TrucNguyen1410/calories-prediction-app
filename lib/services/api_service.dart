@@ -635,6 +635,27 @@ class ApiService {
             return {'success': false, 'message': e.toString()};
         }
     }
+
+    // --- Gửi đóng góp ý kiến ---
+    Future<Map<String, dynamic>> submitFeedback({
+        required String content,
+    }) async {
+        try {
+            final response = await _post('/feedback/submit', {
+                'content': content,
+            });
+
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return {'success': true, 'message': body['message'] ?? 'Gửi phản hồi thành công'};
+            } else {
+                final body = jsonDecode(response.body);
+                return {'success': false, 'message': body['message'] ?? 'Gửi phản hồi thất bại'};
+            }
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối đến máy chủ.'};
+        }
+    }
 }
 
 
