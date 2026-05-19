@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/health_provider.dart';
 import 'terms_policy_screen.dart';
+import 'user_guide_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String name;
@@ -89,6 +90,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Hỗ trợ & Thông tin"),
+                      _buildListTile(
+                        icon: Icons.help_outline,
+                        title: "Hướng dẫn sử dụng",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const UserGuideScreen()),
+                          );
+                        },
+                      ),
                       _buildListTile(
                         icon: Icons.description_outlined,
                         title: "Điều khoản & Chính sách",

@@ -11,6 +11,9 @@ import 'stats_screen.dart';
 import 'menu_screen.dart';
 import 'profile_screen.dart';
 import '../theme.dart';
+import '../providers/tour_provider.dart';
+
+final mainTabProvider = StateProvider<int>((ref) => 0);
 
 class MainScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? userData;
@@ -22,7 +25,6 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  int _selectedIndex = 0;
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -43,7 +45,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    ref.read(mainTabProvider.notifier).state = index;
   }
 
   void _scrollToBottom() {
@@ -92,18 +94,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         children: [
           // Lớp dưới: Giao diện chính
           Scaffold(
-            body: _screens[_selectedIndex],
+            body: _screens[ref.watch(mainTabProvider)],
             bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _selectedIndex,
+              currentIndex: ref.watch(mainTabProvider),
               onTap: _onItemTapped,
               type: BottomNavigationBarType.fixed,
               selectedItemColor: AppTheme.primary,
               unselectedItemColor: Colors.grey,
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Trang chủ"),
-                BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu_outlined), label: "Thực đơn"),
-                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: "Thống kê"),
-                BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "Cá nhân"),
+              items: [
+                const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Trang chủ"),
+                BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu_outlined, key: ref.read(tourKeysProvider).menuTabKey), label: "Thực đơn"),
+                const BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: "Thống kê"),
+                const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "Cá nhân"),
               ],
             ),
           ),
@@ -142,6 +144,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   chatbotNotifier.setChatOpen(true);
                 },
                 child: Container(
+                  key: ref.read(tourKeysProvider).chatbotKey,
                   width: iconSize,
                   height: iconSize,
                   decoration: BoxDecoration(

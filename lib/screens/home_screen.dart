@@ -10,6 +10,8 @@ import '../theme.dart';
 import '../providers/health_provider.dart';
 import 'meal_history_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import '../providers/tour_provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -37,6 +39,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final healthState = ref.watch(healthProvider);
+
+    final startTour = ref.watch(tourStartProvider);
+    if (startTour) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(tourStartProvider.notifier).state = false;
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _startInteractiveTour();
+          }
+        });
+      });
+    }
 
     if (healthState.isLoading && healthState.userData == null) {
       return Scaffold(
@@ -224,6 +238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return _buildBentoCard(
+      key: ref.read(tourKeysProvider).bmiKey,
       title: 'Chỉ số BMI của bạn',
       color: Theme.of(context).cardColor,
       child: Row(
@@ -398,6 +413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildAICard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
+      key: ref.read(tourKeysProvider).aiDiaryKey,
       title: 'Nhật ký dinh dưỡng AI',
       color: Theme.of(context).cardColor,
       action: TextButton(
@@ -808,6 +824,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBentoCard({
+    Key? key,
     required String title,
     required Widget child,
     required Color color,
@@ -815,6 +832,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     VoidCallback? onTap,
   }) {
     return Container(
+      key: key,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(24),
@@ -949,6 +967,162 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _startInteractiveTour() {
+    final tourKeys = ref.read(tourKeysProvider);
+
+    // Kiểm tra xem các widget có được render trên màn hình không
+    if (tourKeys.bmiKey.currentContext == null ||
+        tourKeys.aiDiaryKey.currentContext == null ||
+        tourKeys.chatbotKey.currentContext == null ||
+        tourKeys.menuTabKey.currentContext == null) {
+      debugPrint("Một số widget tour guide chưa được render!");
+      return;
+    }
+
+    final List<TargetFocus> targets = [];
+
+    // Bước 1: BMI Card
+    targets.add(
+      TargetFocus(
+        identify: "bmiTarget",
+        keyTarget: tourKeys.bmiKey,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _buildTourBubble(
+              title: "📊 Chỉ số BMI của bạn",
+              message: "Đây là chỉ số BMI động của bạn, tự động tính toán từ cân nặng và chiều cao ở mục cá nhân.",
+            ),
+          )
+        ],
+      ),
+    );
+
+    // Bước 2: AI Diary Card
+    targets.add(
+      TargetFocus(
+        identify: "aiDiaryTarget",
+        keyTarget: tourKeys.aiDiaryKey,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _buildTourBubble(
+              title: "📝 Nhật ký AI & Gợi ý nhanh",
+              message: "Nhập nhanh món ăn tại đây hoặc bấm các thẻ gợi ý nhanh để trợ lý AI tính calo nạp vào cho bạn nhé!",
+            ),
+          )
+        ],
+      ),
+    );
+
+    // Bước 3: Floating Chatbot Icon
+    targets.add(
+      TargetFocus(
+        identify: "chatbotTarget",
+        keyTarget: tourKeys.chatbotKey,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: _buildTourBubble(
+              title: "🤖 Trợ lý Sức khỏe AI",
+              message: "Bấm vào đây để chat trực tiếp với Trợ lý. Bạn có thể gõ \"Tôi vừa đi bộ 30 phút\" rồi bấm nút Lưu để đồng bộ lên biểu đồ.",
+            ),
+          )
+        ],
+      ),
+    );
+
+    // Bước 4: Menu Tab icon
+    targets.add(
+      TargetFocus(
+        identify: "menuTabTarget",
+        keyTarget: tourKeys.menuTabKey,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: _buildTourBubble(
+              title: "📅 Thực đơn Dinh dưỡng AI",
+              message: "Chuyển sang tab này để nhờ AI thiết kế thực đơn ăn chay, ăn kiêng 7 ngày theo sở thích của bạn.",
+            ),
+          )
+        ],
+      ),
+    );
+
+    final tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black,
+      opacityShadow: 0.8,
+      paddingFocus: 10,
+      textSkip: "Bỏ qua",
+      textStyleSkip: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
+      ),
+      onSkip: () {
+        debugPrint("Người dùng bỏ qua Tour");
+        return true;
+      },
+      onFinish: () {
+        debugPrint("Người dùng hoàn thành Tour");
+      },
+    );
+
+    tutorial.show(context: context);
+  }
+
+  Widget _buildTourBubble({required String title, required String message}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2B2D31), // Nền xám tối Discord
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF8A2BE2), width: 2), // Viền tím gradient màu chủ đạo
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Color(0xFFDBDEE1), // Nhạt màu Discord
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
