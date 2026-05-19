@@ -1,6 +1,5 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import Feedback from "../models/Feedback.js";
 import User from "../models/User.js";
 
@@ -44,24 +43,15 @@ router.post("/submit", verifyToken, async (req, res) => {
     const emailSender = user ? user.email : "Không rõ email";
     const nameSender = user ? user.name : "Người dùng ẩn danh";
 
-    // 2. Gửi email qua nodemailer
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_PASS;
+    // 2. Gửi email qua Resend HTTP API (Cổng 443 - Không bị Render chặn)
+    const resendApiKey = process.env.RESEND_API_KEY;
 
-    if (gmailUser && gmailPass) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: gmailUser,
-          pass: gmailPass
-        }
-      });
-
+    if (resendApiKey) {
       const timeString = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
-      const mailOptions = {
-        from: `"HealthAI Assistant" <${gmailUser}>`,
-        to: "truc141004@gmail.com",
+      const emailBody = {
+        from: 'HealthAI <onboarding@resend.dev>',
+        to: 'truc141004@gmail.com',
         subject: `[HealthAI] Đóng góp ý kiến mới từ người dùng: ${nameSender}`,
         html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #ffffff; color: #333333;">
@@ -97,22 +87,30 @@ router.post("/submit", verifyToken, async (req, res) => {
             </div>
 
             <div style="margin-top: 30px; font-size: 11px; color: #888888; text-align: center; border-top: 1px solid #eeeeee; padding-top: 15px;">
-              Đây là thư được gửi tự động từ máy chủ hệ thống HealthAI. Vui lòng không trả lời trực tiếp email này.
+              Đây là thư được gửi tự động từ máy chủ hệ thống HealthAI qua Resend API.
             </div>
           </div>
         `
       };
 
-      // Gửi email bất đồng bộ
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("❌ Lỗi gửi Gmail phản hồi:", error.message);
-        } else {
-          console.log("✅ Đã gửi Gmail phản hồi thành công:", info.response);
-        }
+      // Gửi request HTTP POST không đồng bộ tới Resend
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`
+        },
+        body: JSON.stringify(emailBody)
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("✅ Đã gửi email phản hồi qua Resend API thành công:", data);
+      })
+      .catch(error => {
+        console.error("❌ Lỗi gửi email qua Resend API:", error.message);
       });
     } else {
-      console.warn("⚠️ Không cấu hình GMAIL_USER và GMAIL_PASS trong .env nên không gửi email.");
+      console.warn("⚠️ Không cấu hình RESEND_API_KEY trong .env nên không gửi email.");
     }
 
     return res.status(200).json({
