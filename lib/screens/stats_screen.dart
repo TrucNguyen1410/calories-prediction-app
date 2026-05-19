@@ -365,6 +365,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
+                if (value % 1 != 0) return const SizedBox();
                 final index = value.toInt();
                 if (index < 0 || index >= days.length) return const SizedBox();
                 return SideTitleWidget(
@@ -476,6 +477,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
+                if (value % 1 != 0) return const SizedBox();
                 final index = value.toInt();
                 if (index < 0 || index >= days.length) return const SizedBox();
                 return SideTitleWidget(
