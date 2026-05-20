@@ -443,12 +443,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildCaloriesCard(HealthState state) {
-    const double calTarget = 2000.0;
-    final intake = state.todayIntake;
-    final progress = (intake / calTarget).clamp(0.0, 1.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Hiển thị calo đã đốt từ tập luyện hôm nay
+    final burned = state.todayBurned;
+    // Mục tiêu đốt calo: 500 kcal/ngày là mức khỏe mạnh
+    const double burnTarget = 500.0;
+    final progress = (burned / burnTarget).clamp(0.0, 1.0);
 
     return _buildBentoCard(
-      title: 'Calories hôm nay',
+      title: 'Calo đã đốt hôm nay',
       color: Theme.of(context).cardColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,13 +467,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   return ScaleTransition(scale: animation, child: child);
                 },
                 child: Text(
-                  '${intake.toInt()}',
-                  key: ValueKey<int>(intake.toInt()),
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orangeAccent, letterSpacing: -1),
+                  '${burned.toInt()}',
+                  key: ValueKey<int>(burned.toInt()),
+                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -1),
                 ),
               ),
               const SizedBox(width: 4),
-              Text('kcal', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 12),
@@ -479,19 +482,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF35373C) : Colors.grey[200],
-              color: Colors.orangeAccent,
+              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
+              color: Colors.redAccent,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Mục tiêu: ${calTarget.toInt()} kcal',
-            style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Mục tiêu: ${burnTarget.toInt()} kcal/ngày',
+                style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+              ),
+              if (burned > 0)
+                Icon(Icons.local_fire_department, color: Colors.redAccent, size: 14),
+            ],
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildAICard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
