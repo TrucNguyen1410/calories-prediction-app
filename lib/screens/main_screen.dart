@@ -65,6 +65,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final chatState = ref.watch(chatProvider);
     final chatbotState = ref.watch(chatbotProvider);
     final chatbotNotifier = ref.read(chatbotProvider.notifier);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (chatState.messages.isNotEmpty || chatState.isLoading) {
       _scrollToBottom();
@@ -149,13 +150,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   height: iconSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: AppTheme.primary, width: 2),
+                    color: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                    border: Border.all(color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+                        color: isDark 
+                            ? const Color(0xFFBB86FC).withOpacity(0.5) 
+                            : Colors.black.withOpacity(0.18),
+                        blurRadius: isDark ? 15 : 10,
+                        spreadRadius: isDark ? 2 : 0,
+                        offset: isDark ? Offset.zero : const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -165,10 +169,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: Colors.white,
-                          child: const Icon(
+                          color: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                          child: Icon(
                             Icons.smart_toy_outlined,
-                            color: AppTheme.primary,
+                            color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary,
                             size: 32,
                           ),
                         );
@@ -443,34 +447,44 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.cardColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
         borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _chatController,
-              style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
-              decoration: InputDecoration(
-                hintText: 'Hỏi AI...',
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-              ),
-              onSubmitted: (_) => _handleChatSend(),
+      child: TextField(
+        controller: _chatController,
+        style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+        decoration: InputDecoration(
+          hintText: 'Hỏi AI...',
+          hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+          filled: true,
+          fillColor: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
+          suffixIcon: Container(
+            margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2B2D31) : Colors.transparent,
+              shape: BoxShape.circle,
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFBB86FC).withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.send, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 18),
+              onPressed: _handleChatSend,
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.send, color: AppTheme.primary),
-            onPressed: _handleChatSend,
-          ),
-        ],
+        ),
+        onSubmitted: (_) => _handleChatSend(),
       ),
     );
   }

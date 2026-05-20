@@ -23,7 +23,7 @@ const verifyToken = (req, res, next) => {
 // POST /api/meals
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { name, calories, mealType, date, imageUrl } = req.body;
+    const { name, calories, mealType, date, imageUrl, servingSize } = req.body;
     if (!name || !calories || !mealType || !date) {
       return res.status(400).json({ success: false, message: 'Thiếu thông tin' });
     }
@@ -32,6 +32,7 @@ router.post('/', verifyToken, async (req, res) => {
       userId: req.userId,
       name,
       calories: parseFloat(calories),
+      servingSize: servingSize || "",
       mealType,
       date,
       imageUrl: imageUrl || "",
@@ -39,7 +40,7 @@ router.post('/', verifyToken, async (req, res) => {
     });
 
     await meal.save();
-    console.log(`✅ Meal added for user ${req.userId}`);
+    console.log(`✅ Meal added for user ${req.userId} with serving size: ${servingSize}`);
     res.status(201).json({ success: true, message: 'Đã lưu bữa ăn', meal });
   } catch (err) {
     console.error('❌ Lỗi POST /meals:', err);

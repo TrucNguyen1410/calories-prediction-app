@@ -180,23 +180,24 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Lịch sử Nhật ký Calo',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black, fontSize: 18),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
         centerTitle: true,
         elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: isDark ? const Color(0xFFF2F3F5) : Colors.black),
       ),
       body: Column(
         children: [
           // Search & Filter Panel
           Container(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF2B2D31) : Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               children: [
@@ -205,23 +206,24 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
                           controller: _searchController,
+                          style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87, fontSize: 14),
                           onChanged: (val) {
                             setState(() {
                               _searchQuery = val;
                             });
                             _applyFilterAndSearch();
                           },
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Tìm kiếm món ăn...',
-                            hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
-                            prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
+                            hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 13),
+                            prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF949BA4) : Colors.grey, size: 20),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
@@ -231,7 +233,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                     IconButton(
                       icon: Icon(
                         Icons.filter_alt_outlined,
-                        color: _filterDate != null ? AppTheme.primary : Colors.grey[600],
+                        color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
                       ),
                       onPressed: _pickDate,
                       tooltip: 'Lọc theo ngày',
@@ -289,7 +291,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                               _allMeals.isEmpty 
                                   ? 'Nhật ký của bạn đang trống!' 
                                   : 'Không tìm thấy kết quả phù hợp',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                              style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontSize: 14),
                             ),
                           ],
                         ),
@@ -312,11 +314,12 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? const Color(0xFF2B2D31) : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
+                                border: isDark ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.02),
+                                    color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   )
@@ -331,13 +334,16 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                     leading: _buildMealThumbnail(imageUrl),
                                     title: Text(
                                       name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
                                     subtitle: Padding(
                                       padding: const EdgeInsets.only(top: 4),
-                                      child: Row(
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -350,12 +356,16 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                               style: const TextStyle(color: Colors.purple, fontSize: 10, fontWeight: FontWeight.bold),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Icon(Icons.access_time, size: 12, color: Colors.grey[500]),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '$timeStr - ${_formatDate(dateStr)}',
-                                            style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.access_time, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '$timeStr - ${_formatDate(dateStr)}',
+                                                style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontSize: 11),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -368,30 +378,50 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.orange),
                                         ),
                                         const SizedBox(width: 8),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                                          onPressed: id.isEmpty ? null : () async {
-                                            final confirm = await showDialog<bool>(
-                                              context: context,
-                                              builder: (c) => AlertDialog(
-                                                title: const Text('Xác nhận'),
-                                                content: const Text('Bạn có chắc muốn xóa bữa ăn này khỏi nhật ký?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(c, false),
-                                                    child: const Text('Hủy'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(c, true),
-                                                    child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                            if (confirm == true) {
-                                              await _deleteMeal(id);
-                                            }
-                                          },
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF1E1F22) : Colors.transparent,
+                                            shape: BoxShape.circle,
+                                            boxShadow: isDark
+                                                ? [
+                                                    BoxShadow(
+                                                      color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                                      blurRadius: 10,
+                                                      spreadRadius: 1,
+                                                    )
+                                                  ]
+                                                : null,
+                                          ),
+                                          child: IconButton(
+                                            icon: Icon(
+                                              Icons.delete_outline,
+                                              color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
+                                              size: 20,
+                                            ),
+                                            onPressed: id.isEmpty ? null : () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (c) => AlertDialog(
+                                                  backgroundColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                                                  title: const Text('Xác nhận'),
+                                                  content: const Text('Bạn có chắc muốn xóa bữa ăn này khỏi nhật ký?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(c, false),
+                                                      child: const Text('Hủy'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(c, true),
+                                                      child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                await _deleteMeal(id);
+                                              }
+                                            },
+                                          ),
                                         ),
                                       ],
                                     ),

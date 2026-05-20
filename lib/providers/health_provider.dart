@@ -162,6 +162,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
       }
 
       final workouts = await _apiService.getWorkouts();
+      final allMeals = await _apiService.getMeals();
       
       List<double> wIntake = [];
       List<double> wBurned = [];
@@ -171,9 +172,11 @@ class HealthNotifier extends StateNotifier<HealthState> {
         final date = today.subtract(Duration(days: i));
         final dStr = DateFormat('yyyy-MM-dd').format(date);
         
-        final meals = await _apiService.getMeals(dStr);
+        final dayMeals = allMeals.where((m) => m['date'] == dStr).toList();
         double dIntake = 0.0;
-        for (var m in meals) dIntake += (m['calories'] ?? 0).toDouble();
+        for (var m in dayMeals) {
+          dIntake += (m['calories'] ?? 0).toDouble();
+        }
         wIntake.add(dIntake);
         
         double dBurned = 0.0;
@@ -249,6 +252,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
     required double carbs,
     required double protein,
     required double fat,
+    String? servingSize,
     String? dayName,
   }) async {
     if (state.currentPlan == null) return;
@@ -301,6 +305,9 @@ class HealthNotifier extends StateNotifier<HealthState> {
         updatedMeal['carbs'] = carbs;
         updatedMeal['protein'] = protein;
         updatedMeal['fat'] = fat;
+        if (servingSize != null) {
+          updatedMeal['servingSize'] = servingSize;
+        }
         meals[mealIndex] = updatedMeal;
       }
 

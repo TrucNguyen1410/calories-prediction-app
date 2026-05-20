@@ -291,6 +291,7 @@ class ApiService {
         required String mealType,
         required String date,
         String? imageUrl,
+        String? servingSize,
     }) async {
         try {
             final response = await _post('/meals', {
@@ -299,6 +300,7 @@ class ApiService {
                 'mealType': mealType,
                 'date': date,
                 'imageUrl': imageUrl ?? '',
+                'servingSize': servingSize ?? '',
             });
 
             if (response.statusCode == 201) {

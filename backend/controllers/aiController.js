@@ -240,7 +240,7 @@ export const generateHealthPlan = async (req, res) => {
         const prompt = `
             Dựa trên thông tin: Tên ${name || 'Khách'}, Giới tính ${gender || 'Nam'}, ${age} tuổi, BMI ${bmi}.
             ${specialRequest}
-            Hãy thiết kế một thực đơn dinh dưỡng 7 ngày chuẩn khoa học.
+            Hãy thiết kế một thực đơn dinh dưỡng đầy đủ 7 ngày trong tuần chuẩn khoa học.
             TRẢ VỀ ĐỊNH DẠNG JSON CHUẨN XÁC THEO CẤU TRÚC SAU (KHÔNG BỌC TRONG MARKDOWN CODEBLOCK):
             {
               "action": "GENERATE_MEAL_PLAN",
@@ -252,14 +252,16 @@ export const generateHealthPlan = async (req, res) => {
                   "totalCalories": 1500,
                   "daily_desc": "Mô tả ngắn gọn (VD: Ức gà & Salad)",
                   "meals": [
-                    {"type": "Bữa sáng", "name": "Tên món", "calories": 350, "carbs": 48, "protein": 12, "fat": 6},
-                    {"type": "Bữa trưa", "name": "Tên món", "calories": 500, "carbs": 55, "protein": 25, "fat": 15},
-                    {"type": "Bữa tối", "name": "Tên món", "calories": 450, "carbs": 30, "protein": 10, "fat": 12},
-                    {"type": "Bữa phụ", "name": "Tên món", "calories": 200, "carbs": 20, "protein": 5, "fat": 8}
+                    {"type": "Bữa sáng", "name": "Tên món", "servingSize": "1 tô (250g)", "calories": 350, "carbs": 48, "protein": 12, "fat": 6},
+                    {"type": "Bữa trưa", "name": "Tên món", "servingSize": "1 phần (300g)", "calories": 500, "carbs": 55, "protein": 25, "fat": 15},
+                    {"type": "Bữa tối", "name": "Tên món", "servingSize": "1 đĩa (200g)", "calories": 450, "carbs": 30, "protein": 10, "fat": 12},
+                    {"type": "Bữa phụ", "name": "Tên món", "servingSize": "1 hộp (100g)", "calories": 200, "carbs": 20, "protein": 5, "fat": 8}
                   ]
                 }
               ]
             }
+            BẮT BUỘC: Kế hoạch "weeklyPlan" phải chứa đúng 7 phần tử tương ứng đầy đủ với 7 ngày trong tuần lần lượt là: "T2", "T3", "T4", "T5", "T6", "T7", "CN". Tuyệt đối không được bỏ sót ngày Chủ Nhật ("CN").
+            BẮT BUỘC: Mỗi món ăn PHẢI có trường "servingSize" (khẩu phần/định lượng) rõ ràng khớp với số calo đã tính. Ví dụ: "1 tô (250g)", "2 lát bánh mì", "1 hũ sữa chua (150ml)", "1 chén cơm + 100g thịt".
             QUAN TRỌNG: Mỗi ngày phải có tổng calo KHÁC NHAU tùy theo các món ăn thực tế (dao động 1200-2000 kcal).
             Tính totalCalories = tổng cộng calories của TẤT CẢ các meals trong ngày đó.
             CHỈ TRẢ VỀ JSON. KHÔNG GIẢI THÍCH GÌ THÊM.
@@ -342,6 +344,7 @@ export const analyzeFood = async (req, res) => {
             {
                 "isFood": true,
                 "foodName": "tên món ăn bằng tiếng Việt",
+                "servingSize": "khẩu phần cụ thể tương ứng với số calo (ví dụ: 1 đĩa 200g, 1 tô 300ml, 2 cái bánh)",
                 "estimatedCalories": số calo (number),
                 "calories": số calo (number),
                 "protein": số g đạm (number),
@@ -352,6 +355,7 @@ export const analyzeFood = async (req, res) => {
                 "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
+            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính.
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
             const completion = await groq.chat.completions.create({
@@ -396,6 +400,7 @@ export const analyzeFood = async (req, res) => {
             {
                 "isFood": true,
                 "foodName": "tên món ăn bằng tiếng Việt",
+                "servingSize": "khẩu phần cụ thể tương ứng với số calo (ví dụ: 1 tô 300g, 1 miếng 150g, 2 lát bánh mì)",
                 "estimatedCalories": số calo (number),
                 "calories": số calo (number),
                 "carbs": số g tinh bột (number),
@@ -406,6 +411,7 @@ export const analyzeFood = async (req, res) => {
                 "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
+            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính.
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
             const completion = await groq.chat.completions.create({

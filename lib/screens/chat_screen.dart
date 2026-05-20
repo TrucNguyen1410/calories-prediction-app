@@ -42,7 +42,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
-    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Gọi scroll khi có tin nhắn mới hoặc đang load
     if (chatState.messages.isNotEmpty || chatState.isLoading) {
       _scrollToBottom();
@@ -85,9 +86,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // Giới hạn chiều rộng trên Web để giao diện không bị quá trải dài
           constraints: const BoxConstraints(maxWidth: 800),
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey[50],
             border: Border.symmetric(
-              vertical: BorderSide(color: Colors.grey[200]!, width: 1),
+              vertical: BorderSide(color: isDark ? const Color(0xFF35373C) : Colors.grey[200]!, width: 1),
             ),
           ),
           child: Column(
@@ -131,6 +132,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   // Giao diện chào mừng khi chưa có tin nhắn
   Widget _buildWelcomeScreen() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -150,22 +152,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Chào mừng bạn đến với Trợ lý Sức khỏe AI!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Hãy hỏi tôi bất kỳ câu hỏi nào về sức khỏe, dinh dưỡng hoặc gõ bài tập luyện của bạn (Ví dụ: "Tôi chạy bộ 30 phút") để lưu vào nhật ký nhé.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.black54,
+                color: isDark ? const Color(0xFFB5BAC1) : Colors.black54,
               ),
             ),
           ],
@@ -318,22 +320,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   // Bong bóng chat
   Widget _buildChatBubble(ChatMessage message) {
     final isUser = message.isUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isUser ? Colors.blueAccent : Colors.white,
+          color: isUser ? Colors.blueAccent : (isDark ? Theme.of(context).cardColor : Colors.white),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
             bottomLeft: Radius.circular(isUser ? 16 : 0),
             bottomRight: Radius.circular(isUser ? 0 : 16),
           ),
+          border: (!isUser && isDark) ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.1 : 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             )
@@ -348,7 +352,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               message.text,
               style: TextStyle(
-                color: isUser ? Colors.white : Colors.black87,
+                color: isUser ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 fontSize: 15,
               ),
             ),
@@ -360,7 +364,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               DateFormat('HH:mm').format(message.timestamp),
               style: TextStyle(
-                color: isUser ? Colors.white70 : Colors.black45,
+                color: isUser ? Colors.white70 : (isDark ? const Color(0xFF949BA4) : Colors.black45),
                 fontSize: 10,
               ),
             ),
@@ -478,31 +482,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   // Hiệu ứng AI đang trả lời: Waving Three Dots cực kỳ cao cấp
   Widget _buildTypingIndicator() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Theme.of(context).cardColor : Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: isDark ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withOpacity(isDark ? 0.06 : 0.03),
               blurRadius: 4,
               offset: const Offset(0, 2),
             )
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ThreeDotsIndicator(),
-            SizedBox(width: 12),
+            const ThreeDotsIndicator(),
+            const SizedBox(width: 12),
             Text(
               'Trợ lý đang phân tích...',
               style: TextStyle(
-                color: Colors.black54,
+                color: isDark ? const Color(0xFFB5BAC1) : Colors.black54,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -515,36 +521,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   // Khu vực nhập liệu
   Widget _buildInputArea() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: 'Hỏi về sức khỏe, calo hoặc nhập bài tập (Ví dụ: "chạy bộ 30 phút")...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-              onSubmitted: (_) => _handleSend(),
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: isDark ? Theme.of(context).cardColor : Colors.white,
+      child: TextField(
+        controller: _controller,
+        style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+        decoration: InputDecoration(
+          hintText: 'Hỏi về sức khỏe, calo hoặc nhập bài tập (Ví dụ: "chạy bộ 30 phút")...',
+          hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 13),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none,
           ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: Colors.blueAccent,
+          filled: true,
+          fillColor: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          suffixIcon: Container(
+            margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2B2D31) : Colors.blueAccent,
+              shape: BoxShape.circle,
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFBB86FC).withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
+              icon: Icon(Icons.send, color: isDark ? const Color(0xFFBB86FC) : Colors.white, size: 18),
               onPressed: _handleSend,
             ),
           ),
-        ],
+        ),
+        onSubmitted: (_) => _handleSend(),
       ),
     );
   }

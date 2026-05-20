@@ -69,12 +69,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   Widget build(BuildContext context) {
     final healthState = ref.watch(healthProvider);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1E1F22) : const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 24,
+          vertical: 20,
+        ),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -82,9 +83,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildAISuggestionBanner(healthState),
-                const SizedBox(height: 32),
-                _buildSegmentedControl(),
                 const SizedBox(height: 24),
+                _buildSegmentedControl(),
+                const SizedBox(height: 20),
                 _activeSegment == 0 
                   ? _buildDailyListSection(healthState)
                   : _buildWeeklyListSection(healthState),
@@ -262,6 +263,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       );
     }
 
+    // Tính tổng calo từ các món trong thực đơn hôm nay (kế hoạch AI)
+    final double planTotalCalories = todaysMeals.fold(0.0, (sum, meal) {
+      return sum + ((meal['calories'] ?? 0) as num).toDouble();
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,8 +288,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 return FadeTransition(opacity: animation, child: child);
               },
               child: Text(
-                'Tổng Calo Nạp: ${healthState.todayIntake.toInt()} kcal',
-                key: ValueKey<int>(healthState.todayIntake.toInt()),
+                'Tổng kế hoạch: ${planTotalCalories.toInt()} kcal',
+                key: ValueKey<int>(planTotalCalories.toInt()),
                 style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
@@ -347,7 +353,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           itemCount: mealPlanList.length,
           itemBuilder: (context, index) {
             final plan = mealPlanList[index];
-            final dayName = plan['day']?.toString() ?? 'T${index + 2}';
+            final fallbackDay = index == 6 ? 'CN' : 'T${index + 2}';
+            final dayName = plan['day']?.toString() ?? fallbackDay;
             
             // Lấy danh sách món ăn trong ngày này
             final List<dynamic> meals = plan['meals'] as List<dynamic>? ?? [];
@@ -417,15 +424,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       String mealTypeStr = meal['type']?.toString().toLowerCase() ?? '';
 
                       if (mealTypeStr.contains('trưa')) {
-                        color = Colors.blueAccent;
+                        color = isDark ? Colors.lightBlueAccent : Colors.blueAccent;
                         icon = Icons.wb_twilight;
                         timeStr = "12:15 PM";
                       } else if (mealTypeStr.contains('tối')) {
-                        color = Colors.indigoAccent;
+                        color = isDark ? const Color(0xFFBB86FC) : Colors.indigoAccent;
                         icon = Icons.nights_stay_outlined;
                         timeStr = "06:45 PM";
                       } else if (mealTypeStr.contains('phụ')) {
-                        color = Colors.greenAccent;
+                        color = isDark ? Colors.lightGreenAccent : Colors.greenAccent;
                         icon = Icons.spa_outlined;
                         timeStr = "03:00 PM";
                       }
@@ -452,7 +459,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         timeStr, 
-                                        style: const TextStyle(color: Colors.grey, fontSize: 9, fontWeight: FontWeight.w500)
+                                        style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 9, fontWeight: FontWeight.w500)
                                       ),
                                     ],
                                   ),
@@ -467,9 +474,20 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                  if (meal['servingSize'] != null && meal['servingSize'].toString().isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '⚖️ Định lượng: ${meal['servingSize']}',
+                                      style: TextStyle(
+                                        color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
+                                        fontSize: 10,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
                                   Text(
                                     macros,
-                                    style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                                    style: TextStyle(color: isDark ? const Color(0xFFB5BAC1) : Colors.grey[500], fontSize: 10),
                                   ),
                                 ],
                               ),
@@ -494,8 +512,21 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                     decoration: BoxDecoration(
                                       color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                                       shape: BoxShape.circle,
+                                      boxShadow: isDark
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                                blurRadius: 10,
+                                                spreadRadius: 1,
+                                              )
+                                            ]
+                                          : null,
                                     ),
-                                    child: Icon(Icons.edit, size: 12, color: isDark ? Colors.white70 : Colors.black54),
+                                    child: Icon(
+                                      Icons.edit,
+                                      size: 12,
+                                      color: isDark ? const Color(0xFFBB86FC) : Colors.black54,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -525,8 +556,21 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                     decoration: BoxDecoration(
                                       color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                                       shape: BoxShape.circle,
+                                      boxShadow: isDark
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                                blurRadius: 10,
+                                                spreadRadius: 1,
+                                              )
+                                            ]
+                                          : null,
                                     ),
-                                    child: const Icon(Icons.delete_outline, size: 12, color: Colors.redAccent),
+                                    child: Icon(
+                                      Icons.delete_outline,
+                                      size: 12,
+                                      color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -554,15 +598,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     String mealTypeStr = meal['type']?.toString().toLowerCase() ?? '';
 
     if (mealTypeStr.contains('trưa')) {
-      color = Colors.blueAccent;
+      color = isDark ? Colors.lightBlueAccent : Colors.blueAccent;
       icon = Icons.wb_twilight;
       timeStr = "12:15 PM";
     } else if (mealTypeStr.contains('tối')) {
-      color = Colors.indigoAccent;
+      color = isDark ? const Color(0xFFBB86FC) : Colors.indigoAccent;
       icon = Icons.nights_stay_outlined;
       timeStr = "06:45 PM";
     } else if (mealTypeStr.contains('phụ')) {
-      color = Colors.greenAccent;
+      color = isDark ? Colors.lightGreenAccent : Colors.greenAccent;
       icon = Icons.spa_outlined;
       timeStr = "03:00 PM";
     }
@@ -604,7 +648,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   children: [
                     Text(meal['type'] ?? 'Bữa ăn', style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(width: 8),
-                    Text(timeStr, style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w500)),
+                    Text(timeStr, style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 10, fontWeight: FontWeight.w500)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -618,8 +662,19 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (meal['servingSize'] != null && meal['servingSize'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '⚖️ Định lượng: ${meal['servingSize']}',
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
-                Text(macros, style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+                Text(macros, style: TextStyle(color: isDark ? const Color(0xFFB5BAC1) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -646,24 +701,88 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                         shape: BoxShape.circle,
+                        boxShadow: isDark
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                )
+                              ]
+                            : null,
                       ),
-                      child: Icon(Icons.edit, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+                      child: Icon(Icons.edit, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
                     ),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () => _showCustomMealDialog(
-                      mealType: meal['type'] ?? 'Bữa ăn',
-                      healthState: healthState,
-                      initialFoodName: meal['name'],
-                    ),
+                    onTap: () async {
+                      final name = meal['name'] ?? 'Món ăn';
+                      if (name == 'Chưa chọn món' || name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('⚠️ Vui lòng tùy chỉnh chọn món trước khi thêm vào nhật ký!'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('⏳ Đang ghi nhận "$name" vào nhật ký ăn uống hôm nay...'),
+                          duration: const Duration(milliseconds: 500),
+                        ),
+                      );
+
+                      try {
+                        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                        final double calories = (meal['calories'] ?? 0).toDouble();
+                        final String servingSize = meal['servingSize'] ?? '';
+                        final String mealType = meal['type'] ?? 'Bữa ăn';
+
+                        await _apiService.addMeal(
+                          name: name,
+                          calories: calories,
+                          mealType: mealType,
+                          date: todayStr,
+                          servingSize: servingSize,
+                        );
+
+                        // Refresh state to update total calories
+                        await ref.read(healthProvider.notifier).refreshAll();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('🎉 Đã ghi nhận bữa ${mealType.toLowerCase()}: $name vào nhật ký hôm nay!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } catch (err) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('❌ Lỗi ghi nhận bữa ăn: $err'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                         shape: BoxShape.circle,
+                        boxShadow: isDark
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                )
+                              ]
+                            : null,
                       ),
-                      child: Icon(Icons.add, size: 14, color: isDark ? Colors.white70 : Colors.black54),
+                      child: Icon(Icons.add, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -692,8 +811,17 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1F22) : Colors.grey[100],
                         shape: BoxShape.circle,
+                        boxShadow: isDark
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFBB86FC).withOpacity(0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                )
+                              ]
+                            : null,
                       ),
-                      child: const Icon(Icons.delete_outline, size: 14, color: Colors.redAccent),
+                      child: Icon(Icons.delete_outline, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent),
                     ),
                   ),
                 ],
@@ -725,6 +853,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     double protein = 0.0;
     double fat = 0.0;
     String macrosText = '';
+    String servingSize = '';
+    double multiplier = 1.0;
 
     double targetDailyCalories = 2000.0;
     final double remainingCalories = targetDailyCalories - healthState.todayIntake;
@@ -866,16 +996,62 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Khẩu phần thực tế:',
+                                    style: TextStyle(
+                                      color: isDark ? const Color(0xFFB5BAC1) : Colors.black54,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  DropdownButton<double>(
+                                    value: multiplier,
+                                    dropdownColor: isDark ? const Color(0xFF1E1F22) : Colors.white,
+                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 11, fontWeight: FontWeight.bold),
+                                    isDense: true,
+                                    underline: Container(),
+                                    items: const [
+                                      DropdownMenuItem(value: 0.5, child: Text('x0.5 (Nửa)')),
+                                      DropdownMenuItem(value: 1.0, child: Text('x1.0 (Chuẩn)')),
+                                      DropdownMenuItem(value: 1.5, child: Text('x1.5 (Nhiều)')),
+                                      DropdownMenuItem(value: 2.0, child: Text('x2.0 (Gấp đôi)')),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setDialogState(() {
+                                          multiplier = val;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              if (servingSize.isNotEmpty) ...[
+                                Text(
+                                  'Định lượng gốc: $servingSize',
+                                  style: TextStyle(
+                                    color: isDark ? const Color(0xFF949BA4) : Colors.grey[700],
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
                               Text(
-                                'Năng lượng: ${estimatedCalories.toInt()} kcal',
+                                'Năng lượng: ${(estimatedCalories * multiplier).toInt()} kcal',
                                 style: TextStyle(
                                   color: isDark ? Colors.white : Colors.black87,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                macrosText,
+                                'Carb: ${(carbs * multiplier).toStringAsFixed(1)}g • Protein: ${(protein * multiplier).toStringAsFixed(1)}g • Fat: ${(fat * multiplier).toStringAsFixed(1)}g',
                                 style: TextStyle(
                                   color: isDark ? const Color(0xFF949BA4) : Colors.black54,
                                   fontSize: 11,
@@ -937,6 +1113,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             carbs = (result['carbs'] ?? 0.0).toDouble();
                             protein = (result['protein'] ?? 0.0).toDouble();
                             fat = (result['fat'] ?? 0.0).toDouble();
+                            servingSize = result['servingSize'] ?? '';
                             macrosText = result['macros'] ??
                                 'Carb: ${carbs.toInt()}g • Protein: ${protein.toInt()}g • Fat: ${fat.toInt()}g';
 
@@ -980,14 +1157,19 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         );
 
                         try {
+                          final String finalServingSize = servingSize.isNotEmpty
+                              ? (multiplier == 1.0 ? servingSize : '$servingSize (x$multiplier)')
+                              : '';
+
                           // 1. Lưu đè món mới vào thực đơn (Plan)
                           await ref.read(healthProvider.notifier).updateMealInPlan(
                             mealType: mealType,
                             newName: detectedName,
-                            newCalories: estimatedCalories,
-                            carbs: carbs,
-                            protein: protein,
-                            fat: fat,
+                            newCalories: estimatedCalories * multiplier,
+                            carbs: carbs * multiplier,
+                            protein: protein * multiplier,
+                            fat: fat * multiplier,
+                            servingSize: finalServingSize,
                             dayName: dayName,
                           );
 
@@ -997,9 +1179,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
                             await _apiService.addMeal(
                               name: detectedName,
-                              calories: estimatedCalories,
+                              calories: estimatedCalories * multiplier,
                               mealType: mealType,
                               date: todayStr,
+                              servingSize: finalServingSize,
                             );
                           }
 

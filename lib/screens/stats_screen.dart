@@ -206,7 +206,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   Expanded(
                     child: _buildHighlightCard(
                       title: 'Đốt Nhiều Nhất',
-                      value: healthState.maxBurnedDayName.split(' ')[0],
+                      value: healthState.maxBurnedDayName.contains('(')
+                          ? healthState.maxBurnedDayName.split(' (')[0]
+                          : healthState.maxBurnedDayName,
                       subtitle: healthState.maxBurnedDayName.contains('(')
                           ? healthState.maxBurnedDayName.substring(healthState.maxBurnedDayName.indexOf('(') + 1, healthState.maxBurnedDayName.indexOf(')'))
                           : 'Chưa có',

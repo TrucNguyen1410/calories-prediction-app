@@ -93,11 +93,34 @@ class AppTheme {
       ),
       
       cardTheme: CardThemeData(
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         color: cardColor,
+      ),
+
+      // AppBar
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: Colors.black87,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
+
+      // BottomNavigationBar
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: primary,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
       ),
     );
   }
@@ -185,12 +208,35 @@ class AppTheme {
         prefixIconColor: secondary.withOpacity(0.8),
       ),
       
-      cardTheme: CardThemeData(
-        elevation: 2,
+      cardTheme: const CardThemeData(
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
-        color: const Color(0xFF2B2D31),
+        color: Color(0xFF2B2D31),
+      ),
+
+      // AppBar
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF2B2D31),
+        foregroundColor: const Color(0xFFF2F3F5),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFFF2F3F5),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFFF2F3F5)),
+      ),
+
+      // BottomNavigationBar
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF2B2D31),
+        selectedItemColor: primary,
+        unselectedItemColor: Color(0xFF949BA4),
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
       ),
     );
   }
@@ -236,7 +282,7 @@ class PurpleGradientButton extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: isEnabled
             ? const LinearGradient(
-                colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+                colors: [Color(0xFFBB86FC), Color(0xFF8A2BE2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
@@ -246,8 +292,8 @@ class PurpleGradientButton extends StatelessWidget {
         boxShadow: isEnabled
             ? [
                 BoxShadow(
-                  color: const Color(0xFF7B1FA2).withOpacity(0.3),
-                  blurRadius: 8,
+                  color: const Color(0xFF8A2BE2).withOpacity(0.4),
+                  blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
               ]
