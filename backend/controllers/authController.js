@@ -45,7 +45,11 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: "Mật khẩu sai" });
 
     // Tạo token JWT
-    const token = jwt.sign({ id: user._id }, "SECRET_KEY", { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "your_secret_key_123",
+      { expiresIn: "7d" }
+    );
 
     res.json({
       success: true,

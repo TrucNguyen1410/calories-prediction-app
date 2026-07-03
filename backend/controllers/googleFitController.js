@@ -5,26 +5,50 @@ import CalorieRecord from '../models/CalorieRecord.js';
 
 export const syncGoogleFit = async (req, res) => {
     try {
-        const { userId, accessToken } = req.body;
-        console.log("👉 GOOGLE-SYNC REQUEST RECEIVED. userId:", userId, "accessToken:", accessToken);
+        const { userId, accessToken, refreshToken } = req.body;
+        console.log("👉 GOOGLE-SYNC REQUEST RECEIVED. userId:", userId);
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Update token if provided
+        // Cập nhật token nếu client gửi lên (access token mới mỗi lần đăng nhập)
         if (accessToken) {
             user.googleAccessToken = accessToken;
+        }
+        // Lưu refresh token nếu có để googleapis tự động làm mới access token khi hết hạn
+        if (refreshToken) {
+            user.googleRefreshToken = refreshToken;
+        }
+        if (accessToken || refreshToken) {
             await user.save();
         }
 
-        if (!user.googleAccessToken) {
-            return res.status(401).json({ 
-                success: false, 
-                message: "Không tìm thấy Google Access Token. Phiên kết nối hết hạn hoặc chưa liên kết Google Fit. Vui lòng Đăng xuất và Đăng nhập lại bằng Google để cấp quyền." 
+        if (!user.googleAccessToken && !user.googleRefreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Không tìm thấy Google Access Token. Phiên kết nối hết hạn hoặc chưa liên kết Google Fit. Vui lòng Đăng xuất và Đăng nhập lại bằng Google để cấp quyền."
             });
         }
 
         const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.setCredentials({ access_token: user.googleAccessToken });
+        // Truyền cả refresh_token (nếu có) để thư viện tự động refresh khi access_token hết hạn
+        const credentials = { access_token: user.googleAccessToken };
+        if (user.googleRefreshToken) {
+            credentials.refresh_token = user.googleRefreshToken;
+        }
+        oauth2Client.setCredentials(credentials);
+
+        // Khi thư viện tự refresh, lưu lại access token mới vào DB
+        oauth2Client.on("tokens", async (tokens) => {
+            try {
+                if (tokens.access_token) {
+                    user.googleAccessToken = tokens.access_token;
+                    await user.save();
+                    console.log("🔄 Google access token đã được tự động làm mới.");
+                }
+            } catch (e) {
+                console.error("Lỗi lưu token mới:", e.message);
+            }
+        });
 
         const fitness = google.fitness({
             version: 'v1',

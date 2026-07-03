@@ -60,7 +60,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             },
           ),
         ),
-        title: const Text('Trợ lý Sức khỏe AI (Gemini)'),
+        title: const Text('Trợ lý Sức khỏe AI'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         actions: [

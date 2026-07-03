@@ -10,9 +10,13 @@ import {
     deleteSession
 } from '../controllers/aiController.js';
 import multer from 'multer';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Tất cả các route AI đều yêu cầu xác thực JWT (bảo vệ quota API & dữ liệu cá nhân)
+router.use(verifyToken);
 
 // --- CÁC ROUTE PHIÊN CHAT (SESSIONS) ---
 router.get('/sessions', getUserSessions);
