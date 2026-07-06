@@ -168,7 +168,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         isDark: isDark,
                         theme: theme,
                         trailing: Text(
-                          "v1.0.0",
+                          "v1.2.0",
                           style: TextStyle(
                             color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
                             fontWeight: FontWeight.bold,

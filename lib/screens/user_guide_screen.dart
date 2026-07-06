@@ -92,11 +92,11 @@ class UserGuideScreen extends ConsumerWidget {
               icon: Icons.smart_toy_outlined,
               iconColor: Colors.purpleAccent,
               title: '1. Trợ lý Sức khỏe AI',
-              description: 'Trò chuyện và điều khiển bằng AI',
+              description: 'Trò chuyện, phân tích & ghi chép bằng AI',
               steps: [
-                'Trò chuyện trực tiếp: Nhấn vào bong bóng Robot tròn ở góc màn hình để mở khung chat hỏi đáp sức khỏe.',
-                'Ghi chép nhanh: Gõ tin nhắn như "Tôi vừa ăn 1 bát phở bò" hoặc "Tôi vừa chạy bộ 30 phút" để AI phân tích calo.',
-                'Lưu nhật ký: Bấm nút "Lưu" trực tiếp trên bong bóng chat của AI để đồng bộ calo đã tiêu hao hoặc nạp vào biểu đồ thống kê.',
+                'Trò chuyện trực tiếp: Nhấn bong bóng Robot tròn ở góc màn hình để hỏi đáp về sức khỏe, dinh dưỡng, tập luyện.',
+                'Ghi buổi tập bằng lời: Gõ "Tôi vừa chạy bộ 30 phút", AI tự tính calo đã đốt và cho nút "Lưu" vào nhật ký.',
+                'Lưu nhật ký: Bấm "Lưu" trên bong bóng của AI để đồng bộ calo vào biểu đồ thống kê.',
               ],
             ),
             const SizedBox(height: 16),
@@ -108,12 +108,29 @@ class UserGuideScreen extends ConsumerWidget {
               subtitleColor: subtitleColor,
               icon: Icons.restaurant_menu_outlined,
               iconColor: Colors.greenAccent,
-              title: '2. Thực đơn Dinh dưỡng AI',
-              description: 'Tạo và tùy chỉnh thực đơn ăn kiêng',
+              title: '2. Dinh dưỡng: Phân tích & Thực đơn AI',
+              description: 'Đếm calo món ăn và lập thực đơn 7 ngày',
               steps: [
-                'Tạo thực đơn 7 ngày: Nhấn nút "Tạo thực đơn AI" ở tab Thực đơn, nhập mô tả (ví dụ: "Ăn chay giảm cân 1800kcal") để nhận kế hoạch chi tiết từ AI.',
-                'Chỉnh sửa món ăn: Nhấp vào biểu tượng chỉnh sửa (icon cây bút) nhỏ ở góc mỗi món ăn để thay thế hoặc điều chỉnh món ăn theo ý thích.',
-                'Kiểm tra & Cảnh báo: Bấm "Kiểm tra AI" để AI thẩm định món ăn mới và đưa ra cảnh báo bảo mật, dinh dưỡng hoặc cảnh báo nếu bạn thêm món ăn đêm khuya.',
+                'Phân tích món ăn: Ở thẻ "Nhật ký dinh dưỡng AI", nhập tên món hoặc tải ẢNH món ăn lên, AI sẽ ước tính calo và các chất (đạm, tinh bột, béo).',
+                'Tạo thực đơn 7 ngày: Vào tab Thực đơn, bấm "Tạo thực đơn AI" và mô tả nhu cầu (ví dụ: "Ăn chay giảm cân 1800kcal").',
+                'Chỉnh sửa món: Nhấn biểu tượng cây bút ở mỗi món để thay thế; AI cảnh báo nếu vượt calo mục tiêu.',
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildGuideCard(
+              context: context,
+              cardColor: cardColor,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              icon: Icons.local_fire_department_outlined,
+              iconColor: Colors.orangeAccent,
+              title: '3. Mục tiêu Calo cá nhân (TDEE) & BMI',
+              description: 'Mục tiêu calo tính riêng cho bạn',
+              steps: [
+                'Đặt mục tiêu: Vào Cá nhân → "Mục tiêu & Mức vận động" chọn Giảm/Giữ/Tăng cân và mức vận động.',
+                'Mục tiêu calo tự động: Hệ thống tính lượng calo nạp mỗi ngày (TDEE) dựa trên cân nặng, chiều cao, tuổi, giới tính và mục tiêu — thay cho con số cố định.',
+                'BMI chuẩn Châu Á: Chỉ số BMI phân loại theo mốc Việt Nam (Thiếu cân → Béo phì độ II), hiển thị trực quan trên thẻ ở Trang chủ.',
               ],
             ),
             const SizedBox(height: 16),
@@ -125,12 +142,45 @@ class UserGuideScreen extends ConsumerWidget {
               subtitleColor: subtitleColor,
               icon: Icons.monitor_weight_outlined,
               iconColor: Colors.blueAccent,
-              title: '3. Nhật ký AI & Chỉ số BMI',
-              description: 'Nhập liệu nhanh và quản lý thể trạng',
+              title: '4. Hồ sơ Sức khỏe & Dự đoán ML',
+              description: 'Theo dõi cân nặng và dự đoán calo tiêu hao',
               steps: [
-                'Gợi ý nhanh (Quick-tags): Sử dụng các thẻ gợi ý nhanh ở thẻ "Nhật ký dinh dưỡng AI" như "🥣 Ăn sáng", "🥗 Ăn trưa"... để điền nhanh nội dung món ăn.',
-                'Chỉ số BMI chuẩn Châu Á: Thể hiện thể trạng thực tế của bạn với 5 phân loại từ Gầy đến Béo phì độ 2 theo mốc Việt Nam.',
-                'Thước đo BMI (Gauge): Theo dõi vị trí cân nặng trực quan bằng dải màu gradient trên thanh thước đo ở góc phải thẻ BMI.',
+                'Ghi cân nặng: Vào Cá nhân → "Hồ sơ sức khỏe", bấm "Cập nhật cân nặng" để lưu số đo; app vẽ biểu đồ xu hướng cân nặng & BMI thật theo thời gian.',
+                'Dự đoán calo (AI/ML): Vào "Dự đoán calo tiêu hao", chọn bài tập và nhập thời gian — mô hình Học máy sẽ ước tính lượng calo đốt (các chỉ số cơ thể tự điền từ hồ sơ).',
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildGuideCard(
+              context: context,
+              cardColor: cardColor,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              icon: Icons.directions_walk_outlined,
+              iconColor: Colors.teal,
+              title: '5. Nước uống & Bước chân (Google Fit)',
+              description: 'Theo dõi vận động và nước uống hằng ngày',
+              steps: [
+                'Uống nước: Trên Trang chủ, dùng thẻ "Nước uống" với nút nhanh +250ml / +500ml; mục tiêu nước tính theo cân nặng.',
+                'Đồng bộ Google Fit: Đăng nhập bằng Google (có Google Fit) — app tự động lấy SỐ BƯỚC hằng ngày và hiển thị trên thẻ "Bước chân hôm nay".',
+                'Đồng bộ lại: Nếu phiên Google hết hạn, bấm "ĐĂNG NHẬP LẠI" trên thông báo để kết nối lại.',
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _buildGuideCard(
+              context: context,
+              cardColor: cardColor,
+              textColor: textColor,
+              subtitleColor: subtitleColor,
+              icon: Icons.manage_accounts_outlined,
+              iconColor: Colors.pinkAccent,
+              title: '6. Tài khoản & Cài đặt',
+              description: 'Quản lý hồ sơ và bảo mật',
+              steps: [
+                'Sửa hồ sơ: Nhấn thẻ tên ở đầu trang Cá nhân để sửa Tên, Giới tính, Chiều cao, Cân nặng, Tuổi cùng lúc.',
+                'Bảo mật: Đổi mật khẩu trong mục "Tài khoản & Bảo mật"; nếu quên mật khẩu, dùng "Quên mật khẩu?" ở màn đăng nhập để nhận mã OTP qua email.',
+                'Giao diện & Dữ liệu: Bật/tắt Chế độ tối; có thể xóa tài khoản vĩnh viễn trong "Vùng nguy hiểm".',
               ],
             ),
           ],
@@ -205,9 +255,10 @@ class UserGuideScreen extends ConsumerWidget {
           const Divider(height: 24),
           Column(
             children: steps.map((step) {
-              final parts = step.split(': ');
-              final titleText = parts[0] + ': ';
-              final detailText = parts.length > 1 ? parts[1] : '';
+              // Tách theo dấu ':' ĐẦU TIÊN để không cắt mất phần mô tả có nhiều dấu ':'
+              final idx = step.indexOf(': ');
+              final titleText = idx >= 0 ? step.substring(0, idx + 2) : '';
+              final detailText = idx >= 0 ? step.substring(idx + 2) : step;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: Row(
