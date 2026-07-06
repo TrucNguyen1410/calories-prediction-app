@@ -1542,6 +1542,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         identify: "bmiTarget",
         keyTarget: tourKeys.bmiKey,
         paddingFocus: 8,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -1560,6 +1562,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         identify: "aiDiaryTarget",
         keyTarget: tourKeys.aiDiaryKey,
         paddingFocus: 8,
+        shape: ShapeLightFocus.RRect,
+        radius: 20,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
