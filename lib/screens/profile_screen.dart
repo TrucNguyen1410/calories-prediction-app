@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
@@ -22,6 +23,16 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  // Dùng cho việc đăng nhập lại Google Fit khi phiên hết hạn
+  final dynamic _googleSignIn = GoogleSignIn(
+    clientId: '457112627312-8hv3dglmk2eulk8ahl1ib3sg0hor1c1s.apps.googleusercontent.com',
+    scopes: [
+      'email',
+      'https://www.googleapis.com/auth/fitness.activity.read',
+      'https://www.googleapis.com/auth/fitness.body.read',
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -53,7 +64,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildSectionTitle("Thông số sinh thể"),
                       _buildBiometricDetailsCard(userData, isDark, theme),
                       const SizedBox(height: 24),
-                      _buildSectionTitle("Sức khỏe & Công cụ"),
+                      _buildSectionTitle("Sức khỏe & Mục tiêu"),
                       _buildListTile(
                         icon: Icons.monitor_weight_outlined,
                         title: "Hồ sơ sức khỏe (Cân nặng & BMI)",
@@ -67,6 +78,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                       _buildListTile(
+                        icon: Icons.flag_outlined,
+                        title: "Mục tiêu & Mức vận động",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () => _showGoalDialog(userData, isDark, theme),
+                      ),
+                      _buildListTile(
                         icon: Icons.auto_graph,
                         title: "Dự đoán calo tiêu hao (AI/ML)",
                         isDark: isDark,
@@ -78,15 +96,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           );
                         },
                       ),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle("Thiết bị & Dữ liệu"),
                       _buildListTile(
-                        icon: Icons.flag_outlined,
-                        title: "Mục tiêu & Mức vận động",
+                        icon: Icons.sync,
+                        title: "Đồng bộ Google Fit ngay",
                         isDark: isDark,
                         theme: theme,
-                        onTap: () => _showGoalDialog(userData, isDark, theme),
+                        onTap: _handleGoogleFitSync,
                       ),
                       const SizedBox(height: 24),
-                      _buildSectionTitle("Cá nhân hóa"),
+                      _buildSectionTitle("Tùy chọn"),
                       _buildListTile(
                         icon: Icons.dark_mode_outlined,
                         title: "Chế độ tối (Dark Mode)",
@@ -103,25 +123,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Tài khoản & Bảo mật"),
                       _buildListTile(
-                        icon: Icons.badge_outlined,
-                        title: "Đổi tên hiển thị",
-                        isDark: isDark,
-                        theme: theme,
-                        onTap: () => _showEditNameDialog(userData, isDark, theme),
-                      ),
-                      _buildListTile(
                         icon: Icons.lock_outline,
                         title: "Đổi mật khẩu",
                         isDark: isDark,
                         theme: theme,
                         onTap: () => _showChangePasswordDialog(isDark, theme),
-                      ),
-                      _buildListTile(
-                        icon: Icons.sync,
-                        title: "Đồng bộ Google Fit ngay",
-                        isDark: isDark,
-                        theme: theme,
-                        onTap: _handleGoogleFitSync,
                       ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Hỗ trợ & Thông tin"),
@@ -428,6 +434,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       } catch (_) {}
     }
 
+    final nameController = TextEditingController(text: userData?['name']?.toString() ?? '');
     final weightController = TextEditingController(text: weight > 0 ? weight.toString() : '');
     final heightController = TextEditingController(text: height > 0 ? height.toString() : '');
     final ageController = TextEditingController(text: age > 0 ? age.toString() : '');
@@ -461,7 +468,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cập nhật thông tin cơ bản',
+                'Chỉnh sửa hồ sơ',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -469,6 +476,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                decoration: const InputDecoration(
+                  labelText: 'Tên hiển thị',
+                  prefixIcon: Icon(Icons.badge_outlined, color: AppTheme.primary),
+                ),
+              ),
+              const SizedBox(height: 16),
               TextField(
                 controller: heightController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -524,10 +540,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onPressed: isSaving
                     ? () {}
                     : () async {
+                        final name = nameController.text.trim();
                         final h = double.tryParse(heightController.text) ?? 0.0;
                         final w = double.tryParse(weightController.text) ?? 0.0;
                         final ageVal = int.tryParse(ageController.text) ?? 0;
 
+                        if (name.length < 2) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('⚠️ Tên phải có ít nhất 2 ký tự'), backgroundColor: Colors.orangeAccent),
+                          );
+                          return;
+                        }
                         if (h <= 0 || w <= 0 || ageVal <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('⚠️ Chiều cao, cân nặng và tuổi phải lớn hơn 0'), backgroundColor: Colors.orangeAccent),
@@ -536,13 +559,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         }
 
                         setDialogState(() => isSaving = true);
-                        final res = await ref.read(authProvider.notifier).updateProfile(
-                              height: h,
-                              weight: w,
-                              gender: selectedGender,
-                              age: ageVal,
-                            );
-                        
+                        final res = await ApiService().updateProfileFields({
+                          'name': name,
+                          'height': h,
+                          'weight': w,
+                          'gender': selectedGender,
+                          'age': ageVal,
+                        });
+                        await ref.read(authProvider.notifier).refreshUserData();
                         // Refresh health state BMI/Weight trends reactively
                         await ref.read(healthProvider.notifier).refreshAll();
                         setDialogState(() => isSaving = false);
@@ -550,7 +574,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         if (res['success'] == true) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('🎯 Chỉ số sinh thể đã được cập nhật thành công!'), backgroundColor: Colors.green),
+                            const SnackBar(content: Text('🎯 Hồ sơ đã được cập nhật thành công!'), backgroundColor: Colors.green),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -597,11 +621,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      final msg = e.toString().contains('hết hạn') || e.toString().contains('401')
-          ? 'Phiên Google Fit đã hết hạn. Vui lòng đăng xuất và đăng nhập lại bằng Google.'
-          : 'Không thể đồng bộ Google Fit. Hãy đăng nhập bằng Google để cấp quyền.';
+      // Phiên hết hạn → cho nút đăng nhập lại Google ngay trên snackbar
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('⚠️ $msg'), backgroundColor: Colors.orangeAccent),
+        SnackBar(
+          content: const Text('⚠️ Phiên Google Fit đã hết hạn hoặc chưa cấp quyền.'),
+          backgroundColor: Colors.orangeAccent,
+          duration: const Duration(seconds: 8),
+          action: SnackBarAction(
+            label: 'ĐĂNG NHẬP LẠI',
+            textColor: Colors.white,
+            onPressed: _reloginGoogleFit,
+          ),
+        ),
+      );
+    }
+  }
+
+  // --- Đăng nhập lại Google để lấy token mới rồi đồng bộ lại ---
+  Future<void> _reloginGoogleFit() async {
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+      // Đăng xuất phiên Google cũ để buộc chọn tài khoản & cấp token mới
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+      final dynamic googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        if (mounted) Navigator.pop(context);
+        return; // người dùng hủy
+      }
+      final dynamic googleAuth = await googleUser.authentication;
+      final userData = ref.read(authProvider).userData;
+      final userId = (userData?['id'] ?? userData?['_id'] ?? '').toString();
+
+      final result = await ApiService().syncGoogleFit(
+        userId: userId,
+        accessToken: googleAuth.accessToken ?? googleAuth.idToken,
+      );
+      await ref.read(healthProvider.notifier).refreshAll();
+      if (!mounted) return;
+      Navigator.pop(context);
+      final data = result['data'] ?? {};
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Đã kết nối lại Google Fit: ${data['steps'] ?? 0} bước • ${((data['caloriesBurned'] ?? 0) as num).toStringAsFixed(0)} kcal'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Đăng nhập lại thất bại: $e'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -680,68 +751,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Lưu mục tiêu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- Đổi tên hiển thị ---
-  void _showEditNameDialog(Map<String, dynamic>? userData, bool isDark, ThemeData theme) {
-    final nameController = TextEditingController(text: userData?['name']?.toString() ?? '');
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: theme.cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 24, right: 24, top: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Đổi tên hiển thị',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
-                decoration: const InputDecoration(labelText: 'Tên hiển thị', prefixIcon: Icon(Icons.badge_outlined, color: AppTheme.primary)),
-              ),
-              const SizedBox(height: 24),
-              PurpleGradientButton(
-                height: 52,
-                onPressed: isSaving
-                    ? () {}
-                    : () async {
-                        final newName = nameController.text.trim();
-                        if (newName.length < 2) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('⚠️ Tên phải có ít nhất 2 ký tự'), backgroundColor: Colors.orangeAccent),
-                          );
-                          return;
-                        }
-                        setDialogState(() => isSaving = true);
-                        final res = await ApiService().updateProfileFields({'name': newName});
-                        await ref.read(authProvider.notifier).refreshUserData();
-                        if (!mounted) return;
-                        setDialogState(() => isSaving = false);
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(res['success'] == true ? '✅ Đã đổi tên!' : '❌ ${res['message'] ?? 'Lỗi'}'),
-                            backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
-                          ),
-                        );
-                      },
-                child: isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Lưu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ],
           ),

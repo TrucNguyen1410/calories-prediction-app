@@ -21,7 +21,6 @@ class _PredictScreenState extends State<PredictScreen> {
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
-  final TextEditingController _heartRateController = TextEditingController();
 
   final List<String> _activities = ["Gym", "Chạy bộ", "Đạp xe", "Bơi lội", "Yoga", "Leo núi", "Đi bộ nhanh"];
   String? _selectedActivity;
@@ -48,8 +47,6 @@ class _PredictScreenState extends State<PredictScreen> {
       if (weight > 0) _weightController.text = weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1);
       if (height > 0) _heightController.text = height.toStringAsFixed(0);
       _ageController.text = age.toString();
-      // Nhịp tim trung bình khi tập ~120 bpm — điền sẵn giá trị gợi ý, người dùng có thể sửa
-      if (_heartRateController.text.isEmpty) _heartRateController.text = '120';
       _prefilledFromProfile = weight > 0 || height > 0;
     });
   }
@@ -58,13 +55,18 @@ class _PredictScreenState extends State<PredictScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
+    final age = int.tryParse(_ageController.text) ?? 25;
+    // Ước lượng nhịp tim trung bình khi tập ~70% nhịp tim tối đa (220 - tuổi)
+    // để người dùng không phải tự nhập chỉ số khó biết này.
+    final estimatedHeartRate = ((220 - age) * 0.7).round().clamp(60, 200);
+
     final workout = Workout(
       activityType: _selectedActivity ?? "Không xác định",
       weight: double.tryParse(_weightController.text) ?? 0,
       height: double.tryParse(_heightController.text) ?? 0,
-      age: int.tryParse(_ageController.text) ?? 0,
+      age: age,
       duration: int.tryParse(_durationController.text) ?? 0,
-      heartRate: int.tryParse(_heartRateController.text) ?? 0,
+      heartRate: estimatedHeartRate,
       calories: 0,
       date: DateTime.now().toIso8601String(),
     );
@@ -180,7 +182,6 @@ class _PredictScreenState extends State<PredictScreen> {
       _buildTextField("Chiều cao (cm)", _heightController, Icons.height),
       _buildTextField("Tuổi", _ageController, Icons.person_outline),
       _buildTextField("Thời gian (phút)", _durationController, Icons.timer_outlined),
-      _buildTextField("Nhịp tim (bpm)", _heartRateController, Icons.favorite_border),
     ];
 
     if (isMobile) {
