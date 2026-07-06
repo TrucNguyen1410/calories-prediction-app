@@ -117,6 +117,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
   final Ref _ref;
   final ApiService _apiService = ApiService();
   static const String _planKey = 'cached_meal_plan';
+  bool _isRefreshing = false; // chống gọi refreshAll chồng chéo gây giật giao diện
 
   HealthNotifier(this._ref) : super(HealthState()) {
     // Khôi phục thực đơn đã lưu từ bộ nhớ cục bộ khi khởi động
@@ -173,14 +174,17 @@ class HealthNotifier extends StateNotifier<HealthState> {
       return;
     }
 
-    state = state.copyWith(userData: userData, isLoading: true);
+    state = state.copyWith(userData: userData);
     await refreshAll(user: userData);
   }
 
   Future<void> refreshAll({Map<String, dynamic>? user}) async {
+    // Nếu đang có một lần làm mới chạy dở, bỏ qua lần gọi mới để tránh giật/đồng bộ trùng
+    if (_isRefreshing) return;
+    _isRefreshing = true;
     state = state.copyWith(isLoading: true);
     final today = DateTime.now();
-    
+
     try {
       final activeUser = user ?? await _apiService.getUserData();
       
@@ -277,6 +281,8 @@ class HealthNotifier extends StateNotifier<HealthState> {
       );
     } catch (e) {
       state = state.copyWith(isLoading: false);
+    } finally {
+      _isRefreshing = false;
     }
   }
 

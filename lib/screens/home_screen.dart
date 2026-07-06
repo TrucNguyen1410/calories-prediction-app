@@ -1613,6 +1613,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       colorShadow: Colors.black,
       opacityShadow: 0.8,
       paddingFocus: 10,
+      pulseEnable: false, // tắt hiệu ứng nhấp nháy gây cảm giác "giật"
       textSkip: "Bỏ qua",
       textStyleSkip: const TextStyle(
         color: Colors.white,
