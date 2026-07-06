@@ -530,18 +530,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
-                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -1),
-              ),
-              const SizedBox(width: 4),
-              Text('/ ${(target / 1000).toStringAsFixed(1)} L',
-                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 13, fontWeight: FontWeight.w500)),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
+                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -1),
+                ),
+                const SizedBox(width: 4),
+                Text('/ ${(target / 1000).toStringAsFixed(1)} L',
+                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 13, fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -601,19 +605,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Icon(Icons.directions_walk, color: Colors.teal, size: 22),
-              const SizedBox(width: 4),
-              Text(
-                steps > 0 ? steps.toInt().toString() : '0',
-                style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -1),
-              ),
-              const SizedBox(width: 4),
-              Text('bước', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Icon(Icons.directions_walk, color: Colors.teal, size: 22),
+                const SizedBox(width: 4),
+                Text(
+                  steps > 0 ? steps.toInt().toString() : '0',
+                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -1),
+                ),
+                const SizedBox(width: 4),
+                Text('bước', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -629,9 +637,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Mục tiêu: 10.000 bước',
-                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+              Flexible(
+                child: Text('Mục tiêu: 10.000 bước',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+              ),
+              const SizedBox(width: 6),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.sync, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
                   const SizedBox(width: 3),
