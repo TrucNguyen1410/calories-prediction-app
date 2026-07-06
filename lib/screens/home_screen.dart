@@ -240,6 +240,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               _buildBMICard(state),
               const SizedBox(height: 16),
+              _buildStepsCard(state),
+              const SizedBox(height: 16),
               _buildCaloriesCard(state),
               const SizedBox(height: 16),
               _buildWaterCard(state),
@@ -271,13 +273,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _buildAICard()),
+                Expanded(child: _buildStepsCard(state)),
                 const SizedBox(width: 16),
                 Expanded(child: _buildWaterCard(state)),
               ],
             ),
             const SizedBox(height: 16),
-            _buildAIWorkoutCard(),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildAICard()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildAIWorkoutCard()),
+              ],
+            ),
             const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,6 +585,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildStepsCard(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final steps = state.todaySteps;
+    const double stepGoal = 10000.0;
+    final progress = (steps / stepGoal).clamp(0.0, 1.0);
+
+    return _buildBentoCard(
+      title: 'Bước chân hôm nay',
+      color: Theme.of(context).cardColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Icon(Icons.directions_walk, color: Colors.teal, size: 22),
+              const SizedBox(width: 4),
+              Text(
+                steps > 0 ? steps.toInt().toString() : '0',
+                style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -1),
+              ),
+              const SizedBox(width: 4),
+              Text('bước', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
+              color: Colors.teal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Mục tiêu: 10.000 bước',
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+              Row(
+                children: [
+                  Icon(Icons.sync, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                  const SizedBox(width: 3),
+                  Text('Google Fit',
+                      style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 10)),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

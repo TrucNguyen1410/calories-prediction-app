@@ -18,6 +18,7 @@ class HealthState {
   final List<double> weeklyWeight; // 7 days
   final List<double> weeklyBMI; // 7 days
   final double todayWaterMl; // lượng nước đã uống hôm nay (ml)
+  final double todaySteps; // số bước hôm nay (đồng bộ từ Google Fit)
   final bool isLoading;
 
   HealthState({
@@ -31,6 +32,7 @@ class HealthState {
     this.weeklyWeight = const [0, 0, 0, 0, 0, 0, 0],
     this.weeklyBMI = const [0, 0, 0, 0, 0, 0, 0],
     this.todayWaterMl = 0.0,
+    this.todaySteps = 0.0,
     this.isLoading = false,
   });
 
@@ -91,6 +93,7 @@ class HealthState {
     List<double>? weeklyWeight,
     List<double>? weeklyBMI,
     double? todayWaterMl,
+    double? todaySteps,
     bool? isLoading,
   }) {
     return HealthState(
@@ -104,6 +107,7 @@ class HealthState {
       weeklyWeight: weeklyWeight ?? this.weeklyWeight,
       weeklyBMI: weeklyBMI ?? this.weeklyBMI,
       todayWaterMl: todayWaterMl ?? this.todayWaterMl,
+      todaySteps: todaySteps ?? this.todaySteps,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -181,13 +185,15 @@ class HealthNotifier extends StateNotifier<HealthState> {
       final activeUser = user ?? await _apiService.getUserData();
       
       // Tự động đồng bộ với Google Fit API trước khi tải danh sách bài tập!
+      double syncedSteps = state.todaySteps; // giữ giá trị cũ nếu đồng bộ lỗi
       if (activeUser != null) {
         final userId = activeUser['id'] ?? activeUser['_id'] ?? '';
         if (userId.isNotEmpty) {
           try {
-            await _apiService.syncGoogleFit(userId: userId);
+            final res = await _apiService.syncGoogleFit(userId: userId);
+            syncedSteps = ((res['data']?['steps']) ?? syncedSteps).toDouble();
           } catch (e) {
-            // Google Fit sync errors are non-critical
+            // Lỗi đồng bộ Google Fit không nghiêm trọng (token hết hạn / chưa liên kết)
           }
         }
       }
@@ -266,6 +272,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
         weeklyWeight: wWeight,
         weeklyBMI: wBMI,
         todayWaterMl: waterToday,
+        todaySteps: syncedSteps,
         isLoading: false,
       );
     } catch (e) {
