@@ -9,6 +9,7 @@ import 'terms_policy_screen.dart';
 import 'user_guide_screen.dart';
 import 'records_screen.dart';
 import 'predict_screen.dart';
+import '../utils/health_calc.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String name;
@@ -77,6 +78,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           );
                         },
                       ),
+                      _buildListTile(
+                        icon: Icons.flag_outlined,
+                        title: "Mục tiêu & Mức vận động",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () => _showGoalDialog(userData, isDark, theme),
+                      ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Cá nhân hóa"),
                       _buildListTile(
@@ -95,6 +103,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Tài khoản & Bảo mật"),
                       _buildListTile(
+                        icon: Icons.badge_outlined,
+                        title: "Đổi tên hiển thị",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () => _showEditNameDialog(userData, isDark, theme),
+                      ),
+                      _buildListTile(
                         icon: Icons.lock_outline,
                         title: "Đổi mật khẩu",
                         isDark: isDark,
@@ -102,19 +117,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         onTap: () => _showChangePasswordDialog(isDark, theme),
                       ),
                       _buildListTile(
-                        icon: Icons.sync_lock,
-                        title: "Đồng bộ Google Fit",
+                        icon: Icons.sync,
+                        title: "Đồng bộ Google Fit ngay",
                         isDark: isDark,
                         theme: theme,
-                        trailing: const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('🔒 Hệ thống tự động đồng bộ hóa Google Fit an toàn.'),
-                              backgroundColor: Colors.blueAccent,
-                            ),
-                          );
-                        },
+                        onTap: _handleGoogleFitSync,
                       ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Hỗ trợ & Thông tin"),
@@ -160,6 +167,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle("Vùng nguy hiểm"),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.red.withOpacity(0.4)),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                          leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                          title: const Text("Xóa tài khoản",
+                              style: TextStyle(fontWeight: FontWeight.w500, color: Colors.redAccent)),
+                          trailing: const Icon(Icons.chevron_right, color: Colors.redAccent),
+                          onTap: _showDeleteAccountDialog,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
                       ),
                     ],
@@ -541,6 +567,220 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  // --- Đồng bộ Google Fit thật (báo kết quả trung thực) ---
+  Future<void> _handleGoogleFitSync() async {
+    final userData = ref.read(authProvider).userData;
+    final userId = (userData?['id'] ?? userData?['_id'] ?? '').toString();
+    if (userId.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final result = await ApiService().syncGoogleFit(userId: userId);
+      await ref.read(healthProvider.notifier).refreshAll();
+      if (!mounted) return;
+      Navigator.pop(context);
+      final data = result['data'] ?? {};
+      final steps = data['steps'] ?? 0;
+      final cal = (data['caloriesBurned'] ?? 0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Đồng bộ Google Fit: $steps bước • ${(cal as num).toStringAsFixed(0)} kcal'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      final msg = e.toString().contains('hết hạn') || e.toString().contains('401')
+          ? 'Phiên Google Fit đã hết hạn. Vui lòng đăng xuất và đăng nhập lại bằng Google.'
+          : 'Không thể đồng bộ Google Fit. Hãy đăng nhập bằng Google để cấp quyền.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('⚠️ $msg'), backgroundColor: Colors.orangeAccent),
+      );
+    }
+  }
+
+  // --- Đặt mục tiêu & mức vận động ---
+  void _showGoalDialog(Map<String, dynamic>? userData, bool isDark, ThemeData theme) {
+    String goal = userData?['goal']?.toString() ?? 'maintain';
+    String activity = userData?['activityLevel']?.toString() ?? 'light';
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 24, right: 24, top: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Mục tiêu & Mức vận động',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+              const SizedBox(height: 8),
+              Text('Dùng để tính mục tiêu calo nạp mỗi ngày của bạn.', style: TextStyle(color: theme.hintColor, fontSize: 13)),
+              const SizedBox(height: 20),
+              Text('Mục tiêu', style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: HealthCalc.goalLabels.entries.map((e) {
+                  return ChoiceChip(
+                    label: Text(e.value),
+                    selected: goal == e.key,
+                    selectedColor: AppTheme.primary,
+                    labelStyle: TextStyle(color: goal == e.key ? Colors.white : (isDark ? Colors.white70 : Colors.black87)),
+                    onSelected: (_) => setDialogState(() => goal = e.key),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              Text('Mức độ vận động', style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: activity,
+                dropdownColor: theme.cardColor,
+                isExpanded: true,
+                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                items: HealthCalc.activityLabels.entries
+                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13))))
+                    .toList(),
+                onChanged: (v) => setDialogState(() => activity = v ?? 'light'),
+                decoration: const InputDecoration(prefixIcon: Icon(Icons.directions_run, color: AppTheme.primary)),
+              ),
+              const SizedBox(height: 24),
+              PurpleGradientButton(
+                height: 52,
+                onPressed: isSaving
+                    ? () {}
+                    : () async {
+                        setDialogState(() => isSaving = true);
+                        final res = await ApiService().updateProfileFields({'goal': goal, 'activityLevel': activity});
+                        await ref.read(authProvider.notifier).refreshUserData();
+                        await ref.read(healthProvider.notifier).refreshAll();
+                        if (!mounted) return;
+                        setDialogState(() => isSaving = false);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['success'] == true ? '🎯 Đã cập nhật mục tiêu!' : '❌ ${res['message'] ?? 'Lỗi'}'),
+                            backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                          ),
+                        );
+                      },
+                child: isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Lưu mục tiêu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Đổi tên hiển thị ---
+  void _showEditNameDialog(Map<String, dynamic>? userData, bool isDark, ThemeData theme) {
+    final nameController = TextEditingController(text: userData?['name']?.toString() ?? '');
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24, left: 24, right: 24, top: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Đổi tên hiển thị',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                decoration: const InputDecoration(labelText: 'Tên hiển thị', prefixIcon: Icon(Icons.badge_outlined, color: AppTheme.primary)),
+              ),
+              const SizedBox(height: 24),
+              PurpleGradientButton(
+                height: 52,
+                onPressed: isSaving
+                    ? () {}
+                    : () async {
+                        final newName = nameController.text.trim();
+                        if (newName.length < 2) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('⚠️ Tên phải có ít nhất 2 ký tự'), backgroundColor: Colors.orangeAccent),
+                          );
+                          return;
+                        }
+                        setDialogState(() => isSaving = true);
+                        final res = await ApiService().updateProfileFields({'name': newName});
+                        await ref.read(authProvider.notifier).refreshUserData();
+                        if (!mounted) return;
+                        setDialogState(() => isSaving = false);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['success'] == true ? '✅ Đã đổi tên!' : '❌ ${res['message'] ?? 'Lỗi'}'),
+                            backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                          ),
+                        );
+                      },
+                child: isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Lưu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Xóa tài khoản (2 bước xác nhận) ---
+  Future<void> _showDeleteAccountDialog() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa tài khoản?'),
+        content: const Text(
+          'Toàn bộ dữ liệu của bạn (bữa ăn, hoạt động, chỉ số, hội thoại AI) sẽ bị xóa vĩnh viễn và KHÔNG THỂ khôi phục. Bạn có chắc chắn?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa vĩnh viễn', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    final res = await ApiService().deleteAccount();
+    if (!mounted) return;
+    Navigator.pop(context); // đóng loading
+    if (res['success'] == true) {
+      await ref.read(authProvider.notifier).logout();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ ${res['message'] ?? 'Xóa thất bại'}'), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   void _showChangePasswordDialog(bool isDark, ThemeData theme) {

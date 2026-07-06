@@ -133,7 +133,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               obscureText: _obscurePassword,
               onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
-            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _showForgotPasswordDialog,
+                child: const Text('Quên mật khẩu?', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 12),
             _isLoading
                 ? const CircularProgressIndicator()
                 : Column(
@@ -240,6 +247,100 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
+    );
+  }
+
+  // --- Luồng quên mật khẩu bằng OTP email ---
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    final otpController = TextEditingController();
+    final newPassController = TextEditingController();
+    bool otpSent = false;
+    bool busy = false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(otpSent ? 'Đặt lại mật khẩu' : 'Quên mật khẩu'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!otpSent) ...[
+                  const Text('Nhập email tài khoản, chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.',
+                      style: TextStyle(fontSize: 13)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                  ),
+                ] else ...[
+                  Text('Nhập mã OTP đã gửi tới ${emailController.text} và mật khẩu mới.',
+                      style: const TextStyle(fontSize: 13)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: const InputDecoration(labelText: 'Mã OTP (6 số)', prefixIcon: Icon(Icons.pin_outlined)),
+                  ),
+                  TextField(
+                    controller: newPassController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Mật khẩu mới', prefixIcon: Icon(Icons.lock_outline)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+            ElevatedButton(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      setDialogState(() => busy = true);
+                      if (!otpSent) {
+                        final res = await _apiService.forgotPassword(emailController.text.trim());
+                        setDialogState(() {
+                          busy = false;
+                          otpSent = res['success'] == true;
+                        });
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(res['message'] ?? '')),
+                          );
+                        }
+                      } else {
+                        final res = await _apiService.resetPassword(
+                          email: emailController.text.trim(),
+                          otp: otpController.text.trim(),
+                          newPassword: newPassController.text,
+                        );
+                        setDialogState(() => busy = false);
+                        if (res['success'] == true) {
+                          if (mounted) Navigator.pop(ctx);
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(res['message'] ?? ''),
+                              backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(otpSent ? 'Đặt lại' : 'Gửi OTP'),
+            ),
+          ],
         ),
       ),
     );

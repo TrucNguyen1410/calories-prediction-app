@@ -19,9 +19,14 @@ Token nhận được sau khi đăng nhập, hết hạn sau 7 ngày.
 |--------|----------|:----:|-------|------|
 | POST | `/register` | ❌ | Đăng ký tài khoản | `{ name, email, password, gender, birthdate }` |
 | POST | `/login` | ❌ | Đăng nhập (trả JWT + user) | `{ email, password }` |
-| PUT | `/profile/:id` | ❌* | Cập nhật chiều cao/cân nặng/giới tính/tuổi (ghi lại mốc BMI) | `{ height, weight, gender, age }` |
+| PUT | `/profile/:id` | ❌* | Cập nhật hồ sơ (tên/chiều cao/cân nặng/giới tính/tuổi/mục tiêu/mức vận động/onboarded) | `{ name?, height?, weight?, gender?, age?, goal?, activityLevel?, onboarded? }` |
 | POST | `/change-password` | ❌* | Đổi mật khẩu | `{ userId, oldPassword, newPassword }` |
+| POST | `/forgot-password` | ❌ | Gửi mã OTP đặt lại mật khẩu qua email | `{ email }` |
+| POST | `/reset-password` | ❌ | Đặt lại mật khẩu bằng OTP | `{ email, otp, newPassword }` |
+| DELETE | `/account` | 🔒 | Xóa tài khoản & toàn bộ dữ liệu liên quan | — |
 | POST | `/google-sync` | ❌* | Đồng bộ Google Fit (steps, calo) | `{ userId, accessToken, refreshToken? }` |
+
+> `goal` ∈ `lose | maintain | gain`; `activityLevel` ∈ `sedentary | light | moderate | active | very_active`. Dùng để tính **mục tiêu calo nạp/ngày (TDEE)** cá nhân hóa.
 
 > *Các route này hiện xác thực dựa trên `userId`/token Google trong body. Có giới hạn tần suất (rate limit) cho `/register` và `/login`.
 
@@ -81,6 +86,18 @@ Token nhận được sau khi đăng nhập, hết hạn sau 7 ngày.
 | POST | `/weight` | Ghi nhận số đo cân nặng (tự tính BMI, đồng bộ hồ sơ) | `{ weight, height?, note? }` |
 | GET | `/weight?limit=100` | Lịch sử cân nặng/BMI (mới nhất trước) | — |
 | DELETE | `/weight/:id` | Xóa một bản ghi | — |
+| POST | `/water` | Ghi thêm lượng nước uống (ml) | `{ amountMl, date? }` |
+| GET | `/water?date=YYYY-MM-DD` | Tổng nước uống trong ngày | — |
+| DELETE | `/water/last` | Hoàn tác lần ghi nước gần nhất | — |
+
+---
+
+## 5b. Keep-alive — `GET /health` (không cần auth)
+
+Trả về trạng thái server (uptime, kết nối DB) — dùng cho cron ping chống Render free ngủ đông:
+```json
+{ "status": "ok", "uptime": 123.4, "db": "connected", "time": "..." }
+```
 
 **Weight record item:**
 ```json

@@ -6,6 +6,7 @@ import 'screens/register_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/health_plan_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
@@ -37,7 +38,15 @@ class MyApp extends ConsumerWidget {
             ),
           );
         case AuthStatus.authenticated:
-          return MainScreen(userData: authState.userData);
+          final u = authState.userData;
+          final onboarded = u?['onboarded'] == true;
+          final w = u?['weight'] ?? 0;
+          final weightNum = w is num ? w : 0;
+          // Chỉ hiện onboarding cho tài khoản mới chưa có chỉ số cơ thể
+          if (!onboarded && weightNum <= 0) {
+            return const OnboardingScreen();
+          }
+          return MainScreen(userData: u);
         case AuthStatus.unauthenticated:
           return const LoginScreen();
       }

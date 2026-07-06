@@ -53,4 +53,34 @@ export function computeTDEE(bmr, activityFactor = 1.375) {
     return Math.round(bmr * activityFactor);
 }
 
-export default { computeBMI, classifyBMIAsian, computeBMR, computeTDEE };
+// Hệ số vận động tương ứng mức độ hoạt động
+export const ACTIVITY_FACTORS = {
+    sedentary: 1.2, // ít vận động
+    light: 1.375, // vận động nhẹ (1-3 buổi/tuần)
+    moderate: 1.55, // vận động vừa (3-5 buổi/tuần)
+    active: 1.725, // vận động nhiều (6-7 buổi/tuần)
+    very_active: 1.9, // vận động rất nhiều / lao động nặng
+};
+
+/**
+ * Tính mục tiêu calo nạp hằng ngày cá nhân hóa từ hồ sơ + mục tiêu.
+ * @returns {number|null} mục tiêu kcal/ngày (đã điều chỉnh theo mục tiêu, clamp tối thiểu 1200)
+ */
+export function computeDailyCalorieTarget({ weightKg, heightCm, age, gender, goal = "maintain", activityLevel = "light" }) {
+    const bmr = computeBMR(weightKg, heightCm, age, gender);
+    if (!bmr) return null;
+    const factor = ACTIVITY_FACTORS[activityLevel] || ACTIVITY_FACTORS.light;
+    let tdee = Math.round(bmr * factor);
+    if (goal === "lose") tdee -= 500;
+    else if (goal === "gain") tdee += 500;
+    return Math.max(1200, tdee);
+}
+
+export default {
+    computeBMI,
+    classifyBMIAsian,
+    computeBMR,
+    computeTDEE,
+    computeDailyCalorieTarget,
+    ACTIVITY_FACTORS,
+};

@@ -1,5 +1,6 @@
 import express from "express";
 import HealthMetric from "../models/HealthMetric.js";
+import WaterLog from "../models/WaterLog.js";
 import User from "../models/User.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { computeBMI, classifyBMIAsian } from "../utils/health.js";
@@ -110,6 +111,77 @@ router.delete("/weight/:id", async (req, res) => {
     } catch (err) {
         console.error("DELETE WEIGHT RECORD ERROR:", err);
         return res.status(500).json({ success: false, message: "Lỗi xóa bản ghi." });
+    }
+});
+
+// ============ THEO DÕI NƯỚC UỐNG ============
+
+// --- Ghi thêm lượng nước uống ---
+// POST /api/records/water  { amountMl, date? }
+router.post("/water", async (req, res) => {
+    try {
+        const amount = parseInt(req.body.amountMl);
+        if (Number.isNaN(amount) || amount <= 0 || amount > 5000) {
+            return res.status(400).json({
+                success: false,
+                message: "Lượng nước không hợp lệ (1 - 5000 ml).",
+            });
+        }
+        const date = req.body.date || new Date().toISOString().split("T")[0];
+
+        await WaterLog.create({ userId: req.userId, amountMl: amount, date });
+
+        // Tính tổng nước đã uống trong ngày
+        const logs = await WaterLog.find({ userId: req.userId, date });
+        const total = logs.reduce((sum, l) => sum + l.amountMl, 0);
+
+        return res.status(201).json({
+            success: true,
+            message: "Đã ghi nhận lượng nước.",
+            data: { date, totalMl: total },
+        });
+    } catch (err) {
+        console.error("ADD WATER ERROR:", err);
+        return res.status(500).json({ success: false, message: "Lỗi ghi nước uống." });
+    }
+});
+
+// --- Lấy tổng nước uống theo ngày (mặc định hôm nay) ---
+// GET /api/records/water?date=YYYY-MM-DD
+router.get("/water", async (req, res) => {
+    try {
+        const date = req.query.date || new Date().toISOString().split("T")[0];
+        const logs = await WaterLog.find({ userId: req.userId, date }).sort({ createdAt: -1 });
+        const total = logs.reduce((sum, l) => sum + l.amountMl, 0);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                date,
+                totalMl: total,
+                entries: logs.map((l) => ({ _id: l._id, amountMl: l.amountMl, createdAt: l.createdAt })),
+            },
+        });
+    } catch (err) {
+        console.error("GET WATER ERROR:", err);
+        return res.status(500).json({ success: false, message: "Lỗi lấy dữ liệu nước uống." });
+    }
+});
+
+// --- Hoàn tác lần ghi nước gần nhất trong ngày ---
+// DELETE /api/records/water/last?date=YYYY-MM-DD
+router.delete("/water/last", async (req, res) => {
+    try {
+        const date = req.query.date || new Date().toISOString().split("T")[0];
+        const last = await WaterLog.findOne({ userId: req.userId, date }).sort({ createdAt: -1 });
+        if (last) await WaterLog.findByIdAndDelete(last._id);
+
+        const logs = await WaterLog.find({ userId: req.userId, date });
+        const total = logs.reduce((sum, l) => sum + l.amountMl, 0);
+        return res.status(200).json({ success: true, data: { date, totalMl: total } });
+    } catch (err) {
+        console.error("DELETE WATER ERROR:", err);
+        return res.status(500).json({ success: false, message: "Lỗi hoàn tác nước uống." });
     }
 });
 

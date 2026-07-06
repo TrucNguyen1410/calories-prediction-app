@@ -856,7 +856,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     String servingSize = '';
     double multiplier = 1.0;
 
-    double targetDailyCalories = 2000.0;
+    double targetDailyCalories = healthState.dailyCalorieTarget;
     final double remainingCalories = targetDailyCalories - healthState.todayIntake;
 
     showDialog(

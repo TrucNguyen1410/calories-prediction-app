@@ -242,6 +242,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 16),
               _buildCaloriesCard(state),
               const SizedBox(height: 16),
+              _buildWaterCard(state),
+              const SizedBox(height: 16),
               _buildAICard(),
               const SizedBox(height: 16),
               _buildAIWorkoutCard(),
@@ -271,9 +273,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 Expanded(child: _buildAICard()),
                 const SizedBox(width: 16),
-                Expanded(child: _buildAIWorkoutCard()),
+                Expanded(child: _buildWaterCard(state)),
               ],
             ),
+            const SizedBox(height: 16),
+            _buildAIWorkoutCard(),
             const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,6 +507,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+
+  Widget _buildWaterCard(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final current = state.todayWaterMl;
+    final target = state.waterTargetMl;
+    final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+
+    return _buildBentoCard(
+      title: 'Nước uống hôm nay',
+      color: Theme.of(context).cardColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
+                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -1),
+              ),
+              const SizedBox(width: 4),
+              Text('/ ${(target / 1000).toStringAsFixed(1)} L',
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
+              color: const Color(0xFF29B6F6),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _waterQuickButton('+250ml', 250),
+              const SizedBox(width: 8),
+              _waterQuickButton('+500ml', 500),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Hoàn tác',
+                onPressed: current > 0 ? () => ref.read(healthProvider.notifier).undoWater() : null,
+                icon: Icon(Icons.undo, size: 18, color: isDark ? const Color(0xFF949BA4) : Colors.grey),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _waterQuickButton(String label, int ml) {
+    return OutlinedButton(
+      onPressed: () => ref.read(healthProvider.notifier).addWater(ml),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF0288D1),
+        side: const BorderSide(color: Color(0xFF29B6F6)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        minimumSize: const Size(0, 34),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    );
+  }
 
   Widget _buildAICard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;

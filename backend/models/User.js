@@ -9,9 +9,23 @@ const UserSchema = new mongoose.Schema({
     
     // --- CÁC TRƯỜNG MỚI ĐƯỢC THÊM VÀO ---
     gender: { type: String, enum: ['Nam', 'Nữ', 'Khác'] },
-    height: { type: Number, default: 0 }, 
+    height: { type: Number, default: 0 },
     weight: { type: Number, default: 0 },
-    
+
+    // --- MỤC TIÊU & MỨC VẬN ĐỘNG (phục vụ tính TDEE cá nhân hóa) ---
+    goal: { type: String, enum: ['lose', 'maintain', 'gain'], default: 'maintain' },
+    activityLevel: {
+        type: String,
+        enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
+        default: 'light',
+    },
+    // Đánh dấu đã hoàn tất onboarding (thu thập chỉ số ban đầu)
+    onboarded: { type: Boolean, default: false },
+
+    // --- QUÊN MẬT KHẨU (OTP) ---
+    resetOTPHash: { type: String },
+    resetOTPExpires: { type: Date },
+
     // --- GOOGLE OAUTH FIELDS ---
     googleId: { type: String, unique: true, sparse: true },
     googleAccessToken: { type: String },

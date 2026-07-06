@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../services/api_service.dart';
 import '../models/workout.dart';
+import '../utils/health_calc.dart';
 import 'package:intl/intl.dart';
 import 'auth_provider.dart';
 
@@ -16,6 +17,7 @@ class HealthState {
   final List<double> weeklyBurned; // 7 days
   final List<double> weeklyWeight; // 7 days
   final List<double> weeklyBMI; // 7 days
+  final double todayWaterMl; // lượng nước đã uống hôm nay (ml)
   final bool isLoading;
 
   HealthState({
@@ -28,10 +30,37 @@ class HealthState {
     this.weeklyBurned = const [0, 0, 0, 0, 0, 0, 0],
     this.weeklyWeight = const [0, 0, 0, 0, 0, 0, 0],
     this.weeklyBMI = const [0, 0, 0, 0, 0, 0, 0],
+    this.todayWaterMl = 0.0,
     this.isLoading = false,
   });
 
   double get averageIntake => weeklyIntake.isEmpty ? 0.0 : weeklyIntake.reduce((a, b) => a + b) / weeklyIntake.length;
+
+  /// Mục tiêu calo nạp hằng ngày cá nhân hóa (TDEE). Trả 2000 nếu thiếu dữ liệu.
+  double get dailyCalorieTarget {
+    if (userData == null) return 2000.0;
+    final weight = (userData!['weight'] ?? 0).toDouble();
+    final height = (userData!['height'] ?? 0).toDouble();
+    final gender = userData!['gender']?.toString() ?? 'Nam';
+    final goal = userData!['goal']?.toString() ?? 'maintain';
+    final activity = userData!['activityLevel']?.toString() ?? 'light';
+    final age = HealthCalc.ageFromDob(userData!['dob']);
+    final target = HealthCalc.dailyCalorieTarget(
+      weightKg: weight,
+      heightCm: height,
+      age: age,
+      gender: gender,
+      goal: goal,
+      activityLevel: activity,
+    );
+    return target ?? 2000.0;
+  }
+
+  /// Mục tiêu nước uống hằng ngày (ml).
+  double get waterTargetMl {
+    final weight = (userData?['weight'] ?? 0).toDouble();
+    return HealthCalc.dailyWaterTargetMl(weight);
+  }
 
   String get maxBurnedDayName {
     if (weeklyBurned.isEmpty) return "Chưa có";
@@ -61,6 +90,7 @@ class HealthState {
     List<double>? weeklyBurned,
     List<double>? weeklyWeight,
     List<double>? weeklyBMI,
+    double? todayWaterMl,
     bool? isLoading,
   }) {
     return HealthState(
@@ -73,6 +103,7 @@ class HealthState {
       weeklyBurned: weeklyBurned ?? this.weeklyBurned,
       weeklyWeight: weeklyWeight ?? this.weeklyWeight,
       weeklyBMI: weeklyBMI ?? this.weeklyBMI,
+      todayWaterMl: todayWaterMl ?? this.todayWaterMl,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -163,6 +194,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
 
       final workouts = await _apiService.getWorkouts();
       final allMeals = await _apiService.getMeals();
+      final waterToday = await _apiService.getWaterToday();
       
       List<double> wIntake = [];
       List<double> wBurned = [];
@@ -233,11 +265,26 @@ class HealthNotifier extends StateNotifier<HealthState> {
         weeklyBurned: wBurned,
         weeklyWeight: wWeight,
         weeklyBMI: wBMI,
+        todayWaterMl: waterToday,
         isLoading: false,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  /// Ghi thêm nước uống (ml) và cập nhật tổng trong ngày.
+  Future<void> addWater(int amountMl) async {
+    final result = await _apiService.addWater(amountMl);
+    if (result['success'] == true) {
+      state = state.copyWith(todayWaterMl: (result['totalMl'] ?? state.todayWaterMl).toDouble());
+    }
+  }
+
+  /// Hoàn tác lần ghi nước gần nhất trong ngày.
+  Future<void> undoWater() async {
+    final total = await _apiService.undoLastWater();
+    state = state.copyWith(todayWaterMl: total);
   }
 
   Future<void> loadPlan({String? allergies, bool forceRefresh = false}) async {

@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../providers/health_provider.dart';
+import '../utils/health_calc.dart';
 import '../theme.dart';
 
 /// Màn hình "Hồ sơ Sức khỏe": theo dõi xu hướng cân nặng & BMI THẬT theo thời gian,
@@ -91,6 +92,8 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _buildSummaryCard(currentWeight, currentBMI, isDark, theme),
+                  const SizedBox(height: 12),
+                  _buildTargetCard(healthState, isDark, theme),
                   const SizedBox(height: 20),
                   _buildChartCard(isDark, theme),
                   const SizedBox(height: 20),
@@ -150,6 +153,51 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
                 Text(
                   _classifyBMI(bmi),
                   style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTargetCard(HealthState state, bool isDark, ThemeData theme) {
+    final target = state.dailyCalorieTarget;
+    final goal = state.userData?['goal']?.toString() ?? 'maintain';
+    final activity = state.userData?['activityLevel']?.toString() ?? 'light';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orangeAccent.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.local_fire_department, color: Colors.orangeAccent),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Mục tiêu calo nạp / ngày",
+                    style: TextStyle(fontSize: 12, color: theme.hintColor)),
+                const SizedBox(height: 2),
+                Text("${target.toStringAsFixed(0)} kcal",
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                const SizedBox(height: 2),
+                Text(
+                  "${HealthCalc.goalLabels[goal] ?? goal} • ${HealthCalc.activityLabels[activity] ?? activity}",
+                  style: TextStyle(fontSize: 11, color: theme.hintColor),
                 ),
               ],
             ),

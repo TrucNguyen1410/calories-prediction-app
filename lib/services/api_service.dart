@@ -699,6 +699,117 @@ class ApiService {
         }
     }
 
+    // --- Cập nhật hồ sơ linh hoạt (name/goal/activity/onboarded...) ---
+    Future<Map<String, dynamic>> updateProfileFields(Map<String, dynamic> fields) async {
+        try {
+            final userData = await getUserData();
+            if (userData == null) throw Exception('Chưa đăng nhập');
+            final userId = userData['id'] ?? userData['_id'];
+
+            final response = await _put('/auth/profile/$userId', fields);
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString(_userKey, jsonEncode(body));
+                return {'success': true, 'user': body};
+            }
+            final body = jsonDecode(response.body);
+            return {'success': false, 'message': body['message'] ?? 'Cập nhật thất bại'};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+        }
+    }
+
+    // --- Xóa tài khoản ---
+    Future<Map<String, dynamic>> deleteAccount() async {
+        try {
+            final response = await _delete('/auth/account');
+            final body = jsonDecode(response.body);
+            if (response.statusCode == 200) {
+                await logout();
+                return {'success': true, 'message': body['message'] ?? 'Đã xóa tài khoản'};
+            }
+            return {'success': false, 'message': body['message'] ?? 'Xóa tài khoản thất bại'};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
+    // --- Quên mật khẩu: gửi OTP ---
+    Future<Map<String, dynamic>> forgotPassword(String email) async {
+        try {
+            final response = await http.post(
+                Uri.parse('$_baseUrl/auth/forgot-password'),
+                headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                body: jsonEncode({'email': email}),
+            );
+            final body = jsonDecode(response.body);
+            return {'success': response.statusCode == 200, 'message': body['message'] ?? ''};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
+    // --- Đặt lại mật khẩu bằng OTP ---
+    Future<Map<String, dynamic>> resetPassword({
+        required String email,
+        required String otp,
+        required String newPassword,
+    }) async {
+        try {
+            final response = await http.post(
+                Uri.parse('$_baseUrl/auth/reset-password'),
+                headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+            );
+            final body = jsonDecode(response.body);
+            return {'success': response.statusCode == 200, 'message': body['message'] ?? ''};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
+    // --- Nước uống ---
+    Future<Map<String, dynamic>> addWater(int amountMl) async {
+        try {
+            final response = await _post('/records/water', {'amountMl': amountMl});
+            if (response.statusCode == 201) {
+                final body = jsonDecode(response.body);
+                return {'success': true, 'totalMl': body['data']?['totalMl'] ?? 0};
+            }
+            final body = jsonDecode(response.body);
+            return {'success': false, 'message': body['message'] ?? 'Lỗi'};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
+    Future<double> getWaterToday() async {
+        try {
+            final response = await _get('/records/water');
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return (body['data']?['totalMl'] ?? 0).toDouble();
+            }
+            return 0.0;
+        } catch (e) {
+            return 0.0;
+        }
+    }
+
+    Future<double> undoLastWater() async {
+        try {
+            final response = await _delete('/records/water/last');
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return (body['data']?['totalMl'] ?? 0).toDouble();
+            }
+            return 0.0;
+        } catch (e) {
+            return 0.0;
+        }
+    }
+
     // --- Gửi đóng góp ý kiến ---
     Future<Map<String, dynamic>> submitFeedback({
         required String content,

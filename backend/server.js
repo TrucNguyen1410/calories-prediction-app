@@ -44,6 +44,16 @@ app.get("/", (req, res) => {
   res.send("🔥 API Health Assistant đang chạy mượt mà!");
 });
 
+// ====== Health check / keep-alive (dùng cho cron ping chống ngủ đông) ======
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    time: new Date().toISOString(),
+  });
+});
+
 // ====== Server khởi chạy ======
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

@@ -7,6 +7,7 @@ import {
     classifyBMIAsian,
     computeBMR,
     computeTDEE,
+    computeDailyCalorieTarget,
 } from "../utils/health.js";
 
 test("computeBMI tính đúng chỉ số BMI", () => {
@@ -42,4 +43,22 @@ test("computeTDEE nhân BMR với hệ số vận động", () => {
     assert.equal(computeTDEE(1674), Math.round(1674 * 1.375));
     assert.equal(computeTDEE(1674, 1.55), Math.round(1674 * 1.55));
     assert.equal(computeTDEE(0), null);
+});
+
+test("computeDailyCalorieTarget điều chỉnh theo mục tiêu", () => {
+    const profile = { weightKg: 70, heightCm: 175, age: 25, gender: "Nam", activityLevel: "light" };
+    const maintain = computeDailyCalorieTarget({ ...profile, goal: "maintain" });
+    const lose = computeDailyCalorieTarget({ ...profile, goal: "lose" });
+    const gain = computeDailyCalorieTarget({ ...profile, goal: "gain" });
+
+    // BMR 1674 * 1.375 = 2302 (maintain)
+    assert.equal(maintain, 2302);
+    assert.equal(lose, 2302 - 500); // giảm cân: -500
+    assert.equal(gain, 2302 + 500); // tăng cân: +500
+});
+
+test("computeDailyCalorieTarget không xuống dưới 1200 và trả null khi thiếu dữ liệu", () => {
+    const tiny = computeDailyCalorieTarget({ weightKg: 30, heightCm: 120, age: 80, gender: "Nữ", goal: "lose", activityLevel: "sedentary" });
+    assert.ok(tiny >= 1200);
+    assert.equal(computeDailyCalorieTarget({ weightKg: 0, heightCm: 175, age: 25, gender: "Nam" }), null);
 });

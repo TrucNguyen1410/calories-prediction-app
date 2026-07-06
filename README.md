@@ -10,10 +10,12 @@
 
 | Nhóm | Tính năng |
 |------|-----------|
-| 🔐 **Tài khoản** | Đăng ký / đăng nhập JWT, đăng nhập Google (OAuth 2.0), đổi mật khẩu, cập nhật hồ sơ sinh thể |
+| 🔐 **Tài khoản** | Đăng ký / đăng nhập JWT, đăng nhập Google (OAuth 2.0), đổi tên, đổi mật khẩu, **quên mật khẩu (OTP email)**, **xóa tài khoản**, **onboarding thu thập chỉ số lần đầu** |
+| 🎯 **Cá nhân hóa** | **Mục tiêu calo nạp/ngày (TDEE)** tính từ BMR + mức vận động + mục tiêu (giảm/giữ/tăng cân) |
 | 🤖 **Trợ lý AI** | Chatbot sức khỏe (Groq LLM), đa phiên hội thoại, tự động ghi nhận buổi tập từ ngôn ngữ tự nhiên, guardrails giới hạn chủ đề |
 | 🍽️ **Dinh dưỡng** | Phân tích calo món ăn từ **văn bản** hoặc **ảnh** (AI Vision), sinh thực đơn 7 ngày cá nhân hóa, nhật ký bữa ăn |
 | 🏃 **Vận động** | **Dự đoán calo tiêu hao bằng mô hình Hồi quy tuyến tính (ML)**, lịch sử tập luyện, đồng bộ Google Fit (số bước, calo) |
+| 💧 **Nước uống** | Theo dõi & nhắc lượng nước uống hằng ngày, vòng tiến độ trên dashboard |
 | 📊 **Theo dõi** | Dashboard Bento Grid, biểu đồ dinh dưỡng/cân nặng/BMI 7 ngày, **hồ sơ sức khỏe với lịch sử cân nặng & BMI thật** |
 | 🎨 **Trải nghiệm** | Responsive (mobile/tablet/desktop), Dark Mode, hướng dẫn tương tác (coach mark) |
 

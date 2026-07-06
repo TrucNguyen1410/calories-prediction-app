@@ -47,6 +47,22 @@ Backend dùng **Docker** (image `nikolaik/python-nodejs` — có sẵn cả Node
 
 ---
 
+## 3b. Chống "ngủ đông" Render Free (keep-alive)
+
+Render Free tự ngủ sau ~15 phút không có request → lần truy cập kế tiếp chờ ~50s (cold start).
+Backend đã có sẵn endpoint nhẹ `GET /health`. Dùng dịch vụ cron miễn phí để ping định kỳ:
+
+1. Tạo tài khoản tại [cron-job.org](https://cron-job.org) (miễn phí).
+2. Tạo job mới:
+   - **URL:** `https://calo-backend-api.onrender.com/health`
+   - **Lịch:** mỗi 10 phút (`*/10 * * * *`)
+   - **Method:** GET
+3. Lưu lại. Server sẽ luôn "thức" trong giờ demo.
+
+> Lưu ý: chỉ nên bật keep-alive khi cần demo/nộp bài để tiết kiệm giờ chạy miễn phí của Render.
+
+---
+
 ## 4. Google Fit / Google Sign-In
 
 1. Tạo project trên [Google Cloud Console](https://console.cloud.google.com).
