@@ -229,8 +229,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      // Thẻ đăng nhập luôn nền sáng nên ép chữ màu tối để không bị "tàng hình" ở Dark Mode
+      style: const TextStyle(color: Colors.black87),
+      cursorColor: AppTheme.primary,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: Colors.grey.shade600),
+        floatingLabelStyle: const TextStyle(color: AppTheme.primary),
         prefixIcon: Icon(icon, color: AppTheme.primary.withOpacity(0.7)),
         suffixIcon: isPassword
             ? IconButton(
