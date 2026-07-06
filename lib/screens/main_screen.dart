@@ -105,8 +105,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               items: [
                 const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Trang chủ"),
                 BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu_outlined, key: ref.read(tourKeysProvider).menuTabKey), label: "Thực đơn"),
-                const BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: "Thống kê"),
-                const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "Cá nhân"),
+                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined, key: ref.read(tourKeysProvider).statsTabKey), label: "Thống kê"),
+                BottomNavigationBarItem(icon: Icon(Icons.person_outline, key: ref.read(tourKeysProvider).profileTabKey), label: "Cá nhân"),
               ],
             ),
           ),

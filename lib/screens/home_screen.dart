@@ -25,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _quickLogController = TextEditingController();
   final TextEditingController _workoutInputController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _isSyncing = false;
   bool _hasUnreadNotifications = true;
 
@@ -38,6 +39,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void dispose() {
     _quickLogController.dispose();
     _workoutInputController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -68,6 +70,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         color: AppTheme.primary,
         onRefresh: () => ref.read(healthProvider.notifier).refreshAll(),
         child: SingleChildScrollView(
+          controller: _scrollController,
           padding: EdgeInsets.symmetric(
             horizontal: Responsive.isMobile(context) ? 16 : 24,
             vertical: 20,
@@ -524,6 +527,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
 
     return _buildBentoCard(
+      key: ref.read(tourKeysProvider).waterKey,
       title: 'Nước uống hôm nay',
       color: Theme.of(context).cardColor,
       child: Column(
@@ -599,6 +603,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress = (steps / stepGoal).clamp(0.0, 1.0);
 
     return _buildBentoCard(
+      key: ref.read(tourKeysProvider).stepsKey,
       title: 'Bước chân hôm nay',
       color: Theme.of(context).cardColor,
       child: Column(
@@ -809,6 +814,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildAIWorkoutCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return _buildBentoCard(
+      key: ref.read(tourKeysProvider).aiWorkoutKey,
       title: 'Nhật ký tập luyện AI',
       color: Theme.of(context).cardColor,
       action: TextButton(
@@ -1535,95 +1541,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // Tạo một bước tour gọn gàng
+  TargetFocus _tourTarget({
+    required String id,
+    required GlobalKey key,
+    required String title,
+    required String message,
+    ContentAlign align = ContentAlign.bottom,
+    ShapeLightFocus shape = ShapeLightFocus.RRect,
+    double radius = 20,
+  }) {
+    return TargetFocus(
+      identify: id,
+      keyTarget: key,
+      paddingFocus: 8,
+      shape: shape,
+      radius: radius,
+      contents: [
+        TargetContent(
+          align: align,
+          child: _buildTourBubble(title: title, message: message),
+        ),
+      ],
+    );
+  }
+
   void _startInteractiveTour() {
     final tourKeys = ref.read(tourKeysProvider);
 
-    // Kiểm tra xem các widget có được render trên màn hình không
-    if (tourKeys.bmiKey.currentContext == null ||
-        tourKeys.aiDiaryKey.currentContext == null ||
-        tourKeys.chatbotKey.currentContext == null ||
-        tourKeys.menuTabKey.currentContext == null) {
-      debugPrint("Một số widget tour guide chưa được render!");
+    if (tourKeys.bmiKey.currentContext == null) {
+      debugPrint("Widget tour guide chưa được render!");
       return;
     }
 
-    final List<TargetFocus> targets = [];
+    // Đưa trang về đầu để bắt đầu tour gọn gàng
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
 
-    // Bước 1: BMI Card
-    targets.add(
-      TargetFocus(
-        identify: "bmiTarget",
-        keyTarget: tourKeys.bmiKey,
-        paddingFocus: 8,
-        shape: ShapeLightFocus.RRect,
-        radius: 20,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: _buildTourBubble(
-              title: "📊 Chỉ số BMI của bạn",
-              message: "Đây là chỉ số BMI động của bạn, tự động tính toán từ cân nặng và chiều cao ở mục cá nhân.",
-            ),
-          )
-        ],
+    final targets = <TargetFocus>[
+      _tourTarget(
+        id: "bmi", key: tourKeys.bmiKey,
+        title: "📊 Chỉ số BMI của bạn",
+        message: "BMI tự động tính từ cân nặng & chiều cao, phân loại theo chuẩn Châu Á. Chạm để xem thể trạng.",
       ),
-    );
-
-    // Bước 2: AI Diary Card
-    targets.add(
-      TargetFocus(
-        identify: "aiDiaryTarget",
-        keyTarget: tourKeys.aiDiaryKey,
-        paddingFocus: 8,
-        shape: ShapeLightFocus.RRect,
-        radius: 20,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: _buildTourBubble(
-              title: "📝 Nhật ký AI & Gợi ý nhanh",
-              message: "Nhập nhanh món ăn tại đây hoặc bấm các thẻ gợi ý nhanh để trợ lý AI tính calo nạp vào cho bạn nhé!",
-            ),
-          )
-        ],
+      _tourTarget(
+        id: "steps", key: tourKeys.stepsKey,
+        title: "👟 Bước chân hôm nay",
+        message: "Số bước tự đồng bộ từ Google Fit khi bạn đăng nhập bằng Google. Mục tiêu 10.000 bước/ngày.",
       ),
-    );
-
-    // Bước 3: Floating Chatbot Icon
-    targets.add(
-      TargetFocus(
-        identify: "chatbotTarget",
-        keyTarget: tourKeys.chatbotKey,
-        paddingFocus: 8,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            child: _buildTourBubble(
-              title: "🤖 Trợ lý Sức khỏe AI",
-              message: "Bấm vào đây để chat trực tiếp với Trợ lý. Bạn có thể gõ \"Tôi vừa đi bộ 30 phút\" rồi bấm nút Lưu để đồng bộ lên biểu đồ.",
-            ),
-          )
-        ],
+      _tourTarget(
+        id: "water", key: tourKeys.waterKey,
+        title: "💧 Nước uống hôm nay",
+        message: "Bấm +250ml / +500ml để ghi lượng nước. Mục tiêu được tính theo cân nặng của bạn.",
       ),
-    );
-
-    // Bước 4: Menu Tab icon
-    targets.add(
-      TargetFocus(
-        identify: "menuTabTarget",
-        keyTarget: tourKeys.menuTabKey,
-        paddingFocus: 8,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            child: _buildTourBubble(
-              title: "📅 Thực đơn Dinh dưỡng AI",
-              message: "Chuyển sang tab này để nhờ AI thiết kế thực đơn ăn chay, ăn kiêng 7 ngày theo sở thích của bạn.",
-            ),
-          )
-        ],
+      _tourTarget(
+        id: "aiDiary", key: tourKeys.aiDiaryKey,
+        title: "📝 Nhật ký dinh dưỡng AI",
+        message: "Nhập tên món hoặc tải ẢNH món ăn, AI sẽ tính calo và các chất dinh dưỡng nạp vào.",
       ),
-    );
+      _tourTarget(
+        id: "aiWorkout", key: tourKeys.aiWorkoutKey,
+        title: "🏋️ Nhật ký tập luyện AI",
+        message: "Gõ hoạt động vừa tập (VD: \"chạy bộ 30 phút\"), AI tính calo đã đốt và lưu vào thống kê.",
+      ),
+      _tourTarget(
+        id: "chatbot", key: tourKeys.chatbotKey,
+        title: "🤖 Trợ lý Sức khỏe AI",
+        message: "Bong bóng chat để hỏi đáp mọi lúc về sức khỏe, dinh dưỡng, tập luyện.",
+        align: ContentAlign.top, shape: ShapeLightFocus.Circle, radius: 0,
+      ),
+      _tourTarget(
+        id: "menuTab", key: tourKeys.menuTabKey,
+        title: "📅 Thực đơn Dinh dưỡng AI",
+        message: "Tab Thực đơn: nhờ AI thiết kế thực đơn ăn kiêng/ăn chay 7 ngày theo sở thích.",
+        align: ContentAlign.top,
+      ),
+      _tourTarget(
+        id: "statsTab", key: tourKeys.statsTabKey,
+        title: "📈 Thống kê",
+        message: "Xem biểu đồ calo nạp/đốt, xu hướng cân nặng & BMI theo 7 ngày.",
+        align: ContentAlign.top,
+      ),
+      _tourTarget(
+        id: "profileTab", key: tourKeys.profileTabKey,
+        title: "👤 Cá nhân",
+        message: "Cập nhật hồ sơ, đặt mục tiêu calo, hồ sơ sức khỏe, dự đoán calo và cài đặt.",
+        align: ContentAlign.top,
+      ),
+    ];
 
     final tutorial = TutorialCoachMark(
       targets: targets,
@@ -1631,6 +1637,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       opacityShadow: 0.8,
       paddingFocus: 10,
       pulseEnable: false, // tắt hiệu ứng nhấp nháy gây cảm giác "giật"
+      // Tự động cuộn tới widget trước khi highlight (quan trọng trên điện thoại)
+      beforeFocus: (target) async {
+        final ctx = target.keyTarget?.currentContext;
+        if (ctx != null) {
+          try {
+            await Scrollable.ensureVisible(
+              ctx,
+              alignment: 0.25,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            );
+          } catch (_) {}
+          await Future.delayed(const Duration(milliseconds: 250));
+        }
+      },
       textSkip: "Bỏ qua",
       textStyleSkip: const TextStyle(
         color: Colors.white,
