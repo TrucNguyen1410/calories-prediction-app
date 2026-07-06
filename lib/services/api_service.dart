@@ -638,6 +638,67 @@ class ApiService {
         }
     }
 
+    // --- Lịch sử cân nặng / BMI (Health Records) ---
+
+    // Ghi nhận một lần đo cân nặng mới
+    Future<Map<String, dynamic>> addWeightRecord({
+        required double weight,
+        double? height,
+        String? note,
+    }) async {
+        try {
+            final body = <String, dynamic>{'weight': weight};
+            if (height != null) body['height'] = height;
+            if (note != null && note.isNotEmpty) body['note'] = note;
+
+            final response = await _post('/records/weight', body);
+            final decoded = jsonDecode(response.body);
+            if (response.statusCode == 201 && decoded['success'] == true) {
+                // Đồng bộ cân nặng mới nhất vào cache user để BMI ở nơi khác cập nhật
+                final userData = await getUserData();
+                if (userData != null) {
+                    userData['weight'] = weight;
+                    if (height != null) userData['height'] = height;
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString(_userKey, jsonEncode(userData));
+                }
+                return {'success': true, 'data': decoded['data'], 'message': decoded['message'] ?? 'Đã lưu'};
+            }
+            return {'success': false, 'message': decoded['message'] ?? 'Lưu thất bại'};
+        } catch (e) {
+            print('addWeightRecord Error: $e');
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
+    // Lấy lịch sử đo cân nặng (mới nhất trước)
+    Future<List<Map<String, dynamic>>> getWeightRecords({int limit = 100}) async {
+        try {
+            final response = await _get('/records/weight?limit=$limit');
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                if (body['success'] == true && body['data'] is List) {
+                    return List<Map<String, dynamic>>.from(body['data']);
+                }
+            }
+            return [];
+        } catch (e) {
+            print('getWeightRecords Error: $e');
+            return [];
+        }
+    }
+
+    // Xóa một bản ghi cân nặng
+    Future<bool> deleteWeightRecord(String id) async {
+        try {
+            final response = await _delete('/records/weight/$id');
+            return response.statusCode == 200;
+        } catch (e) {
+            print('deleteWeightRecord Error: $e');
+            return false;
+        }
+    }
+
     // --- Gửi đóng góp ý kiến ---
     Future<Map<String, dynamic>> submitFeedback({
         required String content,

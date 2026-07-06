@@ -7,6 +7,8 @@ import '../providers/theme_provider.dart';
 import '../providers/health_provider.dart';
 import 'terms_policy_screen.dart';
 import 'user_guide_screen.dart';
+import 'records_screen.dart';
+import 'predict_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String name;
@@ -49,6 +51,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Thông số sinh thể"),
                       _buildBiometricDetailsCard(userData, isDark, theme),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle("Sức khỏe & Công cụ"),
+                      _buildListTile(
+                        icon: Icons.monitor_weight_outlined,
+                        title: "Hồ sơ sức khỏe (Cân nặng & BMI)",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const RecordsScreen()),
+                          );
+                        },
+                      ),
+                      _buildListTile(
+                        icon: Icons.auto_graph,
+                        title: "Dự đoán calo tiêu hao (AI/ML)",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PredictScreen()),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Cá nhân hóa"),
                       _buildListTile(

@@ -9,7 +9,10 @@ const calorieRecordSchema = new mongoose.Schema({
   duration: Number,
   heartRate: Number,
   calories: Number,
-  date: { type: String, default: new Date().toISOString() },
+  date: { type: String, default: () => new Date().toISOString() },
 });
+
+// Tăng tốc truy vấn lịch sử theo người dùng & thời gian
+calorieRecordSchema.index({ userId: 1, date: -1 });
 
 export default mongoose.model("CalorieRecord", calorieRecordSchema);

@@ -186,35 +186,42 @@ class HealthNotifier extends StateNotifier<HealthState> {
         wBurned.add(dBurned);
       }
 
-      // Generate weight and BMI trends dynamically based on user profile
+      // Dựng xu hướng cân nặng & BMI 7 ngày từ DỮ LIỆU ĐO THẬT (HealthMetric).
       double currentWeight = 0.0;
       double currentHeight = 0.0;
       if (activeUser != null) {
         currentWeight = (activeUser['weight'] ?? 0.0).toDouble();
         currentHeight = (activeUser['height'] ?? 0.0).toDouble();
       }
-      
+
+      final weightRecords = await _apiService.getWeightRecords();
+      final hMeters = currentHeight > 0 ? currentHeight / 100.0 : 0.0;
+
+      // Lấy cân nặng đo được gần nhất tính đến từng ngày (carry-forward nếu ngày đó không đo)
       List<double> wWeight = [];
       List<double> wBMI = [];
-      if (currentWeight > 0) {
-        wWeight = [
-          currentWeight - 0.4,
-          currentWeight - 0.2,
-          currentWeight - 0.3,
-          currentWeight + 0.1,
-          currentWeight,
-          currentWeight - 0.1,
-          currentWeight
-        ];
-        if (currentHeight > 0) {
-          final hMeters = currentHeight / 100.0;
-          wBMI = wWeight.map((w) => double.parse((w / (hMeters * hMeters)).toStringAsFixed(1))).toList();
-        } else {
-          wBMI = List.filled(7, 0.0);
+      for (int i = 6; i >= 0; i--) {
+        final dayEnd = DateTime(today.year, today.month, today.day)
+            .subtract(Duration(days: i))
+            .add(const Duration(days: 1));
+
+        double? weightOnDay;
+        for (final r in weightRecords) {
+          final dt = DateTime.tryParse(r['date']?.toString() ?? '');
+          if (dt != null && dt.isBefore(dayEnd)) {
+            // records sắp xếp mới→cũ, phần tử đầu thỏa điều kiện là gần nhất
+            weightOnDay = (r['weight'] ?? 0).toDouble();
+            break;
+          }
         }
-      } else {
-        wWeight = List.filled(7, 0.0);
-        wBMI = List.filled(7, 0.0);
+        // Nếu chưa có bản ghi nào trước ngày đó, dùng cân nặng hiện tại của hồ sơ
+        final w = weightOnDay ?? currentWeight;
+        wWeight.add(w);
+        if (hMeters > 0 && w > 0) {
+          wBMI.add(double.parse((w / (hMeters * hMeters)).toStringAsFixed(1)));
+        } else {
+          wBMI.add(0.0);
+        }
       }
 
       state = state.copyWith(

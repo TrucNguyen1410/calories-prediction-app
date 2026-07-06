@@ -1,36 +1,22 @@
 import express from "express";
 import { spawn } from "child_process";
-import jwt from "jsonwebtoken";
 import CalorieRecord from "../models/CalorieRecord.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
+import { validatePredictInput } from "../middleware/validate.js";
 
 const router = express.Router();
-
-// Middleware: Xác thực JWT token
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Không có token' });
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key_123');
-    req.userId = decoded.user?.id || decoded.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'Token không hợp lệ' });
-  }
-};
 
 // ===========================
 // 🔹 API: DỰ ĐOÁN CALO
 // ===========================
-router.post("/predict", verifyToken, async (req, res) => {
+router.post("/predict", verifyToken, validatePredictInput, async (req, res) => {
   try {
     const { activityType, weight, height, age, duration, heartRate } = req.body;
 
-    if (!activityType || !weight || !height || !age || !duration || !heartRate) {
+    if (!activityType) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu dữ liệu đầu vào!",
+        message: "Vui lòng chọn loại bài tập!",
       });
     }
 

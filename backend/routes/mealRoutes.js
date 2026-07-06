@@ -1,23 +1,8 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import Meal from '../models/Meal.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
-
-// Middleware: Xác thực JWT token
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Không có token' });
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key_123');
-    req.userId = decoded.user?.id || decoded.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'Token không hợp lệ' });
-  }
-};
 
 // API: Thêm bữa ăn
 // POST /api/meals

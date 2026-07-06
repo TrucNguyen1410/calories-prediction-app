@@ -2,13 +2,20 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import HealthMetric from '../models/HealthMetric.js';
+import { computeBMI } from '../utils/health.js';
+import { validateRegister, validateLogin } from '../middleware/validate.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 import { syncGoogleFit } from '../controllers/googleFitController.js';
 
 
 const router = express.Router();
 
+// Chống dò mật khẩu / spam đăng ký: tối đa 20 lần / phút / IP
+const authLimiter = rateLimit({ windowMs: 60_000, max: 20, message: 'Quá nhiều lần thử. Vui lòng đợi 1 phút.' });
+
 // API: Đăng ký
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, validateRegister, async (req, res) => {
     // (Code đăng ký của bạn. Hãy đảm bảo nó khớp)
     const { name, email, password, gender, birthdate } = req.body; 
     try {
@@ -62,7 +69,7 @@ router.post('/register', async (req, res) => {
 });
 
 // API: Đăng nhập (Cập nhật để trả về thêm dữ liệu)
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, validateLogin, async (req, res) => {
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
@@ -134,6 +141,9 @@ router.put('/profile/:id', async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });
         }
         
+        const weightChanged =
+            weight !== undefined && weight !== null && Number(weight) !== Number(user.weight);
+
         // Cập nhật thông tin
         user.height = height ?? user.height;
         user.weight = weight ?? user.weight;
@@ -142,8 +152,23 @@ router.put('/profile/:id', async (req, res) => {
             const birthYear = new Date().getFullYear() - parseInt(age);
             user.dob = new Date(`${birthYear}-01-01`);
         }
-        
+
         await user.save();
+
+        // Nếu cân nặng thay đổi, ghi lại một mốc đo để dựng biểu đồ xu hướng thật
+        if (weightChanged && user.weight > 0) {
+            try {
+                await HealthMetric.create({
+                    userId: user._id,
+                    weight: user.weight,
+                    height: user.height || undefined,
+                    bmi: computeBMI(user.weight, user.height) || undefined,
+                    source: "profile",
+                });
+            } catch (metricErr) {
+                console.error("Lỗi ghi HealthMetric từ profile:", metricErr.message);
+            }
+        }
         
         // Trả về thông tin user đã cập nhật
         res.json({

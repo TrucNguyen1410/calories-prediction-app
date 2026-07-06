@@ -1,24 +1,9 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import Feedback from "../models/Feedback.js";
 import User from "../models/User.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-
-// Middleware: Xác thực JWT token
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Không có token' });
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key_123');
-    req.userId = decoded.user?.id || decoded.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'Token không hợp lệ' });
-  }
-};
 
 // API: Gửi đóng góp ý kiến
 router.post("/submit", verifyToken, async (req, res) => {
@@ -51,7 +36,7 @@ router.post("/submit", verifyToken, async (req, res) => {
 
       const emailBody = {
         from: 'HealthAI <onboarding@resend.dev>',
-        to: 'truc141004@gmail.com',
+        to: process.env.FEEDBACK_RECIPIENT || 'truc141004@gmail.com',
         subject: `[HealthAI] Đóng góp ý kiến mới từ người dùng: ${nameSender}`,
         html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #ffffff; color: #333333;">
