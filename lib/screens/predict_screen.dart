@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/workout.dart';
 import '../services/api_service.dart';
 import '../utils/responsive.dart';
+import '../utils/health_calc.dart';
 import '../theme.dart';
 import 'history_screen.dart';
 
@@ -26,6 +27,32 @@ class _PredictScreenState extends State<PredictScreen> {
   String? _selectedActivity;
   double? _predictedCalories;
   bool _isLoading = false;
+  bool _prefilledFromProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillFromProfile();
+  }
+
+  // Tự động điền cân nặng/chiều cao/tuổi từ hồ sơ người dùng để đỡ phải nhập tay
+  Future<void> _prefillFromProfile() async {
+    final user = await _apiService.getUserData();
+    if (user == null || !mounted) return;
+
+    final weight = (user['weight'] ?? 0).toDouble();
+    final height = (user['height'] ?? 0).toDouble();
+    final age = HealthCalc.ageFromDob(user['dob']);
+
+    setState(() {
+      if (weight > 0) _weightController.text = weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1);
+      if (height > 0) _heightController.text = height.toStringAsFixed(0);
+      _ageController.text = age.toString();
+      // Nhịp tim trung bình khi tập ~120 bpm — điền sẵn giá trị gợi ý, người dùng có thể sửa
+      if (_heartRateController.text.isEmpty) _heartRateController.text = '120';
+      _prefilledFromProfile = weight > 0 || height > 0;
+    });
+  }
 
   Future<void> _predictCalories() async {
     if (!_formKey.currentState!.validate()) return;
@@ -70,6 +97,10 @@ class _PredictScreenState extends State<PredictScreen> {
               child: Column(
                 children: [
                   _buildHeader(),
+                  if (_prefilledFromProfile) ...[
+                    const SizedBox(height: 12),
+                    _buildPrefillNote(),
+                  ],
                   const SizedBox(height: 32),
                   Responsive(
                     mobile: _buildFormLayout(isMobile: true),
@@ -112,6 +143,29 @@ class _PredictScreenState extends State<PredictScreen> {
                 Text('Dự đoán Calo tiêu hao', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 18)),
                 Text('Nhập thông tin buổi tập để AI tính toán', style: Theme.of(context).textTheme.bodyMedium),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrefillNote() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: const [
+          Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Đã tự điền cân nặng, chiều cao, tuổi từ hồ sơ của bạn. Bạn chỉ cần chọn bài tập & thời gian (có thể sửa nếu cần).',
+              style: TextStyle(fontSize: 12, color: Colors.green),
             ),
           ),
         ],
