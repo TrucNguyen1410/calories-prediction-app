@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
 
@@ -75,44 +76,193 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
+  int _n(String k) {
+    final v = _stats[k];
+    return v is num ? v.toInt() : 0;
+  }
+
   Widget _buildStatsTab(ThemeData theme) {
-    final cards = [
-      ['Người dùng', _stats['totalUsers'], Icons.people, Colors.blueAccent],
-      ['Bữa ăn', _stats['totalMeals'], Icons.restaurant, Colors.orangeAccent],
-      ['Buổi tập', _stats['totalWorkouts'], Icons.fitness_center, Colors.green],
-      ['Phiên chat AI', _stats['totalSessions'], Icons.chat_bubble, Colors.purpleAccent],
-      ['Phản hồi', _stats['totalFeedback'], Icons.feedback, Colors.teal],
-      ['User mới (7 ngày)', _stats['newUsers'], Icons.person_add, Colors.pinkAccent],
-    ];
     return RefreshIndicator(
       onRefresh: _load,
-      child: GridView.count(
-        crossAxisCount: 2,
+      child: ListView(
         padding: const EdgeInsets.all(16),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5,
-        children: cards.map((c) {
-          final color = c[3] as Color;
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: theme.dividerColor),
-            ),
+        children: [
+          _buildHeroHeader(theme),
+          const SizedBox(height: 18),
+          _buildKpiGrid(theme),
+          const SizedBox(height: 18),
+          _buildContentChart(theme),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  // Header hero: tổng người dùng + đăng ký mới
+  Widget _buildHeroHeader(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: const Color(0xFF8A2BE2).withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(c[2] as IconData, color: color, size: 26),
-                Text('${c[1] ?? 0}',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-                Text(c[0] as String, style: TextStyle(fontSize: 12, color: theme.hintColor)),
+                const Text('Tổng người dùng', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const SizedBox(height: 6),
+                Text('${_n('totalUsers')}',
+                    style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold, height: 1)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                  child: Text('+${_n('newUsers')} người dùng mới trong 7 ngày',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+                ),
               ],
             ),
-          );
-        }).toList(),
+          ),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
+            child: const Icon(Icons.groups_rounded, color: Colors.white, size: 40),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiGrid(ThemeData theme) {
+    final tiles = [
+      ['Bữa ăn', _n('totalMeals'), Icons.restaurant_rounded, const Color(0xFFF59E0B)],
+      ['Buổi tập', _n('totalWorkouts'), Icons.fitness_center_rounded, const Color(0xFF10B981)],
+      ['Phiên chat AI', _n('totalSessions'), Icons.chat_bubble_rounded, const Color(0xFF6366F1)],
+      ['Phản hồi', _n('totalFeedback'), Icons.feedback_rounded, const Color(0xFF06B6D4)],
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.7,
+      children: tiles.map((t) {
+        final color = t[3] as Color;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                child: Icon(t[2] as IconData, color: color, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('${t[1]}',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                    Text(t[0] as String, style: TextStyle(fontSize: 11, color: theme.hintColor), overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Biểu đồ cột 1 tông màu: khối lượng nội dung trong hệ thống
+  Widget _buildContentChart(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final labels = ['Bữa ăn', 'Buổi tập', 'Phiên AI', 'Phản hồi'];
+    final values = [_n('totalMeals'), _n('totalWorkouts'), _n('totalSessions'), _n('totalFeedback')];
+    final maxV = (values.isEmpty ? 0 : values.reduce((a, b) => a > b ? a : b)).toDouble();
+    final maxY = (maxV < 5 ? 5 : maxV) * 1.25;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Khối lượng dữ liệu trong hệ thống',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textTheme.bodyLarge?.color)),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: BarChart(
+              BarChartData(
+                maxY: maxY,
+                alignment: BarChartAlignment.spaceAround,
+                gridData: FlGridData(
+                  show: true, drawVerticalLine: false,
+                  getDrawingHorizontalLine: (v) => FlLine(color: isDark ? const Color(0xFF35373C) : Colors.grey[200]!, strokeWidth: 1, dashArray: [4, 4]),
+                ),
+                borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 32)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= labels.length) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(labels[i], style: TextStyle(fontSize: 10, color: theme.hintColor, fontWeight: FontWeight.w500)),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                barGroups: List.generate(values.length, (i) {
+                  return BarChartGroupData(x: i, barRods: [
+                    BarChartRodData(
+                      toY: values[i].toDouble(),
+                      color: AppTheme.primary,
+                      width: 26,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                    ),
+                  ], showingTooltipIndicators: []);
+                }),
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => isDark ? const Color(0xFF2B2D31) : Colors.black87,
+                    getTooltipItem: (group, gi, rod, ri) => BarTooltipItem(
+                      '${labels[group.x]}\n${rod.toY.toInt()}',
+                      const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
