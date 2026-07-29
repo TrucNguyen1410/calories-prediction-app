@@ -15,7 +15,9 @@ const groq = new Groq({
 // --- 1. CHAT VỚI AI (Hỗ trợ Đa phiên Chat Sessions) ---
 export const chatWithAI = async (req, res) => {
     try {
-        const { userId, message, sessionId } = req.body;
+        // Ưu tiên userId từ token (an toàn hơn tin vào body do client gửi)
+        const userId = req.userId || req.body.userId;
+        const { message, sessionId } = req.body;
 
         // Lấy thông tin thể chất của người dùng từ Database để cá nhân hóa
         const user = await User.findById(userId);
@@ -158,7 +160,7 @@ Nhiệm vụ đặc biệt:
 // --- LẤY DANH SÁCH PHIÊN CHAT CỦA USER ---
 export const getUserSessions = async (req, res) => {
     try {
-        const { userId } = req.query;
+        const userId = req.userId || req.query.userId;
         if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
         
         const sessions = await ChatSession.find({ userId })
@@ -178,8 +180,12 @@ export const getSessionDetail = async (req, res) => {
         const { sessionId } = req.params;
         const session = await ChatSession.findById(sessionId);
         if (!session) return res.status(404).json({ success: false, message: "Không tìm thấy phiên chat" });
-        
-        res.status(200).json({ 
+        // Chỉ chủ sở hữu mới được xem phiên chat
+        if (req.userId && session.userId?.toString() !== req.userId) {
+            return res.status(403).json({ success: false, message: "Không có quyền truy cập phiên chat này" });
+        }
+
+        res.status(200).json({
             success: true, 
             sessionTitle: session.sessionTitle, 
             messages: session.messages 
@@ -193,7 +199,7 @@ export const getSessionDetail = async (req, res) => {
 // --- TẠO MỚI PHIÊN CHAT TRỐNG ---
 export const createNewSession = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userId = req.userId || req.body.userId;
         if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
         
         const session = new ChatSession({
@@ -213,6 +219,10 @@ export const createNewSession = async (req, res) => {
 export const deleteSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const session = await ChatSession.findById(sessionId);
+        if (session && req.userId && session.userId?.toString() !== req.userId) {
+            return res.status(403).json({ success: false, message: "Không có quyền xóa phiên chat này" });
+        }
         await ChatSession.findByIdAndDelete(sessionId);
         res.status(200).json({ success: true, message: "Đã xóa phiên chat thành công" });
     } catch (error) {
@@ -224,7 +234,8 @@ export const deleteSession = async (req, res) => {
 // --- 2. TẠO THỰC ĐƠN & BÀI TẬP ---
 export const generateHealthPlan = async (req, res) => {
     try {
-        const { userId, userInput } = req.body;
+        const userId = req.userId || req.body.userId;
+        const { userInput } = req.body;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
 
@@ -293,7 +304,8 @@ export const generateHealthPlan = async (req, res) => {
 // --- 3. THUẬT TOÁN AHP ---
 export const getWorkoutIntensityAHP = async (req, res) => {
     try {
-        const { userId, sleepHours, stressLevel } = req.body; 
+        const userId = req.userId || req.body.userId;
+        const { sleepHours, stressLevel } = req.body;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
