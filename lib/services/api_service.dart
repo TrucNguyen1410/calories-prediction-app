@@ -638,6 +638,54 @@ class ApiService {
         }
     }
 
+    // --- Admin ---
+    Future<Map<String, dynamic>> getAdminStats() async {
+        try {
+            final response = await _get('/admin/stats');
+            if (response.statusCode == 200) {
+                return {'success': true, 'data': jsonDecode(response.body)['data'] ?? {}};
+            }
+            return {'success': false, 'message': 'Không lấy được thống kê'};
+        } catch (e) {
+            return {'success': false, 'message': 'Lỗi kết nối'};
+        }
+    }
+
+    Future<List<Map<String, dynamic>>> getAdminUsers() async {
+        try {
+            final response = await _get('/admin/users');
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                if (body['data'] is List) return List<Map<String, dynamic>>.from(body['data']);
+            }
+            return [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    Future<List<Map<String, dynamic>>> getAdminFeedback() async {
+        try {
+            final response = await _get('/admin/feedback');
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                if (body['data'] is List) return List<Map<String, dynamic>>.from(body['data']);
+            }
+            return [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    Future<bool> deleteUserAdmin(String id) async {
+        try {
+            final response = await _delete('/admin/users/$id');
+            return response.statusCode == 200;
+        } catch (e) {
+            return false;
+        }
+    }
+
     // --- Phân tích tuần bằng AI ---
     Future<Map<String, dynamic>> getWeeklyInsight() async {
         try {

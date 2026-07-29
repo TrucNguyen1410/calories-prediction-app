@@ -10,6 +10,7 @@ import 'terms_policy_screen.dart';
 import 'user_guide_screen.dart';
 import 'records_screen.dart';
 import 'predict_screen.dart';
+import 'admin_screen.dart';
 import '../utils/health_calc.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -64,6 +65,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildSectionTitle("Thông số sinh thể"),
                       _buildBiometricDetailsCard(userData, isDark, theme),
                       const SizedBox(height: 24),
+                      if (userData?['role'] == 'admin') ...[
+                        _buildSectionTitle("Quản trị"),
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                            leading: const Icon(Icons.admin_panel_settings, color: Colors.redAccent),
+                            title: const Text("Trang quản trị",
+                                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent)),
+                            trailing: const Icon(Icons.chevron_right, color: Colors.redAccent),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen())),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                       _buildSectionTitle("Sức khỏe & Mục tiêu"),
                       _buildListTile(
                         icon: Icons.monitor_weight_outlined,
