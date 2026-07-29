@@ -638,6 +638,21 @@ class ApiService {
         }
     }
 
+    // --- Phân tích tuần bằng AI ---
+    Future<Map<String, dynamic>> getWeeklyInsight() async {
+        try {
+            final response = await _post('/ai/weekly-insight', {});
+            if (response.statusCode == 200) {
+                final body = jsonDecode(response.body);
+                return {'success': true, 'data': body['data'] ?? {}};
+            }
+            final body = jsonDecode(response.body);
+            return {'success': false, 'message': body['message'] ?? 'Không thể phân tích'};
+        } catch (e) {
+            return {'success': false, 'message': 'Không thể kết nối máy chủ.'};
+        }
+    }
+
     // --- Lịch sử cân nặng / BMI (Health Records) ---
 
     // Ghi nhận một lần đo cân nặng mới

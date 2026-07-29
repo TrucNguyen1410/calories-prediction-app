@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
+import '../services/api_service.dart';
 import 'meal_history_screen.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
@@ -14,6 +15,8 @@ class StatsScreen extends ConsumerStatefulWidget {
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
   bool _showWeightTrend = true; // true = Cân nặng, false = BMI
+  bool _loadingInsight = false;
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -50,6 +53,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 0. Nút Phân tích tuần bằng AI
+              _buildWeeklyInsightButton(isDark),
+              const SizedBox(height: 20),
+
               // 1. Apple Health Bento-style Card cho Calo 7 ngày
               _buildSectionTitle('Dinh dưỡng tuần này'),
               const SizedBox(height: 10),
@@ -239,6 +246,152 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
         letterSpacing: -0.5,
       ),
+    );
+  }
+
+  Widget _buildWeeklyInsightButton(bool isDark) {
+    return InkWell(
+      onTap: _loadingInsight ? null : _showWeeklyInsight,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: const Color(0xFF8A2BE2).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Phân tích tuần bằng AI',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  SizedBox(height: 2),
+                  Text('Nhận xét & lời khuyên cá nhân từ dữ liệu 7 ngày',
+                      style: TextStyle(color: Colors.white70, fontSize: 11)),
+                ],
+              ),
+            ),
+            _loadingInsight
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showWeeklyInsight() async {
+    setState(() => _loadingInsight = true);
+    final result = await _apiService.getWeeklyInsight();
+    if (!mounted) return;
+    setState(() => _loadingInsight = false);
+
+    if (result['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Không thể phân tích'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final data = result['data'] as Map<String, dynamic>;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final score = (data['score'] ?? 0) is num ? (data['score'] as num).toInt() : 0;
+    final highlights = List<String>.from((data['highlights'] ?? []).map((e) => e.toString()));
+    final advice = List<String>.from((data['advice'] ?? []).map((e) => e.toString()));
+    final scoreColor = score >= 75 ? Colors.green : (score >= 50 ? Colors.orangeAccent : Colors.redAccent);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.92,
+        expand: false,
+        builder: (ctx, scroll) => ListView(
+          controller: scroll,
+          padding: const EdgeInsets.all(20),
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 5,
+                decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: AppTheme.primary, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(data['title']?.toString() ?? 'Phân tích tuần',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Điểm sức khỏe tuần
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: scoreColor.withOpacity(0.12), shape: BoxShape.circle),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('$score', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: scoreColor)),
+                    Text('điểm', style: TextStyle(fontSize: 12, color: scoreColor)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(data['summary']?.toString() ?? '',
+                style: TextStyle(fontSize: 14, height: 1.5, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87)),
+            if (highlights.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              _insightSection('📊 Điểm nổi bật', highlights, Colors.blueAccent, isDark),
+            ],
+            if (advice.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _insightSection('💡 Lời khuyên tuần tới', advice, Colors.green, isDark),
+            ],
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _insightSection(String title, List<String> items, Color color, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+        const SizedBox(height: 8),
+        ...items.map((t) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(margin: const EdgeInsets.only(top: 6), width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(t, style: TextStyle(fontSize: 13, height: 1.4, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87))),
+                ],
+              ),
+            )),
+      ],
     );
   }
 

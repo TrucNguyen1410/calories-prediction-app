@@ -2,6 +2,10 @@ import Groq from "groq-sdk";
 import ChatMessage from "../models/ChatMessage.js";
 import ChatSession from "../models/ChatSession.js";
 import User from "../models/User.js";
+import Meal from "../models/Meal.js";
+import CalorieRecord from "../models/CalorieRecord.js";
+import HealthMetric from "../models/HealthMetric.js";
+import { computeDailyCalorieTarget } from "../utils/health.js";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -438,6 +442,99 @@ export const analyzeFood = async (req, res) => {
     } catch (error) {
         console.error("ANALYZE FOOD ERROR:", error);
         res.status(500).json({ success: false, message: "Không thể phân tích món ăn" });
+    }
+};
+
+// --- 5. PHÂN TÍCH TUẦN BẰNG AI ---
+export const getWeeklyInsight = async (req, res) => {
+    try {
+        const userId = req.userId || req.body.userId;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
+
+        // Danh sách 7 ngày gần nhất (yyyy-MM-dd)
+        const today = new Date();
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().split("T")[0]);
+        }
+
+        const [meals, workouts, metrics] = await Promise.all([
+            Meal.find({ userId }),
+            CalorieRecord.find({ userId }),
+            HealthMetric.find({ userId }).sort({ date: 1 }),
+        ]);
+
+        // Tổng hợp calo nạp / đốt theo ngày
+        const intakeByDay = Object.fromEntries(days.map((d) => [d, 0]));
+        const burnByDay = Object.fromEntries(days.map((d) => [d, 0]));
+        meals.forEach((m) => { if (intakeByDay[m.date] !== undefined) intakeByDay[m.date] += m.calories || 0; });
+        workouts.forEach((w) => {
+            const d = (w.date || "").split("T")[0];
+            if (burnByDay[d] !== undefined) burnByDay[d] += w.calories || 0;
+        });
+
+        const intakes = days.map((d) => intakeByDay[d]);
+        const burns = days.map((d) => burnByDay[d]);
+        const daysWithFood = intakes.filter((v) => v > 0).length;
+        const avgIntake = daysWithFood ? Math.round(intakes.reduce((a, b) => a + b, 0) / daysWithFood) : 0;
+        const totalBurned = Math.round(burns.reduce((a, b) => a + b, 0));
+        const daysWithWorkout = burns.filter((v) => v > 0).length;
+
+        let age = 25;
+        if (user.dob) age = new Date().getFullYear() - new Date(user.dob).getFullYear();
+        const target = computeDailyCalorieTarget({
+            weightKg: user.weight, heightCm: user.height, age,
+            gender: user.gender, goal: user.goal, activityLevel: user.activityLevel,
+        }) || 2000;
+
+        // Thay đổi cân nặng trong ~4 tuần gần nhất
+        let weightChange = null;
+        if (metrics.length >= 2) {
+            weightChange = Math.round((metrics[metrics.length - 1].weight - metrics[0].weight) * 10) / 10;
+        }
+
+        const goalText = { lose: "giảm cân", maintain: "giữ cân", gain: "tăng cân" }[user.goal] || "giữ cân";
+
+        const prompt = `Bạn là huấn luyện viên sức khỏe AI. Dựa trên DỮ LIỆU 7 NGÀY của người dùng, hãy nhận xét ngắn gọn, tích cực và đưa lời khuyên cá nhân hóa bằng tiếng Việt.
+
+Hồ sơ: ${user.gender || "Nam"}, ${age} tuổi, ${user.weight}kg, mục tiêu: ${goalText}.
+Mục tiêu calo nạp/ngày (TDEE): ${target} kcal.
+Số ngày có ghi bữa ăn: ${daysWithFood}/7.
+Calo nạp trung bình/ngày: ${avgIntake} kcal.
+Số ngày có tập: ${daysWithWorkout}/7. Tổng calo đốt qua vận động: ${totalBurned} kcal.
+${weightChange !== null ? `Thay đổi cân nặng gần đây: ${weightChange > 0 ? "+" : ""}${weightChange} kg.` : ""}
+
+CHỈ trả về JSON đúng cấu trúc (không markdown):
+{
+  "title": "Tiêu đề ngắn gọn cho tuần",
+  "summary": "1-2 câu tổng kết tuần qua",
+  "highlights": ["2-3 điểm nổi bật/quan sát từ số liệu"],
+  "advice": ["2-3 lời khuyên cụ thể, khả thi cho tuần tới"],
+  "score": số điểm sức khỏe tuần này từ 0-100 (number)
+}`;
+
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.6,
+            response_format: { type: "json_object" },
+        });
+
+        let content = completion.choices[0].message.content.trim();
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) content = jsonMatch[0];
+        const insight = JSON.parse(content);
+
+        // Đính kèm số liệu thô để frontend hiển thị
+        insight.stats = { avgIntake, target, totalBurned, daysWithFood, daysWithWorkout, weightChange };
+
+        res.status(200).json({ success: true, data: insight });
+    } catch (error) {
+        console.error("WEEKLY INSIGHT ERROR:", error);
+        res.status(500).json({ success: false, message: "Không thể tạo phân tích tuần" });
     }
 };
 

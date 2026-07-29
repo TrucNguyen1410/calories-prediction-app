@@ -1,13 +1,14 @@
 import express from 'express';
-import { 
-    chatWithAI, 
-    generateHealthPlan, 
-    getWorkoutIntensityAHP, 
+import {
+    chatWithAI,
+    generateHealthPlan,
+    getWorkoutIntensityAHP,
     analyzeFood,
     getUserSessions,
     getSessionDetail,
     createNewSession,
-    deleteSession
+    deleteSession,
+    getWeeklyInsight
 } from '../controllers/aiController.js';
 import multer from 'multer';
 import { verifyToken } from '../middleware/authMiddleware.js';
@@ -39,5 +40,8 @@ router.post('/ahp-suggestion', getWorkoutIntensityAHP);
 
 // Route phân tích món ăn (Text/Image)
 router.post('/analyze-food', upload.single('image'), analyzeFood);
+
+// Route phân tích tuần bằng AI
+router.post('/weekly-insight', getWeeklyInsight);
 
 export default router;
