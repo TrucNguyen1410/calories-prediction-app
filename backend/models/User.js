@@ -22,6 +22,9 @@ const UserSchema = new mongoose.Schema({
     // Đánh dấu đã hoàn tất onboarding (thu thập chỉ số ban đầu)
     onboarded: { type: Boolean, default: false },
 
+    // Phân quyền: user thường hoặc quản trị viên
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+
     // --- QUÊN MẬT KHẨU (OTP) ---
     resetOTPHash: { type: String },
     resetOTPExpires: { type: Date },

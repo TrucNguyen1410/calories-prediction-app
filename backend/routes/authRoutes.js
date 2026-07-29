@@ -31,6 +31,7 @@ function buildUserResponse(user) {
         goal: user.goal,
         activityLevel: user.activityLevel,
         onboarded: user.onboarded,
+        role: user.role,
     };
 }
 

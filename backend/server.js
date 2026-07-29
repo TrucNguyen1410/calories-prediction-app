@@ -12,6 +12,7 @@ import mealRoutes from "./routes/mealRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,7 @@ app.use("/api/meals", mealRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/records", recordRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ====== Mặc định root ======
 app.get("/", (req, res) => {
