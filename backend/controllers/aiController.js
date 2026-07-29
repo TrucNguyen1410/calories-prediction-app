@@ -324,8 +324,8 @@ export const analyzeFood = async (req, res) => {
         let nutritionData = null;
 
         if (imageFile) {
-            // Sử dụng Groq Vision (llama-3.2-11b-vision-preview) cực kỳ ổn định,
-            // dùng chung GROQ_API_KEY sẵn có mà không cần cấu hình thêm Gemini Key.
+            // Sử dụng Groq Vision (qwen/qwen3.6-27b) — model đa phương thức còn hoạt động,
+            // dùng chung GROQ_API_KEY sẵn có (model llama-4-scout cũ đã bị Groq gỡ bỏ).
             const base64Image = imageFile.buffer.toString("base64");
             const prompt = `Nhiệm vụ của bạn là phân tích hình ảnh món ăn này.
             
@@ -373,7 +373,7 @@ export const analyzeFood = async (req, res) => {
                         ],
                     },
                 ],
-                model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                model: "qwen/qwen3.6-27b",
                 response_format: { type: "json_object" }
             });
 
