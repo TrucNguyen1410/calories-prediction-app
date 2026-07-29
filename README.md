@@ -55,8 +55,15 @@
 - **Dữ liệu:** `gym_members_exercise_tracking_cleaned.csv`
 - **Đặc trưng đầu vào:** `Age, Weight (kg), Height (m), Session_Duration (hours), Avg_BPM`
 - **Mục tiêu:** `Calories_Burned`
-- **Mô hình:** Hồi quy tuyến tính (`LinearRegression`)
-- **Kết quả đánh giá (tập test 20%):** **R² ≈ 0.97**, **MAE ≈ 39.8 kcal**, **RMSE ≈ 50.2 kcal**
+- **So sánh nhiều mô hình** (tập test 20%), chọn mô hình tốt nhất theo R²:
+
+  | Mô hình | R² | MAE (kcal) | RMSE (kcal) |
+  |---|---|---|---|
+  | LinearRegression | 0.970 | 39.8 | 50.2 |
+  | RandomForest | 0.972 | 37.1 | 48.6 |
+  | **GradientBoosting** ✅ (đang dùng) | **0.990** | **22.8** | **28.5** |
+
+- Bảng đánh giá được lưu tự động tại `backend/ml/model_metrics.json`.
 - Khi không nạp được mô hình, hệ thống tự động **fallback sang công thức MET** để đảm bảo tính liên tục.
 
 Huấn luyện lại mô hình:

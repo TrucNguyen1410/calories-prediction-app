@@ -1,0 +1,28 @@
+{
+  "best_model": "GradientBoosting",
+  "features": [
+    "Age",
+    "Weight (kg)",
+    "Height (m)",
+    "Session_Duration (hours)",
+    "Avg_BPM"
+  ],
+  "test_size": 0.2,
+  "results": {
+    "LinearRegression": {
+      "r2": 0.9698,
+      "mae": 39.82,
+      "rmse": 50.17
+    },
+    "RandomForest": {
+      "r2": 0.9717,
+      "mae": 37.09,
+      "rmse": 48.6
+    },
+    "GradientBoosting": {
+      "r2": 0.9903,
+      "mae": 22.84,
+      "rmse": 28.48
+    }
+  }
+}
