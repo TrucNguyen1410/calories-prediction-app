@@ -1730,48 +1730,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final notifications = [
-              {
-                'type': 'Dinh dưỡng',
-                'title': 'Dinh dưỡng & Thực đơn',
-                'message': 'Bạn mới nạp 550/2000 kcal hôm nay. Hãy dùng Nhật ký AI để cập nhật thêm bữa tối nhé!',
-                'time': '10 phút trước',
-                'icon': Icons.fastfood_outlined,
-                'color': Colors.orangeAccent,
-              },
-              {
-                'type': 'Tập luyện',
-                'title': 'Google Fit Sync',
-                'message': 'Dữ liệu Google Fit Sync đã cập nhật: +63 kcal từ hoạt động Đi bộ của bạn.',
-                'time': '1 giờ trước',
-                'icon': Icons.directions_run,
-                'color': Colors.cyanAccent,
-              },
-              {
-                'type': 'Hệ thống',
-                'title': 'Trợ lý AI',
-                'message': 'Trợ lý AI đã chuẩn bị xong Thực đơn 7 ngày mới cho bạn.',
-                'time': '3 giờ trước',
-                'icon': Icons.auto_awesome,
-                'color': Colors.purpleAccent,
-              },
-              {
-                'type': 'Đạt mục tiêu',
+            // Thông báo sinh động TỪ DỮ LIỆU THẬT để đồng nhất với dashboard
+            final health = ref.read(healthProvider);
+            final intake = health.todayIntake;
+            final target = health.dailyCalorieTarget;
+            final burned = health.todayBurned;
+            final steps = health.todaySteps;
+            final water = health.todayWaterMl;
+            final waterTarget = health.waterTargetMl;
+
+            // Chuỗi ngày ghi nhật ký liên tục (tính đến hôm nay)
+            int streak = 0;
+            for (int i = health.weeklyIntake.length - 1; i >= 0; i--) {
+              if (health.weeklyIntake[i] > 0) {
+                streak++;
+              } else {
+                break;
+              }
+            }
+
+            final notifications = <Map<String, dynamic>>[];
+
+            // 1) Dinh dưỡng hôm nay
+            notifications.add({
+              'title': 'Dinh dưỡng hôm nay',
+              'message': intake > 0
+                  ? 'Bạn đã nạp ${intake.toInt()}/${target.toInt()} kcal hôm nay.' +
+                      (intake < target
+                          ? ' Còn ${(target - intake).toInt()} kcal để đạt mục tiêu.'
+                          : ' Bạn đã đạt/vượt mục tiêu!')
+                  : 'Hôm nay bạn chưa ghi bữa ăn nào. Hãy dùng Nhật ký AI để bắt đầu nhé!',
+              'time': 'Hôm nay',
+              'icon': Icons.fastfood_outlined,
+              'color': Colors.orangeAccent,
+            });
+
+            // 2) Google Fit (số liệu thật)
+            notifications.add({
+              'title': 'Google Fit',
+              'message': (steps > 0 || burned > 0)
+                  ? 'Đã đồng bộ: ${steps.toInt()} bước • ${burned.toInt()} kcal đã đốt hôm nay.'
+                  : 'Chưa có dữ liệu Google Fit hôm nay. Đăng nhập bằng Google để đồng bộ số bước.',
+              'time': 'Vừa cập nhật',
+              'icon': Icons.directions_run,
+              'color': Colors.cyan,
+            });
+
+            // 3) Nước uống
+            notifications.add({
+              'title': 'Nước uống',
+              'message': water > 0
+                  ? 'Bạn đã uống ${(water / 1000).toStringAsFixed(1)}L / ${(waterTarget / 1000).toStringAsFixed(1)}L hôm nay.' +
+                      (water < waterTarget ? ' Uống thêm để đạt mục tiêu nhé!' : ' Tuyệt vời, đã đủ nước!')
+                  : 'Bạn chưa uống nước hôm nay. Bấm +250ml trên thẻ Nước uống để ghi lại.',
+              'time': 'Hôm nay',
+              'icon': Icons.water_drop_outlined,
+              'color': Colors.blueAccent,
+            });
+
+            // 4) Đạt mục tiêu calo (khi nạp sát mục tiêu)
+            if (target > 0 && intake >= target * 0.9 && intake <= target * 1.1) {
+              notifications.add({
                 'title': 'Đạt mục tiêu ngày',
-                'message': 'Xuất sắc! Bạn đã hoàn thành mục tiêu calo hôm nay với chỉ số dinh dưỡng vô cùng cân đối 🌟.',
-                'time': '1 ngày trước',
+                'message': 'Xuất sắc! Lượng calo nạp hôm nay rất sát mục tiêu của bạn 🌟.',
+                'time': 'Hôm nay',
                 'icon': Icons.stars,
                 'color': Colors.amber,
-              },
-              {
-                'type': 'Streak',
+              });
+            }
+
+            // 5) Chuỗi ngày (streak) khi >= 2 ngày
+            if (streak >= 2) {
+              notifications.add({
                 'title': 'Giữ vững phong độ',
-                'message': 'Bạn đã duy trì nhật ký ăn uống liên tục 3 ngày rồi! Cố gắng giữ vững phong độ cùng HealthAI nhé 💪.',
-                'time': '2 ngày trước',
+                'message': 'Bạn đã ghi nhật ký ăn uống $streak ngày liên tục! Cố gắng duy trì nhé 💪.',
+                'time': 'Chuỗi ngày',
                 'icon': Icons.local_fire_department,
                 'color': Colors.redAccent,
-              },
-            ];
+              });
+            }
 
             return DraggableScrollableSheet(
               initialChildSize: 0.65,
