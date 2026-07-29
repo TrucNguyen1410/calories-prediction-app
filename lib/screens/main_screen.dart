@@ -214,17 +214,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           Expanded(
             child: Container(
               color: isDark ? const Color(0xFF1E1F22) : Colors.grey[50],
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(12),
-                itemCount: chatState.messages.length + (chatState.isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == chatState.messages.length) {
-                    return _buildTypingIndicator();
-                  }
-                  return _buildChatBubble(chatState.messages[index]);
-                },
-              ),
+              // Chat trống (lần đầu vào / mở lại app) -> hiện lời chào của Trợ lý
+              child: (chatState.messages.isEmpty && !chatState.isLoading)
+                  ? _buildWelcomeMessage()
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(12),
+                      itemCount: chatState.messages.length + (chatState.isLoading ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == chatState.messages.length) {
+                          return _buildTypingIndicator();
+                        }
+                        return _buildChatBubble(chatState.messages[index]);
+                      },
+                    ),
             ),
           ),
 
@@ -422,6 +425,83 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 elevation: 0,
               ),
             ),
+    );
+  }
+
+  Widget _buildWelcomeMessage() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final suggestions = [
+      'Tôi nên ăn gì để giảm cân?',
+      'Gợi ý bài tập cho người mới',
+      'Tôi vừa chạy bộ 30 phút',
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            constraints: const BoxConstraints(maxWidth: 280),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF35373C) : Colors.white,
+              borderRadius: BorderRadius.circular(16).copyWith(bottomLeft: Radius.zero),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2)],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.auto_awesome, color: Colors.orangeAccent, size: 18),
+                    SizedBox(width: 6),
+                    Text('Trợ lý Sức khỏe AI',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Xin chào 👋 Mình là Trợ lý Sức khỏe AI của bạn!\n\nMình có thể tư vấn dinh dưỡng, gợi ý bài tập, hoặc ghi lại buổi tập giúp bạn (ví dụ: "Tôi vừa chạy bộ 30 phút"). Bạn cần mình giúp gì hôm nay?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text('Gợi ý nhanh:',
+              style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600])),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: suggestions.map((s) {
+            return GestureDetector(
+              onTap: () => ref.read(chatProvider.notifier).sendMessage(s),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                ),
+                child: Text(s, style: const TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w500)),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
