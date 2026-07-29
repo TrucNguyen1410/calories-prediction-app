@@ -4,6 +4,17 @@ import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// Chuẩn hóa loại bữa ăn về đúng enum của model.
+// Frontend (thực đơn AI) gửi "Bữa sáng/Bữa trưa/Bữa tối/Bữa phụ/Ăn nhẹ..." nên cần map.
+function normalizeMealType(raw) {
+  const s = (raw || '').toString().toLowerCase().trim();
+  if (s.includes('sáng')) return 'Sáng';
+  if (s.includes('trưa')) return 'Trưa';
+  if (s.includes('tối')) return 'Tối';
+  if (s.includes('phụ') || s.includes('snack') || s.includes('nhẹ') || s.includes('vặt')) return 'Snack';
+  return 'AI Log';
+}
+
 // API: Thêm bữa ăn
 // POST /api/meals
 router.post('/', verifyToken, async (req, res) => {
@@ -18,7 +29,7 @@ router.post('/', verifyToken, async (req, res) => {
       name,
       calories: parseFloat(calories),
       servingSize: servingSize || "",
-      mealType,
+      mealType: normalizeMealType(mealType),
       date,
       imageUrl: imageUrl || "",
       timestamp: new Date().toISOString(),
@@ -29,6 +40,9 @@ router.post('/', verifyToken, async (req, res) => {
     res.status(201).json({ success: true, message: 'Đã lưu bữa ăn', meal });
   } catch (err) {
     console.error('❌ Lỗi POST /meals:', err);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: 'Dữ liệu bữa ăn không hợp lệ' });
+    }
     res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
   }
 });
