@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+
+    <!-- Main Neon Gradient: Purple to Cyan/Fit Blue -->
+    <linearGradient id="primaryNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="50%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+
+    <!-- Subtle Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#a855f7" flood-opacity="0.45" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#06b6d4" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Squircle App Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="url(#primaryNeon)" stroke-width="3" stroke-opacity="0.25" />
+
+  <!-- Heart & Pulse & AI Sparkle Group -->
+  <g filter="url(#neonGlow)">
+    <!-- Stylized Heart Base -->
+    <path d="M256 420 C256 420 100 320 100 200 C100 135 150 95 210 95 C235 95 250 108 256 118 C262 108 277 95 302 95 C362 95 412 135 412 200 C412 260 360 330 256 420 Z" 
+          fill="none" 
+          stroke="url(#primaryNeon)" 
+          stroke-width="26" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- Pulse Line (Google Fit / Vital Sync) -->
+    <path d="M120 230 L195 230 L225 170 L256 290 L287 200 L315 230 L392 230" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="18" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- AI 4-Point Sparkle Star (Top Right) -->
+    <path d="M375 90 Q375 125 410 125 Q375 125 375 160 Q375 125 340 125 Q375 125 375 90 Z" 
+          fill="url(#primaryNeon)" />
+    <circle cx="375" cy="125" r="4" fill="#ffffff" />
+  </g>
+</svg>

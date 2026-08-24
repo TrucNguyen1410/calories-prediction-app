@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 60, color: AppTheme.primary),
+            Image.asset('assets/logo/logo.png', width: 84, height: 84),
             const SizedBox(height: 16),
             const Text(
               'HealthAI',
