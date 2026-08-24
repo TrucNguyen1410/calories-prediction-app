@@ -89,7 +89,7 @@ Nhiệm vụ đặc biệt:
                 ...chatHistory,
                 { role: "user", content: message }
             ],
-            model: "llama-3.3-70b-versatile",
+            model: "openai/gpt-oss-120b",
             temperature: 0.7,
             max_tokens: 1024,
         });
@@ -284,7 +284,7 @@ export const generateHealthPlan = async (req, res) => {
 
         const completion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
-            model: "llama-3.3-70b-versatile",
+            model: "openai/gpt-oss-120b",
             temperature: 0.5,
             response_format: { type: "json_object" }
         });
@@ -432,7 +432,7 @@ export const analyzeFood = async (req, res) => {
 
             const completion = await groq.chat.completions.create({
                 messages: [{ role: "user", content: prompt }],
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b",
                 response_format: { type: "json_object" }
             });
             nutritionData = JSON.parse(completion.choices[0].message.content);
@@ -518,7 +518,7 @@ CHỈ trả về JSON đúng cấu trúc (không markdown):
 
         const completion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
-            model: "llama-3.3-70b-versatile",
+            model: "openai/gpt-oss-120b",
             temperature: 0.6,
             response_format: { type: "json_object" },
         });
