@@ -1321,7 +1321,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       CircularProgressIndicator(color: Colors.purpleAccent),
                       SizedBox(height: 12),
                       Text(
-                        '🤖 Đang biên dịch thực đơn 7 ngày dạng JSON từ AI...',
+                        '🤖 AI đang thiết kế thực đơn 7 ngày phù hợp với bạn...',
                         style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ],
