@@ -16,6 +16,17 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY || "dummy_key_to_prevent_startup_crash",
 });
 
+// Một số model thỉnh thoảng vẫn bọc JSON trong ```json``` dù đã yêu cầu response_format json_object
+function extractJsonContent(raw) {
+    if (!raw) return raw;
+    let content = raw.trim();
+    if (content.startsWith("```")) {
+        content = content.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    }
+    const match = content.match(/\{[\s\S]*\}/);
+    return match ? match[0] : content;
+}
+
 // --- 1. CHAT VỚI AI (Hỗ trợ Đa phiên Chat Sessions) ---
 export const chatWithAI = async (req, res) => {
     try {
@@ -394,7 +405,7 @@ export const analyzeFood = async (req, res) => {
             });
 
             const content = completion.choices[0]?.message?.content;
-            nutritionData = JSON.parse(content);
+            nutritionData = JSON.parse(extractJsonContent(content));
             if (nutritionData) {
                 nutritionData.imageUrl = `data:${imageFile.mimetype};base64,${base64Image}`;
             }
@@ -435,13 +446,13 @@ export const analyzeFood = async (req, res) => {
                 model: "openai/gpt-oss-120b",
                 response_format: { type: "json_object" }
             });
-            nutritionData = JSON.parse(completion.choices[0].message.content);
+            nutritionData = JSON.parse(extractJsonContent(completion.choices[0].message.content));
         }
 
         res.status(200).json({ success: true, data: nutritionData });
     } catch (error) {
         console.error("ANALYZE FOOD ERROR:", error);
-        res.status(500).json({ success: false, message: "Không thể phân tích món ăn" });
+        res.status(500).json({ success: false, message: "Không thể phân tích món ăn", error: error?.message || String(error) });
     }
 };
 
