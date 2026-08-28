@@ -657,13 +657,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: progress > 0.45 ? Colors.white : (isDark ? Colors.white : const Color(0xFF01579B)),
+                          color: isDark ? Colors.white : (progress > 0.45 ? Colors.white : const Color(0xFF01579B)),
                           letterSpacing: -0.5,
                         ),
                       ),
                       Text('/ ${(target / 1000).toStringAsFixed(1)} L',
                           style: TextStyle(
-                            color: progress > 0.45 ? Colors.white70 : (isDark ? const Color(0xFF949BA4) : Colors.black45),
+                            color: isDark ? Colors.white70 : (progress > 0.45 ? Colors.white70 : Colors.black45),
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                           )),
@@ -1419,72 +1419,148 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
+        final calories = data['estimatedCalories'] ?? data['calories'] ?? 0;
+        final isReasonable = data['isReasonable'] != false;
+        final warningMessage = data['warningMessage']?.toString() ?? '';
+
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Xác nhận dinh dưỡng', 
-                style: TextStyle(
-                  fontSize: 20, 
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? const Color(0xFFF2F3F5) : Colors.black87
-                )
-              ),
-              const SizedBox(height: 16),
-              if (data['imageUrl'] != null && data['imageUrl'].toString().startsWith('data:')) ...[
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF35373C) : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                if (data['imageUrl'] != null && data['imageUrl'].toString().startsWith('data:')) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
                     child: Image.memory(
                       base64Decode(data['imageUrl'].toString().split(',')[1]),
-                      height: 160,
+                      height: 170,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
+                  const SizedBox(height: 20),
+                ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '$calories',
+                      style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, letterSpacing: -1),
+                    ),
+                    const SizedBox(width: 6),
+                    Text('kcal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500])),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+                Text(
+                  data['foodName'] ?? 'Không rõ',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                ),
+                if (data['servingSize'] != null && data['servingSize'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    data['servingSize'].toString(),
+                    style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: _buildMacroPill('${data['protein']}g', 'Protein', AppTheme.macroProtein, LucideIcons.beef)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMacroPill('${data['carbs']}g', 'Carbs', AppTheme.macroCarbs, LucideIcons.wheat)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMacroPill('${data['fat']}g', 'Fat', AppTheme.macroFat, LucideIcons.droplet)),
+                  ],
+                ),
+                if (!isReasonable && warningMessage.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5A524).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(LucideIcons.alertTriangle, color: Color(0xFFF5A524), size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            warningMessage,
+                            style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87, fontWeight: FontWeight.w500, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: isDark ? const Color(0xFF35373C) : Colors.grey[300]!),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: Text('Hủy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 52,
+                        child: PurpleGradientButton(
+                          onPressed: () async {
+                            await _apiService.addMeal(
+                              name: data['foodName'],
+                              calories: (data['estimatedCalories'] as num).toDouble(),
+                              mealType: 'AI Log',
+                              date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                              imageUrl: data['imageUrl'],
+                              servingSize: data['servingSize'],
+                            );
+                            Navigator.pop(context);
+                            ref.read(healthProvider.notifier).refreshAll();
+                            AppToast.show(
+                              context,
+                              message: 'Đã lưu món ăn thành công!',
+                              type: AppToastType.success,
+                            );
+                          },
+                          child: const Text('Lưu vào nhật ký', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
-              _buildNutrientRow('Món ăn', data['foodName'] ?? 'Không rõ'),
-              if (data['servingSize'] != null && data['servingSize'].toString().isNotEmpty)
-                _buildNutrientRow('Khẩu phần', data['servingSize'].toString()),
-              _buildNutrientRow('Calories', '${data['estimatedCalories']} kcal'),
-              _buildNutrientRow('Protein', '${data['protein']}g'),
-              _buildNutrientRow('Carbs', '${data['carbs']}g'),
-              _buildNutrientRow('Fat', '${data['fat']}g'),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: PurpleGradientButton(
-                  onPressed: () async {
-                    await _apiService.addMeal(
-                      name: data['foodName'],
-                      calories: (data['estimatedCalories'] as num).toDouble(),
-                      mealType: 'AI Log',
-                      date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                      imageUrl: data['imageUrl'],
-                      servingSize: data['servingSize'],
-                    );
-                    Navigator.pop(context);
-                    ref.read(healthProvider.notifier).refreshAll();
-                    AppToast.show(
-                      context,
-                      message: 'Đã lưu món ăn thành công! 🎉',
-                      type: AppToastType.success,
-                    );
-                  },
-                  child: const Text('Lưu vào nhật ký', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         );
       },
@@ -1500,6 +1576,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
           Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacroPill(String value, String label, Color color, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600])),
         ],
       ),
     );
