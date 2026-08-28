@@ -13,6 +13,7 @@ import 'menu_screen.dart';
 import 'profile_screen.dart';
 import '../theme.dart';
 import '../providers/tour_provider.dart';
+import '../widgets/app_toast.dart';
 
 final mainTabProvider = StateProvider<int>((ref) => 0);
 
@@ -395,21 +396,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
                   if (mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('🔥 Đã lưu thành công $caloriesBurned kcal!'),
-                        backgroundColor: Colors.green,
-                      ),
+                    AppToast.show(
+                      context,
+                      message: 'Đã lưu thành công $caloriesBurned kcal!',
+                      type: AppToastType.success,
                     );
                   }
                 } catch (e) {
                   if (mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Lỗi: $e'),
-                        backgroundColor: Colors.red,
-                      ),
+                    AppToast.show(
+                      context,
+                      message: 'Lỗi: $e',
+                      type: AppToastType.error,
                     );
                   }
                 }

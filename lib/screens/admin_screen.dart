@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
+import '../widgets/app_toast.dart';
 
 /// Trang Quản trị — chỉ tài khoản role='admin' truy cập (đã chặn ở cả backend).
 class AdminScreen extends StatefulWidget {
@@ -376,8 +377,10 @@ class _AdminScreenState extends State<AdminScreen> {
     if (ok == true) {
       final success = await _api.deleteUserAdmin(user['_id']?.toString() ?? '');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(success ? 'Đã xóa người dùng' : 'Xóa thất bại'), backgroundColor: success ? Colors.green : Colors.red),
+      AppToast.show(
+        context,
+        message: success ? 'Đã xóa người dùng' : 'Xóa thất bại',
+        type: success ? AppToastType.success : AppToastType.error,
       );
       if (success) _load();
     }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
+import '../widgets/app_toast.dart';
 
 class MealHistoryScreen extends StatefulWidget {
   const MealHistoryScreen({Key? key}) : super(key: key);
@@ -113,13 +114,9 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
         _allMeals.removeWhere((m) => m['_id'] == id || m['id'] == id);
         _applyFilterAndSearch();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã xóa bữa ăn khỏi nhật ký')),
-      );
+      AppToast.show(context, message: 'Đã xóa bữa ăn khỏi nhật ký', type: AppToastType.success);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Xóa thất bại')),
-      );
+      AppToast.show(context, message: 'Xóa thất bại', type: AppToastType.error);
     }
   }
 

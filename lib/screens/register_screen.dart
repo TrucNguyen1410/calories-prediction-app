@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
 import '../utils/responsive.dart';
+import '../widgets/app_toast.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -201,8 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _onRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Mật khẩu nhập lại không khớp!")));
+      AppToast.show(context, message: "Mật khẩu nhập lại không khớp!", type: AppToastType.warning);
       return;
     }
 
@@ -219,12 +219,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = false);
 
     if (result["success"] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Đăng ký thành công! Hãy đăng nhập."), backgroundColor: Colors.green));
+      AppToast.show(context, message: "Đăng ký thành công! Hãy đăng nhập.", type: AppToastType.success);
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result["message"] ?? "Lỗi không xác định")));
+      AppToast.show(context, message: result["message"] ?? "Lỗi không xác định", type: AppToastType.error);
     }
   }
 }

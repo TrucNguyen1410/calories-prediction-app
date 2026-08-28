@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
 import 'meal_history_screen.dart';
+import '../widgets/app_toast.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -296,8 +297,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     setState(() => _loadingInsight = false);
 
     if (result['success'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Không thể phân tích'), backgroundColor: Colors.red),
+      AppToast.show(
+        context,
+        message: result['message'] ?? 'Không thể phân tích',
+        type: AppToastType.error,
       );
       return;
     }

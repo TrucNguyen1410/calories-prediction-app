@@ -12,6 +12,7 @@ import 'records_screen.dart';
 import 'predict_screen.dart';
 import 'admin_screen.dart';
 import '../utils/health_calc.dart';
+import '../widgets/app_toast.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String name;
@@ -568,14 +569,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         final ageVal = int.tryParse(ageController.text) ?? 0;
 
                         if (name.length < 2) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('⚠️ Tên phải có ít nhất 2 ký tự'), backgroundColor: Colors.orangeAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Tên phải có ít nhất 2 ký tự',
+                            type: AppToastType.warning,
                           );
                           return;
                         }
                         if (h <= 0 || w <= 0 || ageVal <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('⚠️ Chiều cao, cân nặng và tuổi phải lớn hơn 0'), backgroundColor: Colors.orangeAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Chiều cao, cân nặng và tuổi phải lớn hơn 0',
+                            type: AppToastType.warning,
                           );
                           return;
                         }
@@ -595,12 +600,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                         if (res['success'] == true) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('🎯 Hồ sơ đã được cập nhật thành công!'), backgroundColor: Colors.green),
+                          AppToast.show(
+                            context,
+                            message: 'Hồ sơ đã được cập nhật thành công!',
+                            type: AppToastType.success,
                           );
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('❌ Cập nhật thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Cập nhật thất bại: ${res['message'] ?? 'Không rõ'}',
+                            type: AppToastType.error,
                           );
                         }
                       },
@@ -634,16 +643,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final data = result['data'] ?? {};
       final steps = data['steps'] ?? 0;
       final cal = (data['caloriesBurned'] ?? 0);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Đồng bộ Google Fit: $steps bước • ${(cal as num).toStringAsFixed(0)} kcal'),
-          backgroundColor: Colors.green,
-        ),
+      AppToast.show(
+        context,
+        message: 'Đồng bộ Google Fit: $steps bước • ${(cal as num).toStringAsFixed(0)} kcal',
+        type: AppToastType.success,
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      // Phiên hết hạn → cho nút đăng nhập lại Google ngay trên snackbar
+      // Phiên hết hạn → cho nút đăng nhập lại Google ngay trên snackbar (có action, giữ nguyên SnackBar)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('⚠️ Phiên Google Fit đã hết hạn hoặc chưa cấp quyền.'),
@@ -684,17 +692,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (!mounted) return;
       Navigator.pop(context);
       final data = result['data'] ?? {};
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Đã kết nối lại Google Fit: ${data['steps'] ?? 0} bước • ${((data['caloriesBurned'] ?? 0) as num).toStringAsFixed(0)} kcal'),
-          backgroundColor: Colors.green,
-        ),
+      AppToast.show(
+        context,
+        message: 'Đã kết nối lại Google Fit: ${data['steps'] ?? 0} bước • ${((data['caloriesBurned'] ?? 0) as num).toStringAsFixed(0)} kcal',
+        type: AppToastType.success,
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Đăng nhập lại thất bại: $e'), backgroundColor: Colors.redAccent),
+      AppToast.show(
+        context,
+        message: 'Đăng nhập lại thất bại: $e',
+        type: AppToastType.error,
       );
     }
   }
@@ -763,11 +772,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         if (!mounted) return;
                         setDialogState(() => isSaving = false);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(res['success'] == true ? '🎯 Đã cập nhật mục tiêu!' : '❌ ${res['message'] ?? 'Lỗi'}'),
-                            backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
-                          ),
+                        AppToast.show(
+                          context,
+                          message: res['success'] == true ? 'Đã cập nhật mục tiêu!' : (res['message'] ?? 'Lỗi'),
+                          type: res['success'] == true ? AppToastType.success : AppToastType.error,
                         );
                       },
                 child: isSaving
@@ -808,8 +816,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (res['success'] == true) {
       await ref.read(authProvider.notifier).logout();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ ${res['message'] ?? 'Xóa thất bại'}'), backgroundColor: Colors.redAccent),
+      AppToast.show(
+        context,
+        message: res['message'] ?? 'Xóa thất bại',
+        type: AppToastType.error,
       );
     }
   }
@@ -874,8 +884,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         final newP = newPasswordController.text;
 
                         if (oldP.isEmpty || newP.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('⚠️ Vui lòng nhập đầy đủ mật khẩu cũ và mới'), backgroundColor: Colors.orangeAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Vui lòng nhập đầy đủ mật khẩu cũ và mới',
+                            type: AppToastType.warning,
                           );
                           return;
                         }
@@ -895,18 +907,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           
                           if (res['success'] == true) {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('🔑 Đổi mật khẩu thành công!'), backgroundColor: Colors.green),
+                            AppToast.show(
+                              context,
+                              message: 'Đổi mật khẩu thành công!',
+                              type: AppToastType.success,
                             );
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('❌ Đổi mật khẩu thất bại: ${res['message'] ?? 'Không rõ'}'), backgroundColor: Colors.redAccent),
+                            AppToast.show(
+                              context,
+                              message: 'Đổi mật khẩu thất bại: ${res['message'] ?? 'Không rõ'}',
+                              type: AppToastType.error,
                             );
                           }
                         } catch (e) {
                           setDialogState(() => isSaving = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('❌ Lỗi kết nối: $e'), backgroundColor: Colors.redAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Lỗi kết nối: $e',
+                            type: AppToastType.error,
                           );
                         }
                       },
@@ -980,8 +998,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : () async {
                         final text = feedbackController.text.trim();
                         if (text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('⚠️ Vui lòng nhập nội dung góp ý'), backgroundColor: Colors.orangeAccent),
+                          AppToast.show(
+                            context,
+                            message: 'Vui lòng nhập nội dung góp ý',
+                            type: AppToastType.warning,
                           );
                           return;
                         }
@@ -994,18 +1014,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         if (mounted) {
                           Navigator.pop(context);
                           if (res['success'] == true) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('💖 ${res['message'] ?? 'Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.'}'),
-                                backgroundColor: Colors.green,
-                              ),
+                            AppToast.show(
+                              context,
+                              message: res['message'] ?? 'Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.',
+                              type: AppToastType.success,
                             );
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('❌ Gửi phản hồi thất bại: ${res['message'] ?? 'Không rõ lý do'}'),
-                                backgroundColor: Colors.redAccent,
-                              ),
+                            AppToast.show(
+                              context,
+                              message: 'Gửi phản hồi thất bại: ${res['message'] ?? 'Không rõ lý do'}',
+                              type: AppToastType.error,
                             );
                           }
                         }

@@ -11,6 +11,7 @@ import '../models/workout.dart';
 import '../utils/responsive.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
+import '../widgets/app_toast.dart';
 import 'meal_history_screen.dart';
 import 'history_screen.dart';
 import 'package:image_picker/image_picker.dart';
@@ -206,11 +207,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onPressed: () async {
                               setState(() => _isSyncing = true);
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('⏳ Đang đồng bộ dữ liệu với máy chủ và thiết bị đeo...'),
-                                  duration: Duration(seconds: 1),
-                                ),
+                              AppToast.show(
+                                context,
+                                message: 'Đang đồng bộ dữ liệu với máy chủ và thiết bị đeo...',
+                                type: AppToastType.info,
                               );
 
                               try {
@@ -218,20 +218,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 await Future.delayed(const Duration(milliseconds: 1000));
 
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('🎉 Đồng bộ thành công! Chỉ số calo đã được làm mới.'),
-                                      backgroundColor: Colors.green,
-                                    ),
+                                  AppToast.show(
+                                    context,
+                                    message: 'Đồng bộ thành công! Chỉ số calo đã được làm mới.',
+                                    type: AppToastType.success,
                                   );
                                 }
                               } catch (e) {
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('❌ Lỗi đồng bộ: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
+                                  AppToast.show(
+                                    context,
+                                    message: 'Lỗi đồng bộ: $e',
+                                    type: AppToastType.error,
                                   );
                                 }
                               } finally {
@@ -1085,17 +1083,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (parsedJson != null && parsedJson['action'] == 'LOG_WORKOUT') {
         _showWorkoutConfirmationSheet(parsedJson);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(parsedJson?['message'] ?? (replyStr.isNotEmpty ? replyStr : 'Không thể phân tích hoạt động. Vui lòng nhập rõ dạng: "Chạy bộ 30 phút"')),
-            backgroundColor: Colors.orangeAccent,
-          ),
+        AppToast.show(
+          context,
+          message: parsedJson?['message'] ?? (replyStr.isNotEmpty ? replyStr : 'Không thể phân tích hoạt động. Vui lòng nhập rõ dạng: "Chạy bộ 30 phút"'),
+          type: AppToastType.info,
         );
       }
     } catch (e) {
       Navigator.pop(context); // Hide loading dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi phân tích bài tập: $e'), backgroundColor: Colors.redAccent),
+      AppToast.show(
+        context,
+        message: 'Lỗi phân tích bài tập: $e',
+        type: AppToastType.error,
       );
     }
   }
@@ -1169,19 +1168,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Navigator.pop(context); // Close confirmation sheet
                       _workoutInputController.clear(); // Clear input field
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('🔥 Đã lưu thành công $caloriesBurned kcal!'),
-                          backgroundColor: Colors.green,
-                        ),
+                      AppToast.show(
+                        context,
+                        message: 'Đã lưu thành công $caloriesBurned kcal!',
+                        type: AppToastType.success,
                       );
                     } catch (e) {
                       Navigator.pop(context); // Hide loading dialog
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Lỗi khi lưu: $e'),
-                          backgroundColor: Colors.redAccent,
-                        ),
+                      AppToast.show(
+                        context,
+                        message: 'Lỗi khi lưu: $e',
+                        type: AppToastType.error,
                       );
                     }
                   },
@@ -1392,8 +1389,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải ảnh: $e')),
+      AppToast.show(
+        context,
+        message: 'Lỗi tải ảnh: $e',
+        type: AppToastType.error,
       );
     }
   }
@@ -1411,7 +1410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _showConfirmationSheet(data);
     } catch (e) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      AppToast.show(context, message: 'Lỗi: $e', type: AppToastType.error);
     }
   }
 
@@ -1475,8 +1474,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                     Navigator.pop(context);
                     ref.read(healthProvider.notifier).refreshAll();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã lưu món ăn thành công! 🎉'), backgroundColor: Colors.green),
+                    AppToast.show(
+                      context,
+                      message: 'Đã lưu món ăn thành công! 🎉',
+                      type: AppToastType.success,
                     );
                   },
                   child: const Text('Lưu vào nhật ký', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
@@ -1993,12 +1994,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     _hasUnreadNotifications = false;
                                   });
                                 });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('✅ Đã đánh dấu toàn bộ thông báo là đã đọc'),
-                                    backgroundColor: Colors.purple,
-                                    duration: Duration(seconds: 1),
-                                  ),
+                                AppToast.show(
+                                  context,
+                                  message: 'Đã đánh dấu toàn bộ thông báo là đã đọc',
+                                  type: AppToastType.info,
                                 );
                               },
                               icon: const Icon(LucideIcons.checkCheck, size: 16, color: Colors.purpleAccent),

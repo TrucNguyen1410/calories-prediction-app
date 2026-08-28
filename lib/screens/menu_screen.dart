@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/app_toast.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({Key? key}) : super(key: key);
@@ -719,20 +720,18 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     onTap: () async {
                       final name = meal['name'] ?? 'Món ăn';
                       if (name == 'Chưa chọn món' || name.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('⚠️ Vui lòng tùy chỉnh chọn món trước khi thêm vào nhật ký!'),
-                            backgroundColor: Colors.orange,
-                          ),
+                        AppToast.show(
+                          context,
+                          message: 'Vui lòng tùy chỉnh chọn món trước khi thêm vào nhật ký!',
+                          type: AppToastType.warning,
                         );
                         return;
                       }
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('⏳ Đang ghi nhận "$name" vào nhật ký ăn uống hôm nay...'),
-                          duration: const Duration(milliseconds: 500),
-                        ),
+                      AppToast.show(
+                        context,
+                        message: 'Đang ghi nhận "$name" vào nhật ký ăn uống hôm nay...',
+                        type: AppToastType.info,
                       );
 
                       try {
@@ -752,18 +751,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         // Refresh state to update total calories
                         await ref.read(healthProvider.notifier).refreshAll();
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('🎉 Đã ghi nhận bữa ${mealType.toLowerCase()}: $name vào nhật ký hôm nay!'),
-                            backgroundColor: Colors.green,
-                          ),
+                        AppToast.show(
+                          context,
+                          message: 'Đã ghi nhận bữa ${mealType.toLowerCase()}: $name vào nhật ký hôm nay!',
+                          type: AppToastType.success,
                         );
                       } catch (err) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('❌ Lỗi ghi nhận bữa ăn: $err'),
-                            backgroundColor: Colors.red,
-                          ),
+                        AppToast.show(
+                          context,
+                          message: 'Lỗi ghi nhận bữa ăn: $err',
+                          type: AppToastType.error,
                         );
                       }
                     },
@@ -1149,11 +1146,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       onPressed: () async {
                         Navigator.pop(context);
                         
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('⏳ Đang cập nhật thực đơn và đồng bộ dữ liệu...'),
-                            duration: Duration(milliseconds: 800),
-                          ),
+                        AppToast.show(
+                          context,
+                          message: 'Đang cập nhật thực đơn và đồng bộ dữ liệu...',
+                          type: AppToastType.info,
                         );
 
                         try {
@@ -1189,18 +1185,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                           // 3. Ép ứng dụng tải lại dữ liệu mới nhất từ Server để đồng bộ hiển thị
                           await ref.read(healthProvider.notifier).refreshAll();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('✅ Đã đồng bộ và cập nhật bữa ${mealType.toLowerCase()} thành món "$detectedName"!'),
-                              backgroundColor: Colors.green,
-                            ),
+                          AppToast.show(
+                            context,
+                            message: 'Đã đồng bộ và cập nhật bữa ${mealType.toLowerCase()} thành món "$detectedName"!',
+                            type: AppToastType.success,
                           );
                         } catch (err) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('❌ Lỗi đồng bộ thực đơn: $err'),
-                              backgroundColor: Colors.red,
-                            ),
+                          AppToast.show(
+                            context,
+                            message: 'Lỗi đồng bộ thực đơn: $err',
+                            type: AppToastType.error,
                           );
                         }
                       },
@@ -1347,15 +1341,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                           _activeSegment = 0; // Chuyển về tab Hôm nay để xem bữa ăn mới tạo
                        });
                        
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(
-                           content: Text('🎉 Thực đơn 7 ngày của bạn đã được AI tạo thành công!'),
-                           backgroundColor: Colors.green,
-                         ),
+                       AppToast.show(
+                         context,
+                         message: 'Thực đơn 7 ngày của bạn đã được AI tạo thành công!',
+                         type: AppToastType.success,
                        );
                     } catch (e) {
                        setDialogState(() => isGenerating = false);
-                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi tạo thực đơn: $e'), backgroundColor: Colors.red));
+                       AppToast.show(context, message: 'Lỗi tạo thực đơn: $e', type: AppToastType.error);
                     }
                   },
                   child: const Text(

@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../providers/health_provider.dart';
 import '../utils/health_calc.dart';
 import '../theme.dart';
+import '../widgets/app_toast.dart';
 
 /// Màn hình "Hồ sơ Sức khỏe": theo dõi xu hướng cân nặng & BMI THẬT theo thời gian,
 /// cho phép người dùng ghi nhận số đo mới và xem lịch sử.
@@ -475,14 +476,18 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
                         await _loadRecords();
                         await ref.read(healthProvider.notifier).refreshAll();
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("✅ Đã lưu cân nặng!"), backgroundColor: Colors.green),
+                          AppToast.show(
+                            context,
+                            message: "Đã lưu cân nặng!",
+                            type: AppToastType.success,
                           );
                         }
                       } else {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(result['message'] ?? "Lỗi"), backgroundColor: Colors.red),
+                          AppToast.show(
+                            context,
+                            message: result['message'] ?? "Lỗi",
+                            type: AppToastType.error,
                           );
                         }
                       }

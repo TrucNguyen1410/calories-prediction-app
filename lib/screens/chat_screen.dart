@@ -7,6 +7,7 @@ import '../providers/health_provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 import '../theme.dart';
+import '../widgets/app_toast.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -445,22 +446,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   // Ẩn loading
                   if (mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('🔥 Đã lưu thành công $caloriesBurned kcal!'),
-                        backgroundColor: Colors.green,
-                      ),
+                    AppToast.show(
+                      context,
+                      message: 'Đã lưu thành công $caloriesBurned kcal!',
+                      type: AppToastType.success,
                     );
                   }
                 } catch (e) {
                   // Ẩn loading
                   if (mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Lỗi: $e'),
-                        backgroundColor: Colors.red,
-                      ),
+                    AppToast.show(
+                      context,
+                      message: 'Lỗi: $e',
+                      type: AppToastType.error,
                     );
                   }
                 }

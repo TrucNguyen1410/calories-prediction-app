@@ -5,6 +5,7 @@ import '../utils/responsive.dart';
 import '../utils/health_calc.dart';
 import '../theme.dart';
 import 'history_screen.dart';
+import '../widgets/app_toast.dart';
 
 class PredictScreen extends StatefulWidget {
   const PredictScreen({Key? key}) : super(key: key);
@@ -78,7 +79,7 @@ class _PredictScreenState extends State<PredictScreen> {
     });
 
     if (result == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Dự đoán thất bại'), backgroundColor: Colors.red));
+      AppToast.show(context, message: 'Dự đoán thất bại', type: AppToastType.error);
     }
   }
 

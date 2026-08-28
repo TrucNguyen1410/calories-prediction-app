@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/health_provider.dart';
 import '../utils/health_calc.dart';
 import '../theme.dart';
+import '../widgets/app_toast.dart';
 
 /// Màn hình thiết lập ban đầu — thu thập chỉ số & mục tiêu ngay sau khi đăng ký,
 /// giúp cá nhân hóa mục tiêu calo (TDEE) và tránh dữ liệu trống (weight = 0).
@@ -64,8 +65,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // main.dart sẽ tự chuyển sang MainScreen khi onboarded = true
     } else {
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Lỗi lưu thông tin'), backgroundColor: Colors.red),
+      AppToast.show(
+        context,
+        message: result['message'] ?? 'Lỗi lưu thông tin',
+        type: AppToastType.error,
       );
     }
   }

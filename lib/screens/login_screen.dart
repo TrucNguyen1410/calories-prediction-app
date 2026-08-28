@@ -8,6 +8,7 @@ import 'register_screen.dart';
 import 'main_screen.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/app_toast.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -61,8 +62,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (error) {
       setState(() => _isLoading = false);
       print('Google Sign-In Error Detail: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi đăng nhập Google: $error. Hãy kiểm tra ClientID và Origin URL.")),
+      AppToast.show(
+        context,
+        message: "Lỗi đăng nhập Google: $error. Hãy kiểm tra ClientID và Origin URL.",
+        type: AppToastType.error,
       );
     }
   }
@@ -317,8 +320,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           otpSent = res['success'] == true;
                         });
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(res['message'] ?? '')),
+                          AppToast.show(
+                            context,
+                            message: res['message'] ?? '',
+                            type: res['success'] == true ? AppToastType.success : AppToastType.error,
                           );
                         }
                       } else {
@@ -332,11 +337,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           if (mounted) Navigator.pop(ctx);
                         }
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(res['message'] ?? ''),
-                              backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
-                            ),
+                          AppToast.show(
+                            context,
+                            message: res['message'] ?? '',
+                            type: res['success'] == true ? AppToastType.success : AppToastType.error,
                           );
                         }
                       }
@@ -361,7 +365,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (response["success"] == true) {
       // Riverpod automatically handles switching home to MainScreen, no Navigator.push needed!
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response["message"] ?? "Lỗi đăng nhập")));
+      AppToast.show(context, message: response["message"] ?? "Lỗi đăng nhập", type: AppToastType.error);
     }
   }
 }
