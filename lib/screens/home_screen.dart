@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -284,6 +285,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildTodayGoalCard(state),
+              const SizedBox(height: 16),
               _buildBMICard(state),
               const SizedBox(height: 16),
               _buildStepsCard(state),
@@ -307,6 +310,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildTodayGoalCard(state),
+            const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -348,6 +353,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildTodayGoalCard(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final intake = state.todayIntake;
+    final target = state.dailyCalorieTarget;
+    final progress = target > 0 ? (intake / target).clamp(0.0, 1.0) : 0.0;
+    final gaugeColor = isDark ? AppTheme.gaugeNeutralDark : AppTheme.gaugeNeutralLight;
+
+    return _buildBentoCard(
+      title: 'Mục tiêu hôm nay',
+      color: Theme.of(context).cardColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '${intake.toInt()}',
+                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, letterSpacing: -1),
+                    ),
+                    Text(
+                      ' / ${target.toInt()}',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF949BA4) : Colors.grey[400]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'kcal đã nạp hôm nay',
+                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          CircularPercentIndicator(
+            radius: 44,
+            lineWidth: 10,
+            percent: progress,
+            circularStrokeCap: CircularStrokeCap.round,
+            backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+            progressColor: gaugeColor,
+            animation: true,
+            animationDuration: 700,
+            center: Icon(LucideIcons.flame, color: gaugeColor, size: 22),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBMICard(HealthState state) {
     double bmi = 0.0;
     String status = "Chưa có";
@@ -379,125 +441,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return _buildBentoCard(
       key: ref.read(tourKeysProvider).bmiKey,
       title: 'Chỉ số BMI của bạn',
       color: Theme.of(context).cardColor,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      bmi > 0 ? bmi.toStringAsFixed(1) : '--',
-                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
-                    ),
-                    const SizedBox(width: 4),
-                    Text('kg/m²', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-                const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                bmi > 0 ? bmi.toStringAsFixed(1) : '--',
+                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
+              ),
+              const SizedBox(width: 10),
+              if (bmi > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    status,
-                    style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
+                  child: Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
-                  style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(width: 16),
-          _buildBMIGauge(bmi, statusColor),
+          const SizedBox(height: 4),
+          Text(
+            height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
+            style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 18),
+          _buildBMIHorizontalBar(bmi),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _bmiLegendDot('Gầy', Colors.blue, isDark),
+              _bmiLegendDot('Bình thường', Colors.green, isDark),
+              _bmiLegendDot('Thừa cân', Colors.orangeAccent, isDark),
+              _bmiLegendDot('Béo phì', const Color(0xFFB71C1C), isDark),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBMIGauge(double bmi, Color statusColor) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final double percent = bmi > 0 ? ((bmi - 15.0) / (35.0 - 15.0)).clamp(0.0, 1.0) : 0.0;
+  Widget _bmiLegendDot(String label, Color color, bool isDark) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
 
-    return Container(
-      height: 90,
-      width: 24,
-      alignment: Alignment.center,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Background/gradient track of the gauge
-          Positioned(
-            left: 8,
-            top: 0,
-            bottom: 0,
-            child: Container(
-              width: 8,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                gradient: bmi > 0
-                    ? const LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.blue,          // Gầy
-                          Colors.green,         // Bình thường
-                          Colors.orangeAccent,  // Thừa cân nhẹ
-                          Colors.redAccent,     // Béo phì độ 1
-                          Color(0xFFB71C1C),    // Béo phì độ 2
-                        ],
-                        stops: [
-                          0.0,
-                          0.175,
-                          0.4,
-                          0.5,
-                          0.75,
-                        ],
-                      )
-                    : null,
-                color: bmi > 0 ? null : (isDark ? const Color(0xFF35373C) : Colors.grey[200]),
-              ),
-            ),
-          ),
-          // Current status indicator dot
-          if (bmi > 0)
-            Positioned(
-              bottom: (percent * 90) - 8,
-              left: 4,
-              child: Container(
-                width: 16,
-                height: 16,
+  Widget _buildBMIHorizontalBar(double bmi) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final percent = bmi > 0 ? ((bmi - 15.0) / (35.0 - 15.0)).clamp(0.0, 1.0) : 0.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final trackWidth = constraints.maxWidth;
+        final dotX = (percent * trackWidth).clamp(8.0, trackWidth - 8.0);
+        return SizedBox(
+          height: 18,
+          width: double.infinity,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.centerLeft,
+            children: [
+              Container(
+                height: 8,
+                width: trackWidth,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2B2D31) : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: statusColor, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(4),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Colors.blue,          // Gầy
+                      Colors.green,         // Bình thường
+                      Colors.orangeAccent,  // Thừa cân nhẹ
+                      Colors.redAccent,     // Béo phì độ 1
+                      Color(0xFFB71C1C),    // Béo phì độ 2
+                    ],
+                    stops: [0.0, 0.175, 0.4, 0.5, 0.75],
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
+              if (bmi > 0)
+                Positioned(
+                  left: dotX - 8,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black87, width: 2.5),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 4, offset: const Offset(0, 1))],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -589,15 +644,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircularPercentIndicator(
-                radius: 42,
-                lineWidth: 9,
+              _WaterWaveCircle(
                 percent: progress,
-                circularStrokeCap: CircularStrokeCap.round,
+                size: 84,
+                waveColor: const Color(0xFF29B6F6),
                 backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
-                progressColor: const Color(0xFF29B6F6),
-                animation: true,
-                animationDuration: 600,
                 center: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Column(
@@ -605,10 +656,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       Text(
                         '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -0.5),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: progress > 0.45 ? Colors.white : (isDark ? Colors.white : const Color(0xFF01579B)),
+                          letterSpacing: -0.5,
+                        ),
                       ),
                       Text('/ ${(target / 1000).toStringAsFixed(1)} L',
-                          style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 9, fontWeight: FontWeight.w500)),
+                          style: TextStyle(
+                            color: progress > 0.45 ? Colors.white70 : (isDark ? const Color(0xFF949BA4) : Colors.black45),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                          )),
                     ],
                   ),
                 ),
@@ -1452,15 +1512,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Widget? action,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       key: key,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: InkWell(
         onTap: onTap,
@@ -2056,5 +2121,109 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     );
+  }
+}
+
+/// Vòng tròn hiển thị mực nước dạng "sóng" lắc nhẹ nhàng qua lại (không cuộn một
+/// chiều liên tục), dùng cho card "Nước uống hôm nay".
+class _WaterWaveCircle extends StatefulWidget {
+  final double percent; // 0..1
+  final double size;
+  final Color waveColor;
+  final Color backgroundColor;
+  final Widget? center;
+
+  const _WaterWaveCircle({
+    required this.percent,
+    required this.waveColor,
+    required this.backgroundColor,
+    this.size = 84,
+    this.center,
+  });
+
+  @override
+  State<_WaterWaveCircle> createState() => _WaterWaveCircleState();
+}
+
+class _WaterWaveCircleState extends State<_WaterWaveCircle> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: ClipOval(
+        child: Container(
+          color: widget.backgroundColor,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) {
+                  return CustomPaint(
+                    size: Size(widget.size, widget.size),
+                    painter: _WavePainter(
+                      progress: widget.percent.clamp(0.0, 1.0),
+                      animationValue: _controller.value,
+                      color: widget.waveColor,
+                    ),
+                  );
+                },
+              ),
+              if (widget.center != null) widget.center!,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  final double progress; // 0..1, mực nước tính từ đáy lên
+  final double animationValue; // 0..1, lặp vô hạn
+  final Color color;
+
+  _WavePainter({required this.progress, required this.animationValue, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final waveAmplitude = size.height * 0.045;
+    final baseline = size.height * (1 - progress);
+    // Lắc qua lắc lại nhẹ nhàng (dao động sin) thay vì cuộn một chiều liên tục.
+    final phase = math.sin(animationValue * 2 * math.pi) * (math.pi / 3);
+
+    Path buildWave(double amplitude, double phaseShift) {
+      final path = Path()..moveTo(0, size.height)..lineTo(0, baseline);
+      for (double x = 0; x <= size.width; x += 2) {
+        final y = baseline + math.sin((x / size.width * 2 * math.pi) + phaseShift) * amplitude;
+        path.lineTo(x, y);
+      }
+      path.lineTo(size.width, size.height);
+      path.close();
+      return path;
+    }
+
+    canvas.drawPath(buildWave(waveAmplitude, phase), Paint()..color = color.withOpacity(0.5));
+    canvas.drawPath(buildWave(waveAmplitude * 0.7, phase + math.pi / 2), Paint()..color = color.withOpacity(0.85));
+  }
+
+  @override
+  bool shouldRepaint(covariant _WavePainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.animationValue != animationValue || oldDelegate.color != color;
   }
 }
