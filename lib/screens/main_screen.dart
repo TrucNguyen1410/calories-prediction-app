@@ -172,7 +172,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         return Container(
                           color: isDark ? const Color(0xFF1E1F22) : Colors.white,
                           child: Icon(
-                            Icons.smart_toy_outlined,
+                            LucideIcons.bot,
                             color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary,
                             size: 32,
                           ),
@@ -263,7 +263,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.auto_awesome, color: Colors.orangeAccent, size: 20),
+          const Icon(LucideIcons.sparkles, color: Colors.orangeAccent, size: 20),
           const SizedBox(width: 8),
           const Text(
             'Trợ lý Sức khỏe AI',
@@ -271,12 +271,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.delete_sweep, color: Colors.white70, size: 20),
+            icon: const Icon(LucideIcons.trash2, color: Colors.white70, size: 20),
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
             tooltip: 'Xóa hội thoại',
           ),
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+            icon: const Icon(LucideIcons.x, color: Colors.white, size: 20),
             onPressed: () => ref.read(chatbotProvider.notifier).setChatOpen(false),
           ),
         ],
@@ -359,7 +359,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  Icon(LucideIcons.checkCircle2, color: Colors.green, size: 16),
                   SizedBox(width: 6),
                   Text(
                     'Đã lưu vào nhật ký',
@@ -414,7 +414,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   }
                 }
               },
-              icon: const Icon(Icons.local_fire_department, size: 16, color: Colors.white),
+              icon: const Icon(LucideIcons.flame, size: 16, color: Colors.white),
               label: Text('Lưu ${caloriesBurned.toStringAsFixed(0)} kcal đã đốt'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orangeAccent,
@@ -459,7 +459,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.auto_awesome, color: Colors.orangeAccent, size: 18),
+                    Icon(LucideIcons.sparkles, color: Colors.orangeAccent, size: 18),
                     SizedBox(width: 6),
                     Text('Trợ lý Sức khỏe AI',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primary)),
@@ -560,7 +560,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   : null,
             ),
             child: IconButton(
-              icon: Icon(Icons.send, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 18),
+              icon: Icon(LucideIcons.send, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 18),
               onPressed: _handleChatSend,
             ),
           ),

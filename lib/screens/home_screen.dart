@@ -377,33 +377,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Text(
                       '${intake.toInt()}',
-                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, letterSpacing: -1),
+                      style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, letterSpacing: -1),
                     ),
                     Text(
                       ' / ${target.toInt()}',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF949BA4) : Colors.grey[400]),
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF949BA4) : Colors.grey[400]),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'kcal đã nạp hôm nay',
-                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
           CircularPercentIndicator(
-            radius: 44,
-            lineWidth: 10,
+            radius: 46,
+            lineWidth: 11,
             percent: progress,
             circularStrokeCap: CircularStrokeCap.round,
             backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
             progressColor: gaugeColor,
             animation: true,
             animationDuration: 700,
-            center: Icon(LucideIcons.flame, color: gaugeColor, size: 22),
+            center: Icon(LucideIcons.flame, color: gaugeColor, size: 24),
           ),
         ],
       ),
@@ -456,7 +456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Text(
                 bmi > 0 ? bmi.toStringAsFixed(1) : '--',
-                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
               ),
               const SizedBox(width: 10),
               if (bmi > 0)
@@ -466,14 +466,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(status, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text(status, style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             height > 0 && weight > 0 ? '${height.toInt()} cm • ${weight.toStringAsFixed(0)} kg' : 'Chưa thiết lập chiều cao/cân nặng',
-            style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+            style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 18),
           _buildBMIHorizontalBar(bmi),
@@ -498,7 +498,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500)),
+        Text(label, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -571,8 +571,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircularPercentIndicator(
-            radius: 42,
-            lineWidth: 9,
+            radius: 46,
+            lineWidth: 10,
             percent: progress,
             circularStrokeCap: CircularStrokeCap.round,
             backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
@@ -590,10 +590,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Text(
                     '${burned.toInt()}',
                     key: ValueKey<int>(burned.toInt()),
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -0.5),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -0.5),
                   ),
                 ),
-                Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 9, fontWeight: FontWeight.w500)),
+                Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 10, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -605,7 +605,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 Text(
                   'Mục tiêu: ${burnTarget.toInt()} kcal/ngày',
-                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 if (burned > 0) ...[
                   const SizedBox(height: 6),
@@ -614,7 +614,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       const Icon(LucideIcons.flame, color: Colors.redAccent, size: 14),
                       const SizedBox(width: 4),
-                      Text('Đang cháy!', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w600)),
+                      Text('Đang cháy!', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ],
@@ -646,7 +646,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               _WaterWaveCircle(
                 percent: progress,
-                size: 84,
+                size: 92,
                 waveColor: const Color(0xFF29B6F6),
                 backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
                 center: FittedBox(
@@ -657,7 +657,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Text(
                         '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: progress > 0.45 ? Colors.white : (isDark ? Colors.white : const Color(0xFF01579B)),
                           letterSpacing: -0.5,
@@ -666,7 +666,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Text('/ ${(target / 1000).toStringAsFixed(1)} L',
                           style: TextStyle(
                             color: progress > 0.45 ? Colors.white70 : (isDark ? const Color(0xFF949BA4) : Colors.black45),
-                            fontSize: 9,
+                            fontSize: 10,
                             fontWeight: FontWeight.w500,
                           )),
                     ],
@@ -679,7 +679,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   current >= target
                       ? 'Đã đạt mục tiêu hôm nay! 🎉'
                       : 'Còn ${((target - current) / 1000).toStringAsFixed(1)} L nữa là đạt mục tiêu.',
-                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -715,7 +715,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         minimumSize: const Size(0, 34),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -733,8 +733,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircularPercentIndicator(
-            radius: 42,
-            lineWidth: 9,
+            radius: 46,
+            lineWidth: 10,
             percent: progress,
             circularStrokeCap: CircularStrokeCap.round,
             backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
@@ -746,10 +746,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.footprints, color: Colors.teal, size: 16),
+                  const Icon(LucideIcons.footprints, color: Colors.teal, size: 18),
                   Text(
                     steps > 0 ? steps.toInt().toString() : '0',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -0.5),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -0.5),
                   ),
                 ],
               ),
@@ -763,15 +763,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 Text('Mục tiêu: 10.000 bước',
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 6),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.refreshCw, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                    Icon(LucideIcons.refreshCw, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
                     const SizedBox(width: 3),
                     Text('Google Fit',
-                        style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 10)),
+                        style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 12)),
                   ],
                 ),
               ],
@@ -801,13 +801,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
           ref.read(healthProvider.notifier).refreshAll();
         },
-        child: const Text(
-          'Lịch sử 🕒',
-          style: TextStyle(
-            color: AppTheme.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Lịch sử', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            SizedBox(width: 4),
+            Icon(LucideIcons.history, size: 15, color: AppTheme.primary),
+          ],
         ),
       ),
       child: Column(
@@ -839,7 +839,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           : null,
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.camera_alt_outlined, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                      icon: Icon(LucideIcons.camera, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
                       onPressed: _handleImagePick,
                     ),
                   ),
@@ -859,7 +859,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           : null,
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.auto_awesome, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                      icon: Icon(LucideIcons.sparkles, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
                       onPressed: () => _handleQuickLog(_quickLogController.text),
                     ),
                   ),
@@ -948,13 +948,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
           ref.read(healthProvider.notifier).refreshAll();
         },
-        child: const Text(
-          'Lịch sử 🕒',
-          style: TextStyle(
-            color: AppTheme.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Lịch sử', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            SizedBox(width: 4),
+            Icon(LucideIcons.history, size: 15, color: AppTheme.primary),
+          ],
         ),
       ),
       child: Column(
@@ -983,7 +983,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       : null,
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.auto_awesome, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                  icon: Icon(LucideIcons.sparkles, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
                   onPressed: () => _handleWorkoutQuickLog(_workoutInputController.text),
                 ),
               ),
@@ -1344,7 +1344,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: AppTheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
+                child: Icon(LucideIcons.camera, color: AppTheme.primary),
               ),
               title: const Text('Chụp ảnh mới', style: TextStyle(fontWeight: FontWeight.w500)),
               onTap: () {
@@ -1360,7 +1360,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: Colors.purple.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.photo_library_outlined, color: Colors.purple),
+                child: const Icon(LucideIcons.image, color: Colors.purple),
               ),
               title: const Text('Chọn ảnh từ thư viện', style: TextStyle(fontWeight: FontWeight.w500)),
               onTap: () {
@@ -1544,7 +1544,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).textTheme.titleLarge?.color,
                       ),
@@ -1569,18 +1569,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Lịch sử tập luyện', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+        Text('Lịch sử tập luyện', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
         TextButton(
           onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const HistoryScreen()),
             );
-          }, 
+          },
           child: const Row(
             children: [
-              Text('Xem tất cả', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-              Icon(Icons.chevron_right, size: 16, color: AppTheme.primary),
+              Text('Xem tất cả', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+              Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.primary),
             ],
           ),
         ),
@@ -1597,7 +1597,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(isDark ? 0.22 : 0.055), blurRadius: 24, offset: const Offset(0, 10), spreadRadius: -6),
+          ],
         ),
         child: const Center(
           child: Text('Chưa có lịch sử tập luyện hôm nay', style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -1617,9 +1619,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -6),
             ],
           ),
           child: Row(
@@ -1627,21 +1628,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.1), 
+                  color: Colors.blueAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.directions_run_outlined, color: Colors.blueAccent, size: 22),
+                child: const Icon(LucideIcons.activity, color: Colors.blueAccent, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(w.activityType, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+                    Text(w.activityType, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
                     const SizedBox(height: 4),
                     Text(
-                      '${w.duration.toInt()} phút • ${DateFormat('dd/MM HH:mm').format(DateTime.parse(w.date))}', 
-                      style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
+                      '${w.duration.toInt()} phút • ${DateFormat('dd/MM HH:mm').format(DateTime.parse(w.date))}',
+                      style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -1653,8 +1654,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '+${w.calories.toStringAsFixed(0)} kcal', 
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
+                  '+${w.calories.toStringAsFixed(0)} kcal',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14),
                 ),
               ),
             ],
@@ -1814,7 +1815,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 18),
+              const Icon(LucideIcons.sparkles, color: Colors.purpleAccent, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -1884,7 +1885,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           : ' Bạn đã đạt/vượt mục tiêu!')
                   : 'Hôm nay bạn chưa ghi bữa ăn nào. Hãy dùng Nhật ký AI để bắt đầu nhé!',
               'time': 'Hôm nay',
-              'icon': Icons.fastfood_outlined,
+              'icon': LucideIcons.utensilsCrossed,
               'color': Colors.orangeAccent,
             });
 
@@ -1895,7 +1896,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ? 'Đã đồng bộ: ${steps.toInt()} bước • ${burned.toInt()} kcal đã đốt hôm nay.'
                   : 'Chưa có dữ liệu Google Fit hôm nay. Đăng nhập bằng Google để đồng bộ số bước.',
               'time': 'Vừa cập nhật',
-              'icon': Icons.directions_run,
+              'icon': LucideIcons.activity,
               'color': Colors.cyan,
             });
 
@@ -1907,7 +1908,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       (water < waterTarget ? ' Uống thêm để đạt mục tiêu nhé!' : ' Tuyệt vời, đã đủ nước!')
                   : 'Bạn chưa uống nước hôm nay. Bấm +250ml trên thẻ Nước uống để ghi lại.',
               'time': 'Hôm nay',
-              'icon': Icons.water_drop_outlined,
+              'icon': LucideIcons.droplet,
               'color': Colors.blueAccent,
             });
 
@@ -1917,7 +1918,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'title': 'Đạt mục tiêu ngày',
                 'message': 'Xuất sắc! Lượng calo nạp hôm nay rất sát mục tiêu của bạn 🌟.',
                 'time': 'Hôm nay',
-                'icon': Icons.stars,
+                'icon': LucideIcons.star,
                 'color': Colors.amber,
               });
             }
@@ -1928,7 +1929,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'title': 'Giữ vững phong độ',
                 'message': 'Bạn đã ghi nhật ký ăn uống $streak ngày liên tục! Cố gắng duy trì nhé 💪.',
                 'time': 'Chuỗi ngày',
-                'icon': Icons.local_fire_department,
+                'icon': LucideIcons.flame,
                 'color': Colors.redAccent,
               });
             }
@@ -1967,7 +1968,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   end: Alignment.bottomRight,
                                 ).createShader(bounds),
                                 child: const Icon(
-                                  Icons.notifications_active_rounded,
+                                  LucideIcons.bellRing,
                                   color: Colors.white,
                                   size: 24,
                                 ),
@@ -2000,7 +2001,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.done_all, size: 16, color: Colors.purpleAccent),
+                              icon: const Icon(LucideIcons.checkCheck, size: 16, color: Colors.purpleAccent),
                               label: const Text(
                                 'Đọc tất cả',
                                 style: TextStyle(
