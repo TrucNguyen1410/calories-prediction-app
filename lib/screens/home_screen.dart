@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../services/api_service.dart';
 import '../models/workout.dart';
 import '../utils/responsive.dart';
@@ -469,50 +470,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return _buildBentoCard(
       title: 'Calo đã đốt hôm nay',
       color: Theme.of(context).cardColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return ScaleTransition(scale: animation, child: child);
-                },
-                child: Text(
-                  '${burned.toInt()}',
-                  key: ValueKey<int>(burned.toInt()),
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -1),
+          CircularPercentIndicator(
+            radius: 42,
+            lineWidth: 9,
+            percent: progress,
+            circularStrokeCap: CircularStrokeCap.round,
+            backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+            progressColor: Colors.redAccent,
+            animation: true,
+            animationDuration: 600,
+            center: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return ScaleTransition(scale: animation, child: child);
+                  },
+                  child: Text(
+                    '${burned.toInt()}',
+                    key: ValueKey<int>(burned.toInt()),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -0.5),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
-              color: Colors.redAccent,
+                Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 9, fontWeight: FontWeight.w500)),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Mục tiêu: ${burnTarget.toInt()} kcal/ngày',
-                style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
-              ),
-              if (burned > 0)
-                Icon(Icons.local_fire_department, color: Colors.redAccent, size: 14),
-            ],
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Mục tiêu: ${burnTarget.toInt()} kcal/ngày',
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+                if (burned > 0) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.local_fire_department, color: Colors.redAccent, size: 14),
+                      const SizedBox(width: 4),
+                      Text('Đang cháy!', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -534,32 +544,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -1),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircularPercentIndicator(
+                radius: 42,
+                lineWidth: 9,
+                percent: progress,
+                circularStrokeCap: CircularStrokeCap.round,
+                backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+                progressColor: const Color(0xFF29B6F6),
+                animation: true,
+                animationDuration: 600,
+                center: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${(current / 1000).toStringAsFixed(current % 1000 == 0 ? 0 : 1)}',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), letterSpacing: -0.5),
+                      ),
+                      Text('/ ${(target / 1000).toStringAsFixed(1)} L',
+                          style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 9, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 4),
-                Text('/ ${(target / 1000).toStringAsFixed(1)} L',
-                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 13, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
-              color: const Color(0xFF29B6F6),
-            ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  current >= target
+                      ? 'Đã đạt mục tiêu hôm nay! 🎉'
+                      : 'Còn ${((target - current) / 1000).toStringAsFixed(1)} L nữa là đạt mục tiêu.',
+                  style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -606,58 +627,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       key: ref.read(tourKeysProvider).stepsKey,
       title: 'Bước chân hôm nay',
       color: Theme.of(context).cardColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Icon(Icons.directions_walk, color: Colors.teal, size: 22),
-                const SizedBox(width: 4),
-                Text(
-                  steps > 0 ? steps.toInt().toString() : '0',
-                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -1),
-                ),
-                const SizedBox(width: 4),
-                Text('bước', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 12, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200],
-              color: Colors.teal,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text('Mục tiêu: 10.000 bước',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
-              ),
-              const SizedBox(width: 6),
-              Row(
+          CircularPercentIndicator(
+            radius: 42,
+            lineWidth: 9,
+            percent: progress,
+            circularStrokeCap: CircularStrokeCap.round,
+            backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+            progressColor: Colors.teal,
+            animation: true,
+            animationDuration: 600,
+            center: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.sync, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
-                  const SizedBox(width: 3),
-                  Text('Google Fit',
-                      style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 10)),
+                  const Icon(Icons.directions_walk, color: Colors.teal, size: 16),
+                  Text(
+                    steps > 0 ? steps.toInt().toString() : '0',
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -0.5),
+                  ),
                 ],
               ),
-            ],
+            ),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Mục tiêu: 10.000 bước',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sync, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                    const SizedBox(width: 3),
+                    Text('Google Fit',
+                        style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 10)),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
