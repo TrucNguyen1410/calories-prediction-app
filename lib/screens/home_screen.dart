@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../services/api_service.dart';
 import '../models/workout.dart';
 import '../utils/responsive.dart';
@@ -94,140 +95,181 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(HealthState state) {
+  static const List<String> _weekdayLabels = ['', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  Widget _buildHeaderIconButton({required Widget child}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFFBB86FC).withOpacity(0.5) : Theme.of(context).dividerColor),
+        boxShadow: [
+          if (isDark)
+            BoxShadow(color: const Color(0xFFBB86FC).withOpacity(0.4), blurRadius: 10, spreadRadius: 1)
+          else
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildDayStrip(bool isDark) {
+    final now = DateTime.now();
+    final weekDays = List.generate(7, (i) => now.add(Duration(days: i - 3)));
+    final accent = AppTheme.heroAccent(isDark);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
+      children: weekDays.map((d) {
+        final isToday = d.year == now.year && d.month == now.month && d.day == now.day;
+        return Container(
+          width: 38,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isToday ? accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Chào mừng trở lại 👋,', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
               Text(
-                state.userData?['name'] ?? 'Người dùng', 
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87, letterSpacing: -0.5),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+                _weekdayLabels[d.weekday],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isToday ? Colors.white : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${d.day}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                ),
               ),
             ],
           ),
-        ),
-        Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? const Color(0xFFBB86FC).withOpacity(0.5) : Theme.of(context).dividerColor),
-                boxShadow: [
-                  if (isDark)
-                    BoxShadow(
-                      color: const Color(0xFFBB86FC).withOpacity(0.4),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    )
-                  else
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
-                ],
-              ),
-              child: _isSyncing
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                    )
-                  : IconButton(
-                      icon: Icon(Icons.sync, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 22),
-                      tooltip: 'Đồng bộ dữ liệu',
-                      onPressed: () async {
-                        setState(() => _isSyncing = true);
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('⏳ Đang đồng bộ dữ liệu với máy chủ và thiết bị đeo...'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
+        );
+      }).toList(),
+    );
+  }
 
-                        try {
-                          await ref.read(healthProvider.notifier).refreshAll();
-                          await Future.delayed(const Duration(milliseconds: 1000));
-                          
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('🎉 Đồng bộ thành công! Chỉ số calo đã được làm mới.'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('❌ Lỗi đồng bộ: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() => _isSyncing = false);
-                          }
-                        }
-                      },
+  Widget _buildHeader(HealthState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      decoration: BoxDecoration(
+        gradient: isDark ? AppTheme.heroGradientDark : AppTheme.heroGradientLight,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Chào mừng trở lại 👋', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(
+                      state.userData?['name'] ?? 'Người dùng',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87, letterSpacing: -0.5),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? const Color(0xFFBB86FC).withOpacity(0.5) : Theme.of(context).dividerColor),
-                boxShadow: [
-                  if (isDark)
-                    BoxShadow(
-                      color: const Color(0xFFBB86FC).withOpacity(0.4),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    )
-                  else
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
-                ],
+                  ],
+                ),
               ),
-              child: Stack(
+              Row(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_none_outlined, size: 22, color: isDark ? const Color(0xFFBB86FC) : Colors.black), 
-                    onPressed: _showNotificationsBottomSheet,
+                  _buildHeaderIconButton(
+                    child: _isSyncing
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                            ),
+                          )
+                        : IconButton(
+                            icon: Icon(LucideIcons.refreshCw, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 20),
+                            tooltip: 'Đồng bộ dữ liệu',
+                            onPressed: () async {
+                              setState(() => _isSyncing = true);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('⏳ Đang đồng bộ dữ liệu với máy chủ và thiết bị đeo...'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+
+                              try {
+                                await ref.read(healthProvider.notifier).refreshAll();
+                                await Future.delayed(const Duration(milliseconds: 1000));
+
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('🎉 Đồng bộ thành công! Chỉ số calo đã được làm mới.'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('❌ Lỗi đồng bộ: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isSyncing = false);
+                                }
+                              }
+                            },
+                          ),
                   ),
-                  if (_hasUnreadNotifications)
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
+                  const SizedBox(width: 12),
+                  _buildHeaderIconButton(
+                    child: Stack(
+                      children: [
+                        IconButton(
+                          icon: Icon(LucideIcons.bell, size: 20, color: isDark ? const Color(0xFFBB86FC) : Colors.black87),
+                          onPressed: _showNotificationsBottomSheet,
                         ),
-                      ),
-                    )
+                        if (_hasUnreadNotifications)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                            ),
+                          )
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildDayStrip(isDark),
+        ],
+      ),
     );
   }
 
@@ -515,7 +557,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.local_fire_department, color: Colors.redAccent, size: 14),
+                      const Icon(LucideIcons.flame, color: Colors.redAccent, size: 14),
                       const SizedBox(width: 4),
                       Text('Đang cháy!', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w600)),
                     ],
@@ -592,7 +634,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               IconButton(
                 tooltip: 'Hoàn tác',
                 onPressed: current > 0 ? () => ref.read(healthProvider.notifier).undoWater() : null,
-                icon: Icon(Icons.undo, size: 18, color: isDark ? const Color(0xFF949BA4) : Colors.grey),
+                icon: Icon(LucideIcons.undo2, size: 18, color: isDark ? const Color(0xFF949BA4) : Colors.grey),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -644,7 +686,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.directions_walk, color: Colors.teal, size: 16),
+                  const Icon(LucideIcons.footprints, color: Colors.teal, size: 16),
                   Text(
                     steps > 0 ? steps.toInt().toString() : '0',
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal, letterSpacing: -0.5),
@@ -666,7 +708,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.sync, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                    Icon(LucideIcons.refreshCw, size: 11, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
                     const SizedBox(width: 3),
                     Text('Google Fit',
                         style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 10)),

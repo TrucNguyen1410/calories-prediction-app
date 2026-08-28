@@ -241,6 +241,31 @@ class AppTheme {
     );
   }
 
+  // --- "Clean concept" design tokens (line-icon, ring-chart redesign) ---
+  // Header background gradient behind the greeting + day strip
+  static const LinearGradient heroGradientLight = LinearGradient(
+    colors: [Color(0xFFEDE9FE), Color(0xFFF5F3FF), Color(0xFFFDFCFF)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  static const LinearGradient heroGradientDark = LinearGradient(
+    colors: [Color(0xFF2A2440), Color(0xFF1E1B2E), Color(0xFF1E1F22)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // Neutral color for the primary/hero ring gauge (e.g. calories) — near-black on
+  // light backgrounds, near-white on dark, so it always reads as the "main" ring.
+  static const Color gaugeNeutralLight = Color(0xFF1A1A1A);
+  static const Color gaugeNeutralDark = Color(0xFFF2F3F5);
+
+  // Macro-nutrient accent colors used across meal/nutrition rings & pills
+  static const Color macroProtein = Color(0xFFF4A950);
+  static const Color macroCarbs = Color(0xFF9C7BFA);
+  static const Color macroFat = Color(0xFF4CBB7A);
+
+  static Color heroAccent(bool isDark) => isDark ? const Color(0xFFBB86FC) : const Color(0xFF8B7CF6);
+
   // --- Members for backward compatibility with existing screens ---
   static const Color primaryDark = Color(0xFF7B1FA2);
   static const LinearGradient mainGradient = LinearGradient(

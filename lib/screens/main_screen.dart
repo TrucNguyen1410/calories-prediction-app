@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../providers/chat_provider.dart';
 import '../providers/chatbot_provider.dart';
 import '../models/chat_message.dart';
@@ -103,10 +104,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               selectedItemColor: AppTheme.primary,
               unselectedItemColor: Colors.grey,
               items: [
-                const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Trang chủ"),
-                BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu_outlined, key: ref.read(tourKeysProvider).menuTabKey), label: "Thực đơn"),
-                BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined, key: ref.read(tourKeysProvider).statsTabKey), label: "Thống kê"),
-                BottomNavigationBarItem(icon: Icon(Icons.person_outline, key: ref.read(tourKeysProvider).profileTabKey), label: "Cá nhân"),
+                const BottomNavigationBarItem(icon: Icon(LucideIcons.house), label: "Trang chủ"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.utensilsCrossed, key: ref.read(tourKeysProvider).menuTabKey), label: "Thực đơn"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.chartColumn, key: ref.read(tourKeysProvider).statsTabKey), label: "Thống kê"),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.user, key: ref.read(tourKeysProvider).profileTabKey), label: "Cá nhân"),
               ],
             ),
           ),
