@@ -13,7 +13,7 @@ import { computeBMI } from '../utils/health.js';
 import { validateRegister, validateLogin } from '../middleware/validate.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
-import { syncGoogleFit } from '../controllers/googleFitController.js';
+import { syncGoogleFit, syncHealthConnect } from '../controllers/googleFitController.js';
 
 
 const router = express.Router();
@@ -270,6 +270,9 @@ router.post('/change-password', async (req, res) => {
 
 // --- API MỚI: ĐỒNG BỘ GOOGLE FIT ---
 router.post('/google-sync', syncGoogleFit);
+
+// --- API DỰ PHÒNG: ĐỒNG BỘ HEALTH CONNECT / HEALTHKIT (khi Google Fit ngừng hoạt động) ---
+router.post('/health-connect-sync', syncHealthConnect);
 
 // --- API: QUÊN MẬT KHẨU (gửi OTP qua email) ---
 // POST /api/auth/forgot-password  { email }

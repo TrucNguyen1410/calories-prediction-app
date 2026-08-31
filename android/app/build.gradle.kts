@@ -24,7 +24,8 @@ android {
         applicationId = "com.example.do_an_chuyen_nganh"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Health Connect (dùng cho đồng bộ dự phòng khi Google Fit API ngừng hoạt động) yêu cầu API 26+
+        minSdk = maxOf(26, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

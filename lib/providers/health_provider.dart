@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../services/api_service.dart';
+import '../services/health_connect_service.dart';
 import '../models/workout.dart';
 import '../utils/health_calc.dart';
 import 'package:intl/intl.dart';
@@ -116,6 +117,7 @@ class HealthState {
 class HealthNotifier extends StateNotifier<HealthState> {
   final Ref _ref;
   final ApiService _apiService = ApiService();
+  final HealthConnectService _healthConnectService = HealthConnectService();
   static const String _planKey = 'cached_meal_plan';
   bool _isRefreshing = false; // chống gọi refreshAll chồng chéo gây giật giao diện
 
@@ -197,7 +199,21 @@ class HealthNotifier extends StateNotifier<HealthState> {
             final res = await _apiService.syncGoogleFit(userId: userId);
             syncedSteps = ((res['data']?['steps']) ?? syncedSteps).toDouble();
           } catch (e) {
-            // Lỗi đồng bộ Google Fit không nghiêm trọng (token hết hạn / chưa liên kết)
+            // Google Fit lỗi (token hết hạn / API ngừng hoạt động...) — thử nguồn dự
+            // phòng Health Connect/HealthKit trên thiết bị trước khi bỏ cuộc.
+            try {
+              final fallback = await _healthConnectService.fetchToday();
+              if (fallback != null) {
+                final res = await _apiService.syncHealthConnect(
+                  userId: userId,
+                  steps: fallback.steps,
+                  caloriesBurned: fallback.caloriesBurned,
+                );
+                syncedSteps = ((res['data']?['steps']) ?? syncedSteps).toDouble();
+              }
+            } catch (_) {
+              // Không có Health Connect / bị từ chối quyền — giữ nguyên giá trị cũ
+            }
           }
         }
       }

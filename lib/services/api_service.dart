@@ -568,6 +568,34 @@ class ApiService {
         }
     }
 
+    // --- Health Connect / HealthKit Sync (dự phòng khi Google Fit API ngừng hoạt động) ---
+    Future<Map<String, dynamic>> syncHealthConnect({
+        required String userId,
+        required int steps,
+        required double caloriesBurned,
+    }) async {
+        try {
+            final response = await http.post(
+                Uri.parse('$_baseUrl/auth/health-connect-sync'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                    'userId': userId,
+                    'steps': steps,
+                    'caloriesBurned': caloriesBurned,
+                }),
+            );
+
+            if (response.statusCode == 200) {
+                return jsonDecode(response.body);
+            } else {
+                throw Exception('Lỗi đồng bộ Health Connect: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('Health Connect Sync Error: $e');
+            throw Exception('Không thể đồng bộ: $e');
+        }
+    }
+
     // --- Log Workout directly ---
     Future<Map<String, dynamic>> logWorkout({
         required String activityName,

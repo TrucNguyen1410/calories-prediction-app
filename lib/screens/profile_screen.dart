@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
+import '../services/health_connect_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/health_provider.dart';
@@ -649,6 +650,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         type: AppToastType.success,
       );
     } catch (e) {
+      // Google Fit lỗi (hết hạn / API ngừng hoạt động) — thử Health Connect/HealthKit
+      // trên thiết bị trước khi báo lỗi cho người dùng.
+      try {
+        final fallback = await HealthConnectService().fetchToday();
+        if (fallback != null) {
+          final result = await ApiService().syncHealthConnect(
+            userId: userId,
+            steps: fallback.steps,
+            caloriesBurned: fallback.caloriesBurned,
+          );
+          await ref.read(healthProvider.notifier).refreshAll();
+          if (!mounted) return;
+          Navigator.pop(context);
+          final data = result['data'] ?? {};
+          AppToast.show(
+            context,
+            message: 'Đồng bộ qua Health Connect: ${data['steps'] ?? 0} bước • ${((data['caloriesBurned'] ?? 0) as num).toStringAsFixed(0)} kcal',
+            type: AppToastType.success,
+          );
+          return;
+        }
+      } catch (_) {
+        // Không có Health Connect / bị từ chối quyền — rơi xuống cảnh báo Google Fit bên dưới
+      }
+
       if (!mounted) return;
       Navigator.pop(context);
       // Phiên hết hạn → cho nút đăng nhập lại Google ngay trên snackbar (có action, giữ nguyên SnackBar)

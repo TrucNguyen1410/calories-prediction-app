@@ -2,6 +2,28 @@ import { google } from 'googleapis';
 import User from '../models/User.js';
 import CalorieRecord from '../models/CalorieRecord.js';
 
+// Lưu số bước/calo hôm nay vào một CalorieRecord "Sync" duy nhất (dùng chung cho
+// cả Google Fit và Health Connect — activityType phân biệt nguồn dữ liệu).
+async function upsertTodaySyncRecord({ userId, steps, caloriesBurned, activityType }) {
+    const dateStr = new Date().toISOString().split('T')[0];
+    let workout = await CalorieRecord.findOne({ userId, date: { $regex: `^${dateStr}` }, activityType });
+
+    if (workout) {
+        workout.calories = caloriesBurned;
+        workout.duration = (steps / 100).toFixed(0);
+        workout.date = new Date().toISOString();
+        await workout.save();
+    } else {
+        await CalorieRecord.create({
+            userId,
+            activityType,
+            duration: (steps / 100).toFixed(0),
+            calories: caloriesBurned,
+            date: new Date().toISOString(),
+        });
+    }
+}
+
 
 export const syncGoogleFit = async (req, res) => {
     try {
@@ -109,28 +131,9 @@ export const syncGoogleFit = async (req, res) => {
         }
 
         // Save to Database (Workout entry for today)
-        const dateStr = new Date().toISOString().split('T')[0];
-        
-        // Find if today's sync entry exists
-        let workout = await CalorieRecord.findOne({ userId, date: { $regex: `^${dateStr}` }, activityType: 'Google Fit Sync' });
-        
-        if (workout) {
-            workout.calories = caloriesBurned;
-            workout.duration = (steps / 100).toFixed(0); 
-            workout.date = new Date().toISOString(); // Bắt buộc lấy thời gian hôm nay để cập nhật
-            await workout.save();
-        } else {
-            await CalorieRecord.create({
-                userId,
-                activityType: 'Google Fit Sync',
-                duration: (steps / 100).toFixed(0),
-                calories: caloriesBurned,
-                date: new Date().toISOString() // Bắt buộc lấy thời gian hôm nay
-            });
-        }
+        await upsertTodaySyncRecord({ userId, steps, caloriesBurned, activityType: 'Google Fit Sync' });
 
-
-        res.status(200).json({ 
+        res.status(200).json({
             success: true, 
             data: { steps, caloriesBurned } 
         });
@@ -141,5 +144,31 @@ export const syncGoogleFit = async (req, res) => {
             return res.status(401).json({ success: false, message: "Hết hạn phiên đăng nhập Google. Vui lòng đăng nhập lại." });
         }
         res.status(500).json({ success: false, message: "Lỗi đồng bộ Google Fit: " + error.message });
+    }
+};
+
+// Đồng bộ dữ liệu từ Health Connect (Android) / HealthKit (iOS) qua package `health` phía Flutter.
+// Khác với Google Fit, dữ liệu được ĐỌC SẴN trên thiết bị rồi app tự đẩy số liệu lên đây —
+// không cần OAuth token, dùng làm nguồn dự phòng khi Google Fit API ngưng hoạt động.
+export const syncHealthConnect = async (req, res) => {
+    try {
+        const { userId, steps, caloriesBurned } = req.body;
+        if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
+
+        const safeSteps = Number(steps) || 0;
+        const safeCalories = Number(caloriesBurned) || 0;
+
+        await upsertTodaySyncRecord({ userId, steps: safeSteps, caloriesBurned: safeCalories, activityType: 'Health Connect Sync' });
+
+        res.status(200).json({
+            success: true,
+            data: { steps: safeSteps, caloriesBurned: safeCalories },
+        });
+    } catch (error) {
+        console.error("HEALTH CONNECT SYNC ERROR:", error.message);
+        res.status(500).json({ success: false, message: "Lỗi đồng bộ Health Connect: " + error.message });
     }
 };
