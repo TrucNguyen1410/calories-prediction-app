@@ -1555,6 +1555,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
                               imageUrl: data['imageUrl'],
                               servingSize: data['servingSize'],
+                              protein: (data['protein'] as num?)?.toDouble(),
+                              carbs: (data['carbs'] as num?)?.toDouble(),
+                              fat: (data['fat'] as num?)?.toDouble(),
+                              fiber: (data['fiber'] as num?)?.toDouble(),
+                              sugar: (data['sugar'] as num?)?.toDouble(),
+                              sodium: (data['sodium'] as num?)?.toDouble(),
                             );
                             Navigator.pop(context);
                             ref.read(healthProvider.notifier).refreshAll();

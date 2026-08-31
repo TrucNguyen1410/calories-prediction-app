@@ -292,6 +292,12 @@ class ApiService {
         required String date,
         String? imageUrl,
         String? servingSize,
+        double? protein,
+        double? carbs,
+        double? fat,
+        double? fiber,
+        double? sugar,
+        double? sodium,
     }) async {
         try {
             final response = await _post('/meals', {
@@ -301,6 +307,12 @@ class ApiService {
                 'date': date,
                 'imageUrl': imageUrl ?? '',
                 'servingSize': servingSize ?? '',
+                'protein': protein ?? 0,
+                'carbs': carbs ?? 0,
+                'fat': fat ?? 0,
+                'fiber': fiber ?? 0,
+                'sugar': sugar ?? 0,
+                'sodium': sodium ?? 0,
             });
 
             if (response.statusCode == 201) {

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
@@ -176,6 +178,125 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
     );
   }
 
+  // Health Score hôm nay: tính từ Chất xơ / Đường / Natri các bữa ăn đã ghi hôm
+  // nay, theo ngưỡng khuyến nghị của WHO (đường) và FDA (natri, chất xơ).
+  Widget _buildHealthScoreCard(bool isDark) {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final todayMeals = _allMeals.where((m) => m['date'] == todayStr).toList();
+    final hasData = todayMeals.isNotEmpty;
+
+    double totalFiber = 0, totalSugar = 0, totalSodium = 0, totalCarbs = 0;
+    for (final m in todayMeals) {
+      totalFiber += (m['fiber'] ?? 0).toDouble();
+      totalSugar += (m['sugar'] ?? 0).toDouble();
+      totalSodium += (m['sodium'] ?? 0).toDouble();
+      totalCarbs += (m['carbs'] ?? 0).toDouble();
+    }
+    final netCarbs = (totalCarbs - totalFiber).clamp(0, double.infinity);
+
+    final fiberOk = totalFiber >= 25;
+    final sugarOk = totalSugar <= 50;
+    final sodiumOk = totalSodium <= 2300;
+
+    double score = 10.0;
+    if (!fiberOk) score -= ((25 - totalFiber) / 10).clamp(0, 2);
+    if (!sugarOk) score -= ((totalSugar - 50) / 20).clamp(0, 3);
+    if (!sodiumOk) score -= ((totalSodium - 2300) / 700).clamp(0, 3);
+    score = score.clamp(0, 10).toDouble();
+
+    String status;
+    Color statusColor;
+    if (!hasData) {
+      status = 'Chưa có dữ liệu hôm nay';
+      statusColor = Colors.grey;
+    } else if (score >= 8) {
+      status = 'Tuyệt vời';
+      statusColor = Colors.green;
+    } else if (score >= 6) {
+      status = 'Tốt';
+      statusColor = Colors.green;
+    } else if (score >= 4) {
+      status = 'Khá';
+      statusColor = Colors.orange;
+    } else {
+      status = 'Cần cải thiện';
+      statusColor = Colors.redAccent;
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Health Score hôm nay',
+                        style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Text(status, style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+                  ],
+                ),
+              ),
+              CircularPercentIndicator(
+                radius: 32,
+                lineWidth: 7,
+                percent: hasData ? (score / 10).clamp(0.0, 1.0).toDouble() : 0.0,
+                circularStrokeCap: CircularStrokeCap.round,
+                backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+                progressColor: statusColor,
+                center: Text(
+                  hasData ? '${score.toStringAsFixed(0)}/10' : '--/10',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildNutrientScoreRow(LucideIcons.wheat, 'Chất xơ', '${totalFiber.toStringAsFixed(0)}g', fiberOk, isDark),
+          _buildNutrientScoreRow(LucideIcons.circleDot, 'Net Carbs', '${netCarbs.toStringAsFixed(0)}g', true, isDark),
+          _buildNutrientScoreRow(LucideIcons.candy, 'Đường', '${totalSugar.toStringAsFixed(0)}g', sugarOk, isDark),
+          _buildNutrientScoreRow(LucideIcons.droplet, 'Natri', '${totalSodium.toStringAsFixed(0)}mg', sodiumOk, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutrientScoreRow(IconData icon, String label, String value, bool isGood, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFB5BAC1) : Colors.black54, fontWeight: FontWeight.w500)),
+          ),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+          const SizedBox(width: 8),
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: isGood ? Colors.green : Colors.redAccent, shape: BoxShape.circle)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -219,7 +340,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                           decoration: InputDecoration(
                             hintText: 'Tìm kiếm món ăn...',
                             hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 13),
-                            prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF949BA4) : Colors.grey, size: 20),
+                            prefixIcon: Icon(LucideIcons.search, color: isDark ? const Color(0xFF949BA4) : Colors.grey, size: 20),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -229,7 +350,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                     const SizedBox(width: 10),
                     // Button phễu lọc theo Ngày
                     AnimatedIconButton(
-                      icon: Icons.filter_alt_outlined,
+                      icon: LucideIcons.filter,
                       color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
                       onPressed: _pickDate,
                       tooltip: 'Lọc theo ngày',
@@ -250,7 +371,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.calendar_today, size: 12, color: AppTheme.primary),
+                            Icon(LucideIcons.calendar, size: 12, color: AppTheme.primary),
                             const SizedBox(width: 6),
                             Text(
                               'Ngày: ${DateFormat('dd/MM/yyyy').format(_filterDate!)}',
@@ -259,7 +380,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: _clearDateFilter,
-                              child: Icon(Icons.close, size: 14, color: AppTheme.primary),
+                              child: Icon(LucideIcons.x, size: 14, color: AppTheme.primary),
                             ),
                           ],
                         ),
@@ -270,6 +391,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
               ],
             ),
           ),
+          _buildHealthScoreCard(isDark),
           const SizedBox(height: 8),
 
           // Main history list
@@ -281,7 +403,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.no_food_outlined, size: 64, color: Colors.grey[400]),
+                            Icon(LucideIcons.utensilsCrossed, size: 64, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
                               _allMeals.isEmpty 
@@ -355,7 +477,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(Icons.access_time, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                                              Icon(LucideIcons.clock, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
                                               const SizedBox(width: 4),
                                               Text(
                                                 '$timeStr - ${_formatDate(dateStr)}',
@@ -389,7 +511,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                                 : null,
                                           ),
                                           child: AnimatedIconButton(
-                                            icon: Icons.delete_outline,
+                                            icon: LucideIcons.trash2,
                                             color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
                                             size: 20,
                                             onPressed: id.isEmpty ? null : () async {

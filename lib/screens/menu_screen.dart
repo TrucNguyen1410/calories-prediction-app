@@ -747,6 +747,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                           mealType: mealType,
                           date: todayStr,
                           servingSize: servingSize,
+                          protein: (meal['protein'] ?? 0).toDouble(),
+                          carbs: (meal['carbs'] ?? 0).toDouble(),
+                          fat: (meal['fat'] ?? 0).toDouble(),
+                          fiber: (meal['fiber'] ?? 0).toDouble(),
+                          sugar: (meal['sugar'] ?? 0).toDouble(),
+                          sodium: (meal['sodium'] ?? 0).toDouble(),
                         );
 
                         // Refresh state to update total calories
@@ -850,6 +856,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     double carbs = 0.0;
     double protein = 0.0;
     double fat = 0.0;
+    double fiber = 0.0;
+    double sugar = 0.0;
+    double sodium = 0.0;
     String macrosText = '';
     String servingSize = '';
     double multiplier = 1.0;
@@ -1109,6 +1118,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             carbs = (result['carbs'] ?? 0.0).toDouble();
                             protein = (result['protein'] ?? 0.0).toDouble();
                             fat = (result['fat'] ?? 0.0).toDouble();
+                            fiber = (result['fiber'] ?? 0.0).toDouble();
+                            sugar = (result['sugar'] ?? 0.0).toDouble();
+                            sodium = (result['sodium'] ?? 0.0).toDouble();
                             servingSize = result['servingSize'] ?? '';
                             macrosText = result['macros'] ??
                                 'Carb: ${carbs.toInt()}g • Protein: ${protein.toInt()}g • Fat: ${fat.toInt()}g';
@@ -1178,6 +1190,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                               mealType: mealType,
                               date: todayStr,
                               servingSize: finalServingSize,
+                              protein: protein * multiplier,
+                              carbs: carbs * multiplier,
+                              fat: fat * multiplier,
+                              fiber: fiber * multiplier,
+                              sugar: sugar * multiplier,
+                              sodium: sodium * multiplier,
                             );
                           }
 

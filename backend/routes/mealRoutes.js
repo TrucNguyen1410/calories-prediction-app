@@ -19,7 +19,7 @@ function normalizeMealType(raw) {
 // POST /api/meals
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { name, calories, mealType, date, imageUrl, servingSize } = req.body;
+    const { name, calories, mealType, date, imageUrl, servingSize, protein, carbs, fat, fiber, sugar, sodium } = req.body;
     if (!name || !calories || !mealType || !date) {
       return res.status(400).json({ success: false, message: 'Thiếu thông tin' });
     }
@@ -28,6 +28,12 @@ router.post('/', verifyToken, async (req, res) => {
       userId: req.userId,
       name,
       calories: parseFloat(calories),
+      protein: parseFloat(protein) || 0,
+      carbs: parseFloat(carbs) || 0,
+      fat: parseFloat(fat) || 0,
+      fiber: parseFloat(fiber) || 0,
+      sugar: parseFloat(sugar) || 0,
+      sodium: parseFloat(sodium) || 0,
       servingSize: servingSize || "",
       mealType: normalizeMealType(mealType),
       date,

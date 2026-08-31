@@ -278,16 +278,17 @@ export const generateHealthPlan = async (req, res) => {
                   "totalCalories": 1500,
                   "daily_desc": "Mô tả ngắn gọn (VD: Ức gà & Salad)",
                   "meals": [
-                    {"type": "Bữa sáng", "name": "Tên món", "servingSize": "1 tô (250g)", "calories": 350, "carbs": 48, "protein": 12, "fat": 6},
-                    {"type": "Bữa trưa", "name": "Tên món", "servingSize": "1 phần (300g)", "calories": 500, "carbs": 55, "protein": 25, "fat": 15},
-                    {"type": "Bữa tối", "name": "Tên món", "servingSize": "1 đĩa (200g)", "calories": 450, "carbs": 30, "protein": 10, "fat": 12},
-                    {"type": "Bữa phụ", "name": "Tên món", "servingSize": "1 hộp (100g)", "calories": 200, "carbs": 20, "protein": 5, "fat": 8}
+                    {"type": "Bữa sáng", "name": "Tên món", "servingSize": "1 tô (250g)", "calories": 350, "carbs": 48, "protein": 12, "fat": 6, "fiber": 4, "sugar": 6, "sodium": 400},
+                    {"type": "Bữa trưa", "name": "Tên món", "servingSize": "1 phần (300g)", "calories": 500, "carbs": 55, "protein": 25, "fat": 15, "fiber": 5, "sugar": 8, "sodium": 600},
+                    {"type": "Bữa tối", "name": "Tên món", "servingSize": "1 đĩa (200g)", "calories": 450, "carbs": 30, "protein": 10, "fat": 12, "fiber": 6, "sugar": 5, "sodium": 500},
+                    {"type": "Bữa phụ", "name": "Tên món", "servingSize": "1 hộp (100g)", "calories": 200, "carbs": 20, "protein": 5, "fat": 8, "fiber": 2, "sugar": 10, "sodium": 150}
                   ]
                 }
               ]
             }
             BẮT BUỘC: Kế hoạch "weeklyPlan" phải chứa đúng 7 phần tử tương ứng đầy đủ với 7 ngày trong tuần lần lượt là: "T2", "T3", "T4", "T5", "T6", "T7", "CN". Tuyệt đối không được bỏ sót ngày Chủ Nhật ("CN").
             BẮT BUỘC: Mỗi món ăn PHẢI có trường "servingSize" (khẩu phần/định lượng) rõ ràng khớp với số calo đã tính. Ví dụ: "1 tô (250g)", "2 lát bánh mì", "1 hũ sữa chua (150ml)", "1 chén cơm + 100g thịt".
+            BẮT BUỘC: Mỗi món ăn PHẢI có thêm "fiber" (g chất xơ), "sugar" (g đường), "sodium" (mg natri) ước tính hợp lý theo thành phần món ăn thực tế.
             QUAN TRỌNG: Mỗi ngày phải có tổng calo KHÁC NHAU tùy theo các món ăn thực tế (dao động 1200-2000 kcal).
             Tính totalCalories = tổng cộng calories của TẤT CẢ các meals trong ngày đó.
             CHỈ TRẢ VỀ JSON. KHÔNG GIẢI THÍCH GÌ THÊM.
@@ -377,12 +378,15 @@ export const analyzeFood = async (req, res) => {
                 "protein": số g đạm (number),
                 "carbs": số g tinh bột (number),
                 "fat": số g chất béo (number),
+                "fiber": số g chất xơ (number),
+                "sugar": số g đường (number),
+                "sodium": số mg natri/muối (number),
                 "macros": "Carb: [số g carbs]g • Protein: [số g protein]g • Fat: [số g fat]g",
                 "isReasonable": true hoặc false (boolean),
                 "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
-            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính.
+            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính. Ước tính "fiber", "sugar", "sodium" hợp lý dựa trên thành phần món ăn, không được bỏ trống hay để giá trị 0 nếu món ăn thực tế có chứa các chất này.
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
             const completion = await groq.chat.completions.create({
@@ -433,12 +437,15 @@ export const analyzeFood = async (req, res) => {
                 "carbs": số g tinh bột (number),
                 "protein": số g đạm (number),
                 "fat": số g chất béo (number),
+                "fiber": số g chất xơ (number),
+                "sugar": số g đường (number),
+                "sodium": số mg natri/muối (number),
                 "macros": "Carb: [số g carbs]g • Protein: [số g protein]g • Fat: [số g fat]g",
                 "isReasonable": true hoặc false (boolean),
                 "warningMessage": "chuỗi cảnh báo thông minh hoặc rỗng",
                 "message": "Phân tích dinh dưỡng món ăn"
             }
-            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính.
+            BẮT BUỘC: Trường "servingSize" phải ghi rõ định lượng cụ thể (số lượng + đơn vị + gram nếu có) tương ứng chính xác với số calo đã tính. Ước tính "fiber", "sugar", "sodium" hợp lý dựa trên thành phần món ăn, không được bỏ trống hay để giá trị 0 nếu món ăn thực tế có chứa các chất này.
             Chỉ trả về đối tượng JSON, không giải thích gì thêm.`;
 
             const completion = await groq.chat.completions.create({
