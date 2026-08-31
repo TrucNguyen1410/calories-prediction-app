@@ -20,6 +20,7 @@ class HealthState {
   final List<double> weeklyBMI; // 7 days
   final double todayWaterMl; // lượng nước đã uống hôm nay (ml)
   final double todaySteps; // số bước hôm nay (đồng bộ từ Google Fit)
+  final double startingWeight; // cân nặng đo được sớm nhất (dùng tính % Goal Progress)
   final bool isLoading;
 
   HealthState({
@@ -34,6 +35,7 @@ class HealthState {
     this.weeklyBMI = const [0, 0, 0, 0, 0, 0, 0],
     this.todayWaterMl = 0.0,
     this.todaySteps = 0.0,
+    this.startingWeight = 0.0,
     this.isLoading = false,
   });
 
@@ -63,6 +65,30 @@ class HealthState {
   double get waterTargetMl {
     final weight = (userData?['weight'] ?? 0).toDouble();
     return HealthCalc.dailyWaterTargetMl(weight);
+  }
+
+  /// Cân nặng mục tiêu (kg) người dùng tự đặt trong "Mục tiêu & Mức vận động".
+  /// Null nếu chưa đặt.
+  double? get goalWeightKg {
+    final v = userData?['goalWeight'];
+    if (v == null) return null;
+    final d = (v as num).toDouble();
+    return d > 0 ? d : null;
+  }
+
+  /// % tiến độ hướng tới cân nặng mục tiêu, tính từ cân nặng đo sớm nhất →
+  /// cân nặng hiện tại → cân nặng mục tiêu. Null nếu chưa đặt mục tiêu hoặc
+  /// chưa có đủ dữ liệu để tính.
+  double? get weightGoalProgressPercent {
+    final goal = goalWeightKg;
+    if (goal == null) return null;
+    final current = (userData?['weight'] ?? 0).toDouble();
+    if (current <= 0) return null;
+    final start = startingWeight > 0 ? startingWeight : current;
+
+    if ((start - goal).abs() < 0.1) return 100.0; // đã ở ngay mục tiêu từ đầu
+    final progress = ((start - current) / (start - goal)) * 100;
+    return progress.clamp(0, 100).toDouble();
   }
 
   String get maxBurnedDayName {
@@ -95,6 +121,7 @@ class HealthState {
     List<double>? weeklyBMI,
     double? todayWaterMl,
     double? todaySteps,
+    double? startingWeight,
     bool? isLoading,
   }) {
     return HealthState(
@@ -109,6 +136,7 @@ class HealthState {
       weeklyBMI: weeklyBMI ?? this.weeklyBMI,
       todayWaterMl: todayWaterMl ?? this.todayWaterMl,
       todaySteps: todaySteps ?? this.todaySteps,
+      startingWeight: startingWeight ?? this.startingWeight,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -255,6 +283,13 @@ class HealthNotifier extends StateNotifier<HealthState> {
       final weightRecords = await _apiService.getWeightRecords();
       final hMeters = currentHeight > 0 ? currentHeight / 100.0 : 0.0;
 
+      // Cân nặng đo được sớm nhất (records sắp xếp mới→cũ nên phần tử cuối là cũ
+      // nhất) — dùng làm điểm "xuất phát" để tính % Goal Progress.
+      double startingWeight = currentWeight;
+      if (weightRecords.isNotEmpty) {
+        startingWeight = (weightRecords.last['weight'] ?? currentWeight).toDouble();
+      }
+
       // Lấy cân nặng đo được gần nhất tính đến từng ngày (carry-forward nếu ngày đó không đo)
       List<double> wWeight = [];
       List<double> wBMI = [];
@@ -293,6 +328,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
         weeklyBMI: wBMI,
         todayWaterMl: waterToday,
         todaySteps: syncedSteps,
+        startingWeight: startingWeight,
         isLoading: false,
       );
     } catch (e) {

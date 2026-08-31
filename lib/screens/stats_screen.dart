@@ -187,6 +187,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         ),
                       ],
                     ),
+                    if (_showWeightTrend) ...[
+                      const SizedBox(height: 14),
+                      _buildGoalProgressSummary(healthState, isDark),
+                    ],
                     const SizedBox(height: 24),
                     SizedBox(
                       height: 180,
@@ -569,6 +573,55 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
+  // "Goal Progress": % tiến độ từ cân nặng khởi điểm → hiện tại → mục tiêu.
+  Widget _buildGoalProgressSummary(HealthState state, bool isDark) {
+    final progress = state.weightGoalProgressPercent;
+    final goal = state.goalWeightKg;
+
+    if (goal == null || progress == null) {
+      return Row(
+        children: [
+          Icon(LucideIcons.target, size: 14, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Đặt cân nặng mục tiêu trong Hồ sơ → Mục tiêu & Mức vận động để xem % tiến độ.',
+              style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      );
+    }
+
+    String status;
+    Color color;
+    if (progress >= 80) {
+      status = 'Xuất sắc';
+      color = Colors.green;
+    } else if (progress >= 50) {
+      status = 'Tốt';
+      color = Colors.green;
+    } else if (progress >= 20) {
+      status = 'Khá';
+      color = Colors.orange;
+    } else {
+      status = 'Mới bắt đầu';
+      color = isDark ? const Color(0xFF949BA4) : Colors.grey[500]!;
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text('${progress.toStringAsFixed(0)}%', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, letterSpacing: -1)),
+        const SizedBox(width: 8),
+        Text(status, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        const Spacer(),
+        Text('Mục tiêu: ${goal.toStringAsFixed(0)}kg', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
   Widget _buildLineChart(HealthState state, bool isDark) {
     final textColor = isDark ? const Color(0xFF949BA4) : Colors.grey[600]!;
     final gridColor = isDark ? const Color(0xFF35373C) : Colors.grey[200]!;
@@ -667,7 +720,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: (_showWeightTrend ? Colors.blueAccent : Colors.teal).withOpacity(0.08),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (_showWeightTrend ? Colors.blueAccent : Colors.teal).withOpacity(0.22),
+                  (_showWeightTrend ? Colors.blueAccent : Colors.teal).withOpacity(0.0),
+                ],
+              ),
             ),
           ),
         ],

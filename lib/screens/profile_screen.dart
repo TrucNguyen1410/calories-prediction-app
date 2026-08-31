@@ -794,6 +794,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showGoalDialog(Map<String, dynamic>? userData, bool isDark, ThemeData theme) {
     String goal = userData?['goal']?.toString() ?? 'maintain';
     String activity = userData?['activityLevel']?.toString() ?? 'light';
+    final goalWeightController = TextEditingController(
+      text: (userData?['goalWeight'] != null && (userData!['goalWeight'] as num) > 0) ? userData['goalWeight'].toString() : '',
+    );
     bool isSaving = false;
 
     showModalBottomSheet(
@@ -841,6 +844,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onChanged: (v) => setDialogState(() => activity = v ?? 'light'),
                 decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.activity, color: AppTheme.primary)),
               ),
+              const SizedBox(height: 20),
+              Text('Cân nặng mục tiêu (kg)', style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(height: 4),
+              Text('Để tính % tiến độ ở biểu đồ Thống kê. Bỏ trống nếu chưa muốn đặt.', style: TextStyle(color: theme.hintColor, fontSize: 12)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: goalWeightController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.target, color: AppTheme.primary), hintText: 'Ví dụ: 60'),
+              ),
               const SizedBox(height: 24),
               PurpleGradientButton(
                 height: 52,
@@ -848,7 +862,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ? () {}
                     : () async {
                         setDialogState(() => isSaving = true);
-                        final res = await ApiService().updateProfileFields({'goal': goal, 'activityLevel': activity});
+                        final goalWeightVal = double.tryParse(goalWeightController.text.trim().replaceAll(',', '.'));
+                        final res = await ApiService().updateProfileFields({
+                          'goal': goal,
+                          'activityLevel': activity,
+                          if (goalWeightVal != null && goalWeightVal > 0) 'goalWeight': goalWeightVal,
+                        });
                         await ref.read(authProvider.notifier).refreshUserData();
                         await ref.read(healthProvider.notifier).refreshAll();
                         if (!mounted) return;

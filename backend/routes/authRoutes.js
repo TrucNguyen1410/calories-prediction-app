@@ -187,7 +187,7 @@ router.post('/login', authLimiter, validateLogin, async (req, res) => {
 // --- API MỚI: CẬP NHẬT CHIỀU CAO/CÂN NẶNG ---
 // PUT /api/auth/profile/:id (Giả sử bạn gắn route này trong server.js)
 router.put('/profile/:id', async (req, res) => {
-    const { name, height, weight, gender, age, goal, activityLevel, onboarded } = req.body;
+    const { name, height, weight, gender, age, goal, activityLevel, onboarded, goalWeight } = req.body;
 
     try {
         let user = await User.findById(req.params.id);
@@ -209,6 +209,9 @@ router.put('/profile/:id', async (req, res) => {
             user.activityLevel = activityLevel;
         }
         if (onboarded !== undefined) user.onboarded = !!onboarded;
+        if (goalWeight !== undefined && goalWeight !== null && Number(goalWeight) > 0) {
+            user.goalWeight = Number(goalWeight);
+        }
         if (age !== undefined && age !== null) {
             const birthYear = new Date().getFullYear() - parseInt(age);
             user.dob = new Date(`${birthYear}-01-01`);

@@ -14,6 +14,7 @@ const UserSchema = new mongoose.Schema({
 
     // --- MỤC TIÊU & MỨC VẬN ĐỘNG (phục vụ tính TDEE cá nhân hóa) ---
     goal: { type: String, enum: ['lose', 'maintain', 'gain'], default: 'maintain' },
+    goalWeight: { type: Number }, // kg — cân nặng mục tiêu, dùng tính % tiến độ (Goal Progress)
     activityLevel: {
         type: String,
         enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
