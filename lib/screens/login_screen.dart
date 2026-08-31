@@ -10,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -125,14 +126,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextField(
               controller: _emailController,
               label: 'Email',
-              icon: Icons.email_outlined,
+              icon: LucideIcons.mail,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _passwordController,
               label: 'Mật khẩu',
-              icon: Icons.lock_outline,
+              icon: LucideIcons.lock,
               isPassword: true,
               obscureText: _obscurePassword,
               onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -243,7 +244,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         prefixIcon: Icon(icon, color: AppTheme.primary.withOpacity(0.7)),
         suffixIcon: isPassword
             ? AnimatedIconButton(
-                icon: obscureText ? Icons.visibility_off : Icons.visibility,
+                icon: obscureText ? LucideIcons.eyeOff : LucideIcons.eye,
                 color: Colors.grey,
                 onPressed: onTogglePassword,
               )
@@ -287,7 +288,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(LucideIcons.mail)),
                   ),
                 ] else ...[
                   Text('Nhập mã OTP đã gửi tới ${emailController.text} và mật khẩu mới.',
@@ -297,12 +298,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: otpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    decoration: const InputDecoration(labelText: 'Mã OTP (6 số)', prefixIcon: Icon(Icons.pin_outlined)),
+                    decoration: const InputDecoration(labelText: 'Mã OTP (6 số)', prefixIcon: Icon(LucideIcons.hash)),
                   ),
                   TextField(
                     controller: newPassController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Mật khẩu mới', prefixIcon: Icon(Icons.lock_outline)),
+                    decoration: const InputDecoration(labelText: 'Mật khẩu mới', prefixIcon: Icon(LucideIcons.lock)),
                   ),
                 ],
               ],

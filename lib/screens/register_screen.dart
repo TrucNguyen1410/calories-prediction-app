@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -45,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_add_rounded, size: 70, color: AppTheme.primary),
+            const Icon(LucideIcons.userPlus, size: 70, color: AppTheme.primary),
             const SizedBox(height: 16),
             
             Text(
@@ -74,10 +75,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildTextField("Họ và tên", nameController, Icons.person_outline),
+                        _buildTextField("Họ và tên", nameController, LucideIcons.user),
                         const SizedBox(height: 16),
-                        
-                        _buildTextField("Email", emailController, Icons.email_outlined, keyboard: TextInputType.emailAddress),
+
+                        _buildTextField("Email", emailController, LucideIcons.mail, keyboard: TextInputType.emailAddress),
                         const SizedBox(height: 16),
 
                         // Layout Ngày sinh & Giới tính linh hoạt
@@ -137,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       readOnly: true,
       decoration: const InputDecoration(
         labelText: "Ngày sinh",
-        prefixIcon: Icon(Icons.calendar_today_outlined),
+        prefixIcon: Icon(LucideIcons.calendar),
       ),
       onTap: () async {
         DateTime? picked = await showDatePicker(
@@ -158,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return DropdownButtonFormField<String>(
       decoration: const InputDecoration(
         labelText: "Giới tính",
-        prefixIcon: Icon(Icons.wc_outlined),
+        prefixIcon: Icon(LucideIcons.users),
       ),
       value: selectedGender,
       items: const [
@@ -190,9 +191,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       obscureText: hide,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline),
+        prefixIcon: const Icon(LucideIcons.lock),
         suffixIcon: AnimatedIconButton(
-          icon: hide ? Icons.visibility_off : Icons.visibility,
+          icon: hide ? LucideIcons.eyeOff : LucideIcons.eye,
           onPressed: toggle,
         ),
       ),

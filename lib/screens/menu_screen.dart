@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
@@ -113,7 +114,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         ),
         child: FloatingActionButton.extended(
           onPressed: () => _showAIChatbotDialog(healthState),
-          icon: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+          icon: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
           label: const Text('Tạo Thực Đơn AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -164,7 +165,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               color: Colors.purple.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 28),
+            child: const Icon(LucideIcons.sparkles, color: Colors.purpleAccent, size: 28),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -253,7 +254,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              const Icon(Icons.fastfood_outlined, color: Colors.grey, size: 48),
+              const Icon(LucideIcons.utensilsCrossed, color: Colors.grey, size: 48),
               const SizedBox(height: 16),
               const Text('Chưa có thực đơn cho hôm nay.', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -319,7 +320,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              const Icon(Icons.calendar_month, color: Colors.grey, size: 48),
+              const Icon(LucideIcons.calendar, color: Colors.grey, size: 48),
               const SizedBox(height: 16),
               const Text('Bạn chưa tạo thực đơn 7 ngày từ AI', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
@@ -368,13 +369,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF2B2D31) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isDark ? const Color(0xFF35373C) : Colors.grey.withOpacity(0.08)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.01),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
+                    color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -6,
+                  ),
                 ],
               ),
               child: Column(
@@ -420,21 +421,21 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       final meal = meals[mIndex];
                       
                       Color color = Colors.orangeAccent;
-                      IconData icon = Icons.wb_sunny_outlined;
+                      IconData icon = LucideIcons.sunrise;
                       String timeStr = "07:30 AM";
                       String mealTypeStr = meal['type']?.toString().toLowerCase() ?? '';
 
                       if (mealTypeStr.contains('trưa')) {
                         color = isDark ? Colors.lightBlueAccent : Colors.blueAccent;
-                        icon = Icons.wb_twilight;
+                        icon = LucideIcons.sun;
                         timeStr = "12:15 PM";
                       } else if (mealTypeStr.contains('tối')) {
                         color = isDark ? const Color(0xFFBB86FC) : Colors.indigoAccent;
-                        icon = Icons.nights_stay_outlined;
+                        icon = LucideIcons.moon;
                         timeStr = "06:45 PM";
                       } else if (mealTypeStr.contains('phụ')) {
                         color = isDark ? Colors.lightGreenAccent : Colors.greenAccent;
-                        icon = Icons.spa_outlined;
+                        icon = LucideIcons.leaf;
                         timeStr = "03:00 PM";
                       }
 
@@ -524,7 +525,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                           : null,
                                     ),
                                     child: Icon(
-                                      Icons.edit,
+                                      LucideIcons.pencil,
                                       size: 12,
                                       color: isDark ? const Color(0xFFBB86FC) : Colors.black54,
                                     ),
@@ -568,7 +569,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                           : null,
                                     ),
                                     child: Icon(
-                                      Icons.delete_outline,
+                                      LucideIcons.trash2,
                                       size: 12,
                                       color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
                                     ),
@@ -594,21 +595,21 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Color color = Colors.orangeAccent;
-    IconData icon = Icons.wb_sunny_outlined;
+    IconData icon = LucideIcons.sunrise;
     String timeStr = "07:30 AM";
     String mealTypeStr = meal['type']?.toString().toLowerCase() ?? '';
 
     if (mealTypeStr.contains('trưa')) {
       color = isDark ? Colors.lightBlueAccent : Colors.blueAccent;
-      icon = Icons.wb_twilight;
+      icon = LucideIcons.sun;
       timeStr = "12:15 PM";
     } else if (mealTypeStr.contains('tối')) {
       color = isDark ? const Color(0xFFBB86FC) : Colors.indigoAccent;
-      icon = Icons.nights_stay_outlined;
+      icon = LucideIcons.moon;
       timeStr = "06:45 PM";
     } else if (mealTypeStr.contains('phụ')) {
       color = isDark ? Colors.lightGreenAccent : Colors.greenAccent;
-      icon = Icons.spa_outlined;
+      icon = LucideIcons.leaf;
       timeStr = "03:00 PM";
     }
 
@@ -621,13 +622,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2B2D31) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? const Color(0xFF35373C) : Colors.grey.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.01),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
         ],
       ),
       child: Row(
@@ -712,7 +713,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                               ]
                             : null,
                       ),
-                      child: Icon(Icons.edit, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
+                      child: Icon(LucideIcons.pencil, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -779,7 +780,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                               ]
                             : null,
                       ),
-                      child: Icon(Icons.add, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
+                      child: Icon(LucideIcons.plus, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.black54),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -818,7 +819,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                               ]
                             : null,
                       ),
-                      child: Icon(Icons.delete_outline, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent),
+                      child: Icon(LucideIcons.trash2, size: 14, color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent),
                     ),
                   ),
                 ],
@@ -867,7 +868,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Row(
               children: [
-                const Icon(Icons.edit_note_rounded, color: AppTheme.primary, size: 24),
+                const Icon(LucideIcons.squarePen, color: AppTheme.primary, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   'Tùy chỉnh bữa ăn', 
@@ -944,14 +945,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.orangeAccent.withOpacity(0.15) : Colors.orange[50],
+                      color: Colors.orangeAccent.withOpacity(isDark ? 0.12 : 0.07),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.5)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 22),
+                        const Icon(LucideIcons.alertTriangle, color: Colors.orangeAccent, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -972,14 +972,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.greenAccent.withOpacity(0.15) : Colors.green[50],
+                      color: Colors.greenAccent.withOpacity(isDark ? 0.12 : 0.07),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle_outline, color: Colors.green, size: 22),
+                        const Icon(LucideIcons.checkCircle2, color: Colors.green, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -1263,7 +1262,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       color: Colors.purple.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 20),
+                    child: const Icon(LucideIcons.sparkles, color: Colors.purpleAccent, size: 20),
                   ),
                   const SizedBox(width: 12),
                   const Text(

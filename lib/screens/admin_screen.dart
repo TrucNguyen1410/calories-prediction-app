@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Trang Quản trị — chỉ tài khoản role='admin' truy cập (đã chặn ở cả backend).
 class AdminScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _AdminScreenState extends State<AdminScreen> {
           title: const Text('Trang quản trị'),
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
-          actions: [AnimatedIconButton(icon: Icons.refresh, onPressed: _load)],
+          actions: [AnimatedIconButton(icon: LucideIcons.refreshCw, onPressed: _load)],
           bottom: const TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
@@ -136,7 +137,7 @@ class _AdminScreenState extends State<AdminScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
-            child: const Icon(Icons.groups_rounded, color: Colors.white, size: 40),
+            child: const Icon(LucideIcons.users, color: Colors.white, size: 40),
           ),
         ],
       ),
@@ -144,11 +145,12 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _buildKpiGrid(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     final tiles = [
-      ['Bữa ăn', _n('totalMeals'), Icons.restaurant_rounded, const Color(0xFFF59E0B)],
-      ['Buổi tập', _n('totalWorkouts'), Icons.fitness_center_rounded, const Color(0xFF10B981)],
-      ['Phiên chat AI', _n('totalSessions'), Icons.chat_bubble_rounded, const Color(0xFF6366F1)],
-      ['Phản hồi', _n('totalFeedback'), Icons.feedback_rounded, const Color(0xFF06B6D4)],
+      ['Bữa ăn', _n('totalMeals'), LucideIcons.utensilsCrossed, const Color(0xFFF59E0B)],
+      ['Buổi tập', _n('totalWorkouts'), LucideIcons.dumbbell, const Color(0xFF10B981)],
+      ['Phiên chat AI', _n('totalSessions'), LucideIcons.messageCircle, const Color(0xFF6366F1)],
+      ['Phản hồi', _n('totalFeedback'), LucideIcons.messageSquare, const Color(0xFF06B6D4)],
     ];
     return GridView.count(
       crossAxisCount: 2,
@@ -164,7 +166,14 @@ class _AdminScreenState extends State<AdminScreen> {
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: theme.dividerColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+                spreadRadius: -6,
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -205,7 +214,14 @@ class _AdminScreenState extends State<AdminScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,17 +295,25 @@ class _AdminScreenState extends State<AdminScreen> {
         itemBuilder: (ctx, i) {
           final u = _users[i];
           final isAdmin = u['role'] == 'admin';
+          final isDark = theme.brightness == Brightness.dark;
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
               color: theme.cardColor,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -6,
+                ),
+              ],
             ),
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: (isAdmin ? Colors.redAccent : AppTheme.primary).withOpacity(0.15),
-                child: Icon(isAdmin ? Icons.shield : Icons.person,
+                child: Icon(isAdmin ? LucideIcons.shield : LucideIcons.user,
                     color: isAdmin ? Colors.redAccent : AppTheme.primary),
               ),
               title: Row(
@@ -312,7 +336,7 @@ class _AdminScreenState extends State<AdminScreen> {
               trailing: isAdmin
                   ? null
                   : AnimatedIconButton(
-                      icon: Icons.delete_outline,
+                      icon: LucideIcons.trash2,
                       color: Colors.redAccent,
                       size: 20,
                       onPressed: () => _confirmDelete(u),
@@ -335,20 +359,28 @@ class _AdminScreenState extends State<AdminScreen> {
           final f = _feedback[i];
           final dt = DateTime.tryParse(f['createdAt']?.toString() ?? '');
           final dateStr = dt != null ? DateFormat('dd/MM/yyyy HH:mm').format(dt.toLocal()) : '';
+          final isDark = theme.brightness == Brightness.dark;
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: theme.cardColor,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -6,
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.account_circle, size: 18, color: AppTheme.primary),
+                    const Icon(LucideIcons.user, size: 18, color: AppTheme.primary),
                     const SizedBox(width: 6),
                     Expanded(child: Text('${f['userName']} (${f['userEmail']})',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis)),

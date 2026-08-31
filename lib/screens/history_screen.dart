@@ -4,6 +4,7 @@ import '../models/workout.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -176,7 +177,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           decoration: InputDecoration(
                             hintText: 'Tìm kiếm bài tập...',
                             hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontSize: 13),
-                            prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF949BA4) : Colors.grey, size: 20),
+                            prefixIcon: Icon(LucideIcons.search, color: isDark ? const Color(0xFF949BA4) : Colors.grey, size: 20),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -186,7 +187,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     const SizedBox(width: 10),
                     // Button phễu lọc theo Ngày
                     AnimatedIconButton(
-                      icon: Icons.filter_alt_outlined,
+                      icon: LucideIcons.filter,
                       color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
                       onPressed: _pickDate,
                       tooltip: 'Lọc theo ngày',
@@ -207,7 +208,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.calendar_today, size: 12, color: AppTheme.primary),
+                            Icon(LucideIcons.calendar, size: 12, color: AppTheme.primary),
                             const SizedBox(width: 6),
                             Text(
                               'Ngày: ${DateFormat('dd/MM/yyyy').format(_filterDate!)}',
@@ -216,7 +217,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: _clearDateFilter,
-                              child: Icon(Icons.close, size: 14, color: AppTheme.primary),
+                              child: Icon(LucideIcons.x, size: 14, color: AppTheme.primary),
                             ),
                           ],
                         ),
@@ -251,13 +252,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               decoration: BoxDecoration(
                                 color: isDark ? const Color(0xFF2B2D31) : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: isDark ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  )
+                                    color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 10),
+                                    spreadRadius: -6,
+                                  ),
                                 ],
                               ),
                               child: ListTile(
@@ -269,7 +270,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     color: Colors.blue.withOpacity(0.08),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.directions_run_rounded, color: Colors.blueAccent),
+                                  child: const Icon(LucideIcons.activity, color: Colors.blueAccent),
                                 ),
                                 title: Text(
                                   w.activityType,
@@ -283,7 +284,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.access_time, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                                      Icon(LucideIcons.clock, size: 12, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${w.duration} phút • $dateTimeDisplay',
@@ -329,7 +330,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.history_toggle_off,
+              LucideIcons.history,
               size: 60,
               color: isDark ? const Color(0xFF949BA4) : Colors.grey,
             ),

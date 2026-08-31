@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class TermsPolicyScreen extends StatelessWidget {
   const TermsPolicyScreen({super.key});
@@ -21,7 +22,7 @@ class TermsPolicyScreen extends StatelessWidget {
         backgroundColor: bgColor,
         elevation: 0,
         leading: AnimatedIconButton(
-          icon: Icons.arrow_back,
+          icon: LucideIcons.arrowLeft,
           color: textColor,
           onPressed: () => Navigator.pop(context),
         ),

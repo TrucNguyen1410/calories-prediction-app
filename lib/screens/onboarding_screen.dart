@@ -6,6 +6,7 @@ import '../providers/health_provider.dart';
 import '../utils/health_calc.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Màn hình thiết lập ban đầu — thu thập chỉ số & mục tiêu ngay sau khi đăng ký,
 /// giúp cá nhân hóa mục tiêu calo (TDEE) và tránh dữ liệu trống (weight = 0).
@@ -91,7 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 12),
-                    const Icon(Icons.favorite, color: AppTheme.primary, size: 56),
+                    const Icon(LucideIcons.heart, color: AppTheme.primary, size: 56),
                     const SizedBox(height: 16),
                     Text(
                       "Chào mừng đến với HealthAI!",
@@ -131,7 +132,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     TextFormField(
                       controller: _heightController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(prefixIcon: Icon(Icons.height), hintText: "VD: 170"),
+                      decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.ruler), hintText: "VD: 170"),
                       validator: (v) {
                         final d = double.tryParse(v ?? '');
                         if (d == null || d < 50 || d > 260) return "Nhập chiều cao 50 - 260 cm";
@@ -144,7 +145,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     TextFormField(
                       controller: _weightController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(prefixIcon: Icon(Icons.scale), hintText: "VD: 65"),
+                      decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.scale), hintText: "VD: 65"),
                       validator: (v) {
                         final d = double.tryParse(v ?? '');
                         if (d == null || d < 20 || d > 400) return "Nhập cân nặng 20 - 400 kg";
@@ -176,7 +177,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     _label("Mức độ vận động"),
                     DropdownButtonFormField<String>(
                       value: _activity,
-                      decoration: const InputDecoration(prefixIcon: Icon(Icons.directions_run)),
+                      decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.activity)),
                       items: HealthCalc.activityLabels.entries
                           .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13))))
                           .toList(),

@@ -8,6 +8,7 @@ import '../utils/health_calc.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Màn hình "Hồ sơ Sức khỏe": theo dõi xu hướng cân nặng & BMI THẬT theo thời gian,
 /// cho phép người dùng ghi nhận số đo mới và xem lịch sử.
@@ -83,7 +84,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddWeightDialog(currentHeight),
         backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(LucideIcons.plus, color: Colors.white),
         label: const Text("Cập nhật cân nặng", style: TextStyle(color: Colors.white)),
       ),
       body: _isLoading
@@ -174,7 +175,14 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -184,7 +192,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
               color: Colors.orangeAccent.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.local_fire_department, color: Colors.orangeAccent),
+            child: const Icon(LucideIcons.flame, color: Colors.orangeAccent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -219,14 +227,21 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.show_chart, color: AppTheme.primary, size: 20),
+              const Icon(LucideIcons.lineChart, color: AppTheme.primary, size: 20),
               const SizedBox(width: 8),
               Text("Xu hướng cân nặng (kg)",
                   style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
@@ -334,7 +349,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
   Widget _buildHistoryHeader(ThemeData theme) {
     return Row(
       children: [
-        const Icon(Icons.history, color: AppTheme.primary, size: 20),
+        const Icon(LucideIcons.history, color: AppTheme.primary, size: 20),
         const SizedBox(width: 8),
         Text("Lịch sử đo (${_records.length})",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.textTheme.bodyLarge?.color)),
@@ -348,7 +363,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(Icons.monitor_weight_outlined, size: 48, color: theme.hintColor),
+          Icon(LucideIcons.heartPulse, size: 48, color: theme.hintColor),
           const SizedBox(height: 12),
           Text("Chưa có dữ liệu đo.\nNhấn \"Cập nhật cân nặng\" để bắt đầu theo dõi.",
               textAlign: TextAlign.center, style: TextStyle(color: theme.hintColor)),
@@ -368,12 +383,19 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _bmiColor(bmi).withOpacity(0.15),
-          child: Icon(Icons.monitor_weight, color: _bmiColor(bmi)),
+          child: Icon(LucideIcons.heartPulse, color: _bmiColor(bmi)),
         ),
         title: Text("${weight.toStringAsFixed(1)} kg",
             style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -382,7 +404,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
           style: TextStyle(fontSize: 12, color: theme.hintColor),
         ),
         trailing: AnimatedIconButton(
-          icon: Icons.delete_outline,
+          icon: LucideIcons.trash2,
           color: Colors.redAccent,
           size: 20,
           onPressed: () => _confirmDelete(r['_id']?.toString()),
@@ -436,7 +458,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
                 TextFormField(
                   controller: weightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: "Cân nặng (kg)", prefixIcon: Icon(Icons.scale)),
+                  decoration: const InputDecoration(labelText: "Cân nặng (kg)", prefixIcon: Icon(LucideIcons.scale)),
                   validator: (v) {
                     final d = double.tryParse(v ?? '');
                     if (d == null) return "Nhập số hợp lệ";
@@ -448,7 +470,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
                 TextFormField(
                   controller: heightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: "Chiều cao (cm)", prefixIcon: Icon(Icons.height)),
+                  decoration: const InputDecoration(labelText: "Chiều cao (cm)", prefixIcon: Icon(LucideIcons.ruler)),
                   validator: (v) {
                     if (v == null || v.isEmpty) return null; // không bắt buộc
                     final d = double.tryParse(v);

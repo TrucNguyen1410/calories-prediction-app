@@ -6,6 +6,7 @@ import '../utils/health_calc.dart';
 import '../theme.dart';
 import 'history_screen.dart';
 import '../widgets/app_toast.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class PredictScreen extends StatefulWidget {
   const PredictScreen({Key? key}) : super(key: key);
@@ -136,7 +137,7 @@ class _PredictScreenState extends State<PredictScreen> {
         children: [
           const CircleAvatar(
             backgroundColor: AppTheme.primary,
-            child: Icon(Icons.auto_graph, color: Colors.white),
+            child: Icon(LucideIcons.trendingUp, color: Colors.white),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -154,16 +155,16 @@ class _PredictScreenState extends State<PredictScreen> {
   }
 
   Widget _buildPrefillNote() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withOpacity(isDark ? 0.12 : 0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.3)),
       ),
       child: Row(
         children: const [
-          Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+          Icon(LucideIcons.checkCircle2, color: Colors.green, size: 18),
           SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -179,10 +180,10 @@ class _PredictScreenState extends State<PredictScreen> {
   Widget _buildFormLayout({required bool isMobile}) {
     final fields = [
       _buildDropdown(),
-      _buildTextField("Cân nặng (kg)", _weightController, Icons.scale),
-      _buildTextField("Chiều cao (cm)", _heightController, Icons.height),
-      _buildTextField("Tuổi", _ageController, Icons.person_outline),
-      _buildTextField("Thời gian (phút)", _durationController, Icons.timer_outlined),
+      _buildTextField("Cân nặng (kg)", _weightController, LucideIcons.scale),
+      _buildTextField("Chiều cao (cm)", _heightController, LucideIcons.ruler),
+      _buildTextField("Tuổi", _ageController, LucideIcons.user),
+      _buildTextField("Thời gian (phút)", _durationController, LucideIcons.timer),
     ];
 
     if (isMobile) {
@@ -205,7 +206,7 @@ class _PredictScreenState extends State<PredictScreen> {
       value: _selectedActivity,
       items: _activities.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
       onChanged: (val) => setState(() => _selectedActivity = val),
-      decoration: const InputDecoration(labelText: "Loại bài tập", prefixIcon: Icon(Icons.fitness_center)),
+      decoration: const InputDecoration(labelText: "Loại bài tập", prefixIcon: Icon(LucideIcons.dumbbell)),
       validator: (val) => val == null ? "Bắt buộc" : null,
     );
   }
@@ -256,7 +257,7 @@ class _PredictScreenState extends State<PredictScreen> {
   Widget _buildHistoryButton() {
     return OutlinedButton.icon(
       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
-      icon: const Icon(Icons.history),
+      icon: const Icon(LucideIcons.history),
       label: const Text('XEM LỊCH SỬ DỰ ĐOÁN'),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 52),

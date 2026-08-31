@@ -9,6 +9,7 @@ import 'dart:math';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -55,7 +56,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(
         leading: Builder(
           builder: (context) => AnimatedIconButton(
-            icon: Icons.menu,
+            icon: LucideIcons.menu,
             tooltip: 'Lịch sử trò chuyện',
             onPressed: () {
               Scaffold.of(context).openDrawer();
@@ -67,14 +68,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         foregroundColor: Colors.white,
         actions: [
           AnimatedIconButton(
-            icon: Icons.add_comment_outlined,
+            icon: LucideIcons.messageSquarePlus,
             tooltip: 'Cuộc trò chuyện mới',
             onPressed: () {
               ref.read(chatProvider.notifier).startNewChat();
             },
           ),
           AnimatedIconButton(
-            icon: Icons.delete_outline,
+            icon: LucideIcons.trash2,
             tooltip: 'Xóa lịch sử chat hiện tại',
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
           )
@@ -148,7 +149,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.chat_bubble_outline,
+                LucideIcons.messageCircle,
                 size: 48,
                 color: Colors.blueAccent,
               ),
@@ -193,7 +194,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ref.read(chatProvider.notifier).startNewChat();
                   Navigator.of(context).pop(); // Đóng Drawer
                 },
-                icon: const Icon(Icons.add, color: Colors.white),
+                icon: const Icon(LucideIcons.plus, color: Colors.white),
                 label: const Text(
                   'Cuộc trò chuyện mới',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -263,7 +264,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 child: ListTile(
                                   dense: true,
                                   leading: Icon(
-                                    Icons.chat_bubble_outline,
+                                    LucideIcons.messageCircle,
                                     size: 16,
                                     color: isActive ? Colors.blueAccent : Colors.white70,
                                   ),
@@ -278,7 +279,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                     ),
                                   ),
                                   trailing: AnimatedIconButton(
-                                    icon: Icons.delete_outline,
+                                    icon: LucideIcons.trash2,
                                     size: 16,
                                     color: Colors.white38,
                                     onPressed: () {
@@ -338,13 +339,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             bottomLeft: Radius.circular(isUser ? 16 : 0),
             bottomRight: Radius.circular(isUser ? 0 : 16),
           ),
-          border: (!isUser && isDark) ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.1 : 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
+              color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+              spreadRadius: -6,
+            ),
           ],
         ),
         constraints: BoxConstraints(
@@ -380,6 +381,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   // Nút hành động Lưu Kcal đã đốt
   Widget _buildWorkoutActionWidget(ChatMessage message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final actionData = message.actionData;
     if (actionData == null) return const SizedBox.shrink();
 
@@ -399,14 +401,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.15),
+                color: Colors.green.withOpacity(isDark ? 0.12 : 0.07),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  Icon(LucideIcons.checkCircle2, color: Colors.green, size: 16),
                   SizedBox(width: 6),
                   Text(
                     'Đã lưu vào nhật ký',
@@ -470,7 +471,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.local_fire_department, size: 16, color: Colors.white),
+                  const Icon(LucideIcons.flame, size: 16, color: Colors.white),
                   const SizedBox(width: 6),
                   Text(
                     'Lưu ${caloriesBurned.toStringAsFixed(0)} kcal đã đốt',
@@ -493,13 +494,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         decoration: BoxDecoration(
           color: isDark ? Theme.of(context).cardColor : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isDark ? Border.all(color: const Color(0xFF35373C), width: 1) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.06 : 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
+              color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+              spreadRadius: -6,
+            ),
           ],
         ),
         child: Row(
@@ -556,7 +557,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   : null,
             ),
             child: AnimatedIconButton(
-              icon: Icons.send,
+              icon: LucideIcons.send,
               color: isDark ? const Color(0xFFBB86FC) : Colors.white,
               size: 18,
               onPressed: _handleSend,

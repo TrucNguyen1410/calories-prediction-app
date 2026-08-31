@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
@@ -94,7 +95,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                           ],
                         ),
                         AnimatedIconButton(
-                          icon: Icons.arrow_forward_ios,
+                          icon: LucideIcons.arrowRight,
                           size: 16,
                           color: AppTheme.primary,
                           onPressed: () async {
@@ -207,7 +208,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       title: 'TB Nạp Tuần Này',
                       value: '${healthState.averageIntake.toStringAsFixed(0)} kcal',
                       subtitle: 'Trung bình hàng ngày',
-                      icon: Icons.restaurant,
+                      icon: LucideIcons.utensilsCrossed,
                       iconColor: Colors.orangeAccent,
                       isDark: isDark,
                       theme: theme,
@@ -223,7 +224,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       subtitle: healthState.maxBurnedDayName.contains('(')
                           ? healthState.maxBurnedDayName.substring(healthState.maxBurnedDayName.indexOf('(') + 1, healthState.maxBurnedDayName.indexOf(')'))
                           : 'Chưa có',
-                      icon: Icons.local_fire_department,
+                      icon: LucideIcons.flame,
                       iconColor: Colors.redAccent,
                       isDark: isDark,
                       theme: theme,
@@ -270,7 +271,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+            const Icon(LucideIcons.sparkles, color: Colors.white, size: 24),
             const SizedBox(width: 12),
             const Expanded(
               child: Column(
@@ -286,7 +287,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             ),
             _loadingInsight
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                : const Icon(LucideIcons.arrowRight, color: Colors.white70, size: 16),
           ],
         ),
       ),
@@ -339,7 +340,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.auto_awesome, color: AppTheme.primary, size: 22),
+                const Icon(LucideIcons.sparkles, color: AppTheme.primary, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(data['title']?.toString() ?? 'Phân tích tuần',
@@ -402,15 +403,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   }
 
   BoxDecoration _buildCardDecoration(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return BoxDecoration(
       color: theme.cardColor,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: theme.dividerColor),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.2 : 0.02),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
+          color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+          spreadRadius: -6,
         ),
       ],
     );

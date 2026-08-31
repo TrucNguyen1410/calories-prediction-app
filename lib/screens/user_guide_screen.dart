@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme.dart';
 import '../providers/tour_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'main_screen.dart';
 
 class UserGuideScreen extends ConsumerWidget {
@@ -67,7 +68,7 @@ class UserGuideScreen extends ConsumerWidget {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.explore_outlined, color: Colors.white, size: 22),
+                    Icon(LucideIcons.compass, color: Colors.white, size: 22),
                     SizedBox(width: 8),
                     Text(
                       '🚀 Khám phá nhanh (Interactive Tour)',
@@ -89,7 +90,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.smart_toy_outlined,
+              icon: LucideIcons.sparkles,
               iconColor: Colors.purpleAccent,
               title: '1. Trợ lý Sức khỏe AI',
               description: 'Trò chuyện, phân tích & ghi chép bằng AI',
@@ -106,7 +107,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.restaurant_menu_outlined,
+              icon: LucideIcons.utensilsCrossed,
               iconColor: Colors.greenAccent,
               title: '2. Dinh dưỡng: Phân tích & Thực đơn AI',
               description: 'Đếm calo món ăn và lập thực đơn 7 ngày',
@@ -123,7 +124,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.local_fire_department_outlined,
+              icon: LucideIcons.flame,
               iconColor: Colors.orangeAccent,
               title: '3. Mục tiêu Calo cá nhân (TDEE) & BMI',
               description: 'Mục tiêu calo tính riêng cho bạn',
@@ -140,7 +141,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.monitor_weight_outlined,
+              icon: LucideIcons.heartPulse,
               iconColor: Colors.blueAccent,
               title: '4. Hồ sơ Sức khỏe & Dự đoán ML',
               description: 'Theo dõi cân nặng và dự đoán calo tiêu hao',
@@ -156,7 +157,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.directions_walk_outlined,
+              icon: LucideIcons.footprints,
               iconColor: Colors.teal,
               title: '5. Nước uống & Bước chân (Google Fit)',
               description: 'Theo dõi vận động và nước uống hằng ngày',
@@ -173,7 +174,7 @@ class UserGuideScreen extends ConsumerWidget {
               cardColor: cardColor,
               textColor: textColor,
               subtitleColor: subtitleColor,
-              icon: Icons.manage_accounts_outlined,
+              icon: LucideIcons.userCog,
               iconColor: Colors.pinkAccent,
               title: '6. Tài khoản & Cài đặt',
               description: 'Quản lý hồ sơ và bảo mật',
@@ -200,17 +201,18 @@ class UserGuideScreen extends ConsumerWidget {
     required String description,
     required List<String> steps,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
           ),
         ],
       ),
