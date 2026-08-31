@@ -35,6 +35,26 @@ const randInt = (min, max) => Math.round(rand(min, max));
 const pick = (arr, i) => arr[i % arr.length];
 const roll = (prob) => Math.random() < prob;
 
+// Suy ra protein/carbs/fat/fiber/sugar/sodium hợp lý từ số calo, để card
+// "Health Score" và các chart macro có dữ liệu thật thay vì toàn số 0.
+// category: 'main' (bữa chính) hay 'snack' (bữa phụ) — tỉ lệ khác nhau đôi chút.
+function deriveNutrition(calories, category) {
+    const proteinRatio = category === "snack" ? rand(0.08, 0.15) : rand(0.15, 0.22);
+    const fatRatio = category === "snack" ? rand(0.20, 0.35) : rand(0.22, 0.32);
+    const carbRatio = Math.max(0.3, 1 - proteinRatio - fatRatio);
+
+    const protein = Math.round((calories * proteinRatio) / 4);
+    const fat = Math.round((calories * fatRatio) / 9);
+    const carbs = Math.round((calories * carbRatio) / 4);
+
+    const fiber = Math.round(rand(0.8, 1.8) * (calories / 100) * 10) / 10;
+    const sugarShare = category === "snack" ? rand(0.25, 0.55) : rand(0.05, 0.18);
+    const sugar = Math.round(carbs * sugarShare);
+    const sodium = category === "snack" ? randInt(50, 250) : randInt(350, 750);
+
+    return { protein, carbs, fat, fiber, sugar, sodium };
+}
+
 function totalDaysInHistory() {
     return Math.floor((new Date().setHours(0, 0, 0, 0) - HISTORY_START.setHours(0, 0, 0, 0)) / 86400000) + 1;
 }
@@ -53,6 +73,7 @@ async function run() {
     user.weight = 68;
     user.dob = new Date("1999-05-20");
     user.goal = "lose";
+    user.goalWeight = 65; // mục tiêu, dùng để test % Goal Progress ở Thống kê
     user.activityLevel = "moderate";
     user.onboarded = true;
     await user.save();
@@ -137,20 +158,21 @@ async function run() {
         const dayDate = addDays(HISTORY_START, NUM_DAYS - 1 - i);
         const d = dateStr(dayDate);
         const dayIdx = NUM_DAYS - 1 - i;
-        const mk = (arr, type, hour, minute) => {
+        const mk = (arr, type, hour, minute, category) => {
             const item = pick(arr, dayIdx);
             const ts = new Date(dayDate);
             ts.setHours(hour, minute, 0, 0);
             meals.push({
                 userId, name: item[0], calories: item[1], servingSize: item[2],
                 mealType: type, imageUrl: "", date: d, timestamp: ts.toISOString(),
+                ...deriveNutrition(item[1], category),
             });
         };
-        mk(breakfast, "Sáng", randInt(6, 8), randInt(0, 59));
-        mk(lunch, "Trưa", randInt(11, 13), randInt(0, 59));
-        mk(dinner, "Tối", randInt(18, 20), randInt(0, 59));
+        mk(breakfast, "Sáng", randInt(6, 8), randInt(0, 59), "main");
+        mk(lunch, "Trưa", randInt(11, 13), randInt(0, 59), "main");
+        mk(dinner, "Tối", randInt(18, 20), randInt(0, 59), "main");
         // ~75% số ngày có thêm bữa phụ, như người dùng thật (không phải ngày nào cũng ăn vặt)
-        if (roll(0.75)) mk(snacks, "Snack", randInt(14, 16), randInt(0, 59));
+        if (roll(0.75)) mk(snacks, "Snack", randInt(14, 16), randInt(0, 59), "snack");
     }
     await Meal.insertMany(meals);
     console.log(`✅ ${meals.length} bữa ăn (${NUM_DAYS} ngày)`);
