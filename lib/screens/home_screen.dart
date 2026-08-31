@@ -1433,7 +1433,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _showConfirmationSheet(data);
     } catch (e) {
       Navigator.pop(context);
-      AppToast.show(context, message: 'Lỗi: $e', type: AppToastType.error);
+      AppToast.show(context, message: e.toString().replaceFirst('Exception: ', ''), type: AppToastType.error);
     }
   }
 

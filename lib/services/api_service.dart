@@ -582,12 +582,25 @@ class ApiService {
             if (response.statusCode == 200) {
                 final body = jsonDecode(response.body);
                 return body['data'];
+            } else if (response.statusCode >= 500) {
+                throw Exception('Máy chủ AI hiện đang gặp sự cố, vui lòng thử lại sau ít phút.');
             } else {
-                throw Exception('Lỗi phân tích: ${response.statusCode}');
+                throw Exception('Không thể phân tích món ăn. Vui lòng thử lại.');
             }
         } catch (e) {
             print('Analyze Food Error: $e');
-            throw Exception('Không thể phân tích: $e');
+            final msg = e.toString();
+            // Lỗi tầng mạng (server sập/không phản hồi) trả về nguyên văn tiếng Anh
+            // kiểu "ClientException: Failed to fetch" — không hiển thị thẳng cho người dùng.
+            final isNetworkError = msg.contains('Failed to fetch') ||
+                msg.contains('ClientException') ||
+                msg.contains('SocketException') ||
+                msg.contains('Connection');
+            if (isNetworkError) {
+                throw Exception('Hiện tại AI đang gặp sự cố kết nối, vui lòng thử lại sau ít phút.');
+            }
+            if (msg.startsWith('Exception: ')) rethrow;
+            throw Exception('Không thể phân tích món ăn. Vui lòng thử lại.');
         }
     }
     
