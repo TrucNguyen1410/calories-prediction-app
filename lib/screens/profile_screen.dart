@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
 import '../services/health_connect_service.dart';
@@ -72,16 +73,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: theme.cardColor,
+                            color: Colors.redAccent.withOpacity(isDark ? 0.12 : 0.07),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
                           ),
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                            leading: const Icon(Icons.admin_panel_settings, color: Colors.redAccent),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                            leading: const Icon(LucideIcons.shieldCheck, color: Colors.redAccent, size: 22),
                             title: const Text("Trang quản trị",
-                                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent)),
-                            trailing: const Icon(Icons.chevron_right, color: Colors.redAccent),
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.redAccent)),
+                            trailing: const Icon(LucideIcons.chevronRight, size: 20, color: Colors.redAccent),
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen())),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           ),
@@ -90,7 +90,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                       _buildSectionTitle("Sức khỏe & Mục tiêu"),
                       _buildListTile(
-                        icon: Icons.monitor_weight_outlined,
+                        icon: LucideIcons.heartPulse,
                         title: "Hồ sơ sức khỏe (Cân nặng & BMI)",
                         isDark: isDark,
                         theme: theme,
@@ -102,14 +102,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                       _buildListTile(
-                        icon: Icons.flag_outlined,
+                        icon: LucideIcons.flag,
                         title: "Mục tiêu & Mức vận động",
                         isDark: isDark,
                         theme: theme,
                         onTap: () => _showGoalDialog(userData, isDark, theme),
                       ),
                       _buildListTile(
-                        icon: Icons.auto_graph,
+                        icon: LucideIcons.trendingUp,
                         title: "Dự đoán calo tiêu hao (AI/ML)",
                         isDark: isDark,
                         theme: theme,
@@ -123,14 +123,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Thiết bị & Dữ liệu"),
                       _buildListTile(
-                        icon: Icons.sync,
+                        icon: LucideIcons.refreshCw,
                         title: "Đồng bộ Google Fit ngay",
                         isDark: isDark,
                         theme: theme,
                         onTap: _handleGoogleFitSync,
                       ),
                       _buildListTile(
-                        icon: Icons.health_and_safety_outlined,
+                        icon: LucideIcons.stethoscope,
                         title: "Kiểm tra Health Connect (dự phòng)",
                         isDark: isDark,
                         theme: theme,
@@ -139,7 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Tùy chọn"),
                       _buildListTile(
-                        icon: Icons.dark_mode_outlined,
+                        icon: LucideIcons.moon,
                         title: "Chế độ tối (Dark Mode)",
                         isDark: isDark,
                         theme: theme,
@@ -154,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Tài khoản & Bảo mật"),
                       _buildListTile(
-                        icon: Icons.lock_outline,
+                        icon: LucideIcons.lock,
                         title: "Đổi mật khẩu",
                         isDark: isDark,
                         theme: theme,
@@ -163,7 +163,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 24),
                       _buildSectionTitle("Hỗ trợ & Thông tin"),
                       _buildListTile(
-                        icon: Icons.help_outline,
+                        icon: LucideIcons.circleHelp,
                         title: "Hướng dẫn sử dụng",
                         isDark: isDark,
                         theme: theme,
@@ -175,7 +175,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                       _buildListTile(
-                        icon: Icons.description_outlined,
+                        icon: LucideIcons.fileText,
                         title: "Điều khoản & Chính sách",
                         isDark: isDark,
                         theme: theme,
@@ -187,14 +187,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                       _buildListTile(
-                        icon: Icons.feedback_outlined,
+                        icon: LucideIcons.messageSquare,
                         title: "Đóng góp ý kiến",
                         isDark: isDark,
                         theme: theme,
                         onTap: () => _showFeedbackDialog(isDark, theme),
                       ),
                       _buildListTile(
-                        icon: Icons.info_outline,
+                        icon: LucideIcons.info,
                         title: "Phiên bản ứng dụng",
                         isDark: isDark,
                         theme: theme,
@@ -211,16 +211,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: theme.cardColor,
+                          color: Colors.redAccent.withOpacity(isDark ? 0.12 : 0.07),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.red.withOpacity(0.4)),
                         ),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                          leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                          leading: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 22),
                           title: const Text("Xóa tài khoản",
-                              style: TextStyle(fontWeight: FontWeight.w500, color: Colors.redAccent)),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.redAccent),
+                              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: Colors.redAccent)),
+                          trailing: const Icon(LucideIcons.chevronRight, size: 20, color: Colors.redAccent),
                           onTap: _showDeleteAccountDialog,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
@@ -249,13 +248,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Theme.of(context).dividerColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
+              color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+              spreadRadius: -6,
+            ),
           ],
         ),
         child: Row(
@@ -263,7 +262,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const CircleAvatar(
               radius: 32,
               backgroundColor: AppTheme.primary,
-              child: Icon(Icons.person_outline, color: Colors.white, size: 36),
+              child: Icon(LucideIcons.user, color: Colors.white, size: 32),
             ),
             const SizedBox(width: 20),
             Expanded(
@@ -273,7 +272,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text(
                     displayName,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 19,
                       fontWeight: FontWeight.bold,
                       color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
                     ),
@@ -290,12 +289,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 18),
+              child: const Icon(LucideIcons.pencil, color: AppTheme.primary, size: 18),
             ),
           ],
         ),
@@ -333,26 +332,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -6,
+          ),
         ],
       ),
       child: Column(
         children: [
-          _buildBiometricRow(Icons.height, "Chiều cao", height > 0 ? "${height.toStringAsFixed(0)} cm" : "-- cm", isDark),
+          _buildBiometricRow(LucideIcons.ruler, "Chiều cao", height > 0 ? "${height.toStringAsFixed(0)} cm" : "-- cm", isDark),
           Divider(height: 24, color: theme.dividerColor),
-          _buildBiometricRow(Icons.scale_outlined, "Cân nặng", weight > 0 ? "${weight.toStringAsFixed(1)} kg" : "-- kg", isDark),
+          _buildBiometricRow(LucideIcons.scale, "Cân nặng", weight > 0 ? "${weight.toStringAsFixed(1)} kg" : "-- kg", isDark),
           Divider(height: 24, color: theme.dividerColor),
-          _buildBiometricRow(Icons.calendar_today_outlined, "Tuổi", age > 0 ? "$age tuổi" : "-- tuổi", isDark),
+          _buildBiometricRow(LucideIcons.calendar, "Tuổi", age > 0 ? "$age tuổi" : "-- tuổi", isDark),
           Divider(height: 24, color: theme.dividerColor),
-          _buildBiometricRow(Icons.wc_outlined, "Giới tính", genderText, isDark),
+          _buildBiometricRow(LucideIcons.users, "Giới tính", genderText, isDark),
           Divider(height: 24, color: theme.dividerColor),
-          _buildBiometricRow(Icons.favorite_outline, "Chỉ số BMI", bmi > 0 ? bmi.toStringAsFixed(1) : "--", isDark, valueColor: Colors.blueAccent),
+          _buildBiometricRow(LucideIcons.heart, "Chỉ số BMI", bmi > 0 ? bmi.toStringAsFixed(1) : "--", isDark, valueColor: Colors.blueAccent),
         ],
       ),
     );
@@ -367,6 +366,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           label,
           style: TextStyle(
             fontWeight: FontWeight.w500,
+            fontSize: 14,
             color: isDark ? const Color(0xFFB5BAC1) : Colors.black54,
           ),
         ),
@@ -376,7 +376,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: valueColor ?? (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
-            fontSize: 15,
+            fontSize: 16,
           ),
         ),
       ],
@@ -391,7 +391,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isDark ? const Color(0xFF949BA4) : Colors.black54,
           letterSpacing: 0.5,
@@ -413,19 +413,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -6,
+          ),
+        ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-        leading: Icon(icon, color: AppTheme.primary),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        leading: Icon(icon, color: AppTheme.primary, size: 22),
         title: Text(
           title,
           style: TextStyle(
             fontWeight: FontWeight.w500,
+            fontSize: 15,
             color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
           ),
         ),
-        trailing: trailing ?? Icon(Icons.chevron_right, color: isDark ? const Color(0xFF949BA4) : Colors.grey),
+        trailing: trailing ?? Icon(LucideIcons.chevronRight, size: 20, color: isDark ? const Color(0xFF949BA4) : Colors.grey),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -446,7 +454,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        icon: const Icon(Icons.logout),
+        icon: const Icon(LucideIcons.logOut, size: 20),
         label: const Text('ĐĂNG XUẤT TÀI KHOẢN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.8)),
       ),
     );
@@ -512,7 +520,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Tên hiển thị',
-                  prefixIcon: Icon(Icons.badge_outlined, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.idCard, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -522,7 +530,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Chiều cao (cm)',
-                  prefixIcon: Icon(Icons.height, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.ruler, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -532,7 +540,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Cân nặng (kg)',
-                  prefixIcon: Icon(Icons.scale_outlined, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.scale, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -542,7 +550,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Tuổi',
-                  prefixIcon: Icon(Icons.calendar_today_outlined, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.calendar, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -562,7 +570,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 },
                 decoration: const InputDecoration(
                   labelText: 'Giới tính',
-                  prefixIcon: Icon(Icons.wc_outlined, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.users, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 24),
@@ -763,7 +771,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: Row(
           children: [
             Icon(
-              diag.success ? Icons.check_circle : Icons.error_outline,
+              diag.success ? LucideIcons.checkCircle2 : LucideIcons.alertCircle,
               color: diag.success ? Colors.green : Colors.orange,
             ),
             const SizedBox(width: 10),
@@ -831,7 +839,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13))))
                     .toList(),
                 onChanged: (v) => setDialogState(() => activity = v ?? 'light'),
-                decoration: const InputDecoration(prefixIcon: Icon(Icons.directions_run, color: AppTheme.primary)),
+                decoration: const InputDecoration(prefixIcon: Icon(LucideIcons.activity, color: AppTheme.primary)),
               ),
               const SizedBox(height: 24),
               PurpleGradientButton(
@@ -935,7 +943,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Mật khẩu hiện tại',
-                  prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.lock, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -945,7 +953,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 decoration: const InputDecoration(
                   labelText: 'Mật khẩu mới',
-                  prefixIcon: Icon(Icons.vpn_key_outlined, color: AppTheme.primary),
+                  prefixIcon: Icon(LucideIcons.keyRound, color: AppTheme.primary),
                 ),
               ),
               const SizedBox(height: 24),
@@ -1060,7 +1068,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   alignLabelWithHint: true,
                   prefixIcon: Padding(
                     padding: EdgeInsets.only(bottom: 50),
-                    child: Icon(Icons.edit_note_outlined, color: AppTheme.primary),
+                    child: Icon(LucideIcons.squarePen, color: AppTheme.primary),
                   ),
                 ),
               ),
