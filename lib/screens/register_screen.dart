@@ -3,6 +3,7 @@ import '../theme.dart';
 import '../services/api_service.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -190,8 +191,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: const Icon(Icons.lock_outline),
-        suffixIcon: IconButton(
-          icon: Icon(hide ? Icons.visibility_off : Icons.visibility),
+        suffixIcon: AnimatedIconButton(
+          icon: hide ? Icons.visibility_off : Icons.visibility,
           onPressed: toggle,
         ),
       ),

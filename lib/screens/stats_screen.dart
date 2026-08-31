@@ -6,6 +6,7 @@ import '../providers/health_provider.dart';
 import '../services/api_service.dart';
 import 'meal_history_screen.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -92,8 +93,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.primary),
+                        AnimatedIconButton(
+                          icon: Icons.arrow_forward_ios,
+                          size: 16,
+                          color: AppTheme.primary,
                           onPressed: () async {
                             await Navigator.push(
                               context,

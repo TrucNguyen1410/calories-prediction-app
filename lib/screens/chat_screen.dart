@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -53,8 +54,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
+          builder: (context) => AnimatedIconButton(
+            icon: Icons.menu,
             tooltip: 'Lịch sử trò chuyện',
             onPressed: () {
               Scaffold.of(context).openDrawer();
@@ -65,15 +66,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_comment_outlined),
+          AnimatedIconButton(
+            icon: Icons.add_comment_outlined,
             tooltip: 'Cuộc trò chuyện mới',
             onPressed: () {
               ref.read(chatProvider.notifier).startNewChat();
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
+          AnimatedIconButton(
+            icon: Icons.delete_outline,
             tooltip: 'Xóa lịch sử chat hiện tại',
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
           )
@@ -276,8 +277,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                       fontSize: 13.5,
                                     ),
                                   ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
+                                  trailing: AnimatedIconButton(
+                                    icon: Icons.delete_outline,
+                                    size: 16,
+                                    color: Colors.white38,
                                     onPressed: () {
                                       // Hiện dialog xác nhận xóa
                                       showDialog(
@@ -552,8 +555,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ]
                   : null,
             ),
-            child: IconButton(
-              icon: Icon(Icons.send, color: isDark ? const Color(0xFFBB86FC) : Colors.white, size: 18),
+            child: AnimatedIconButton(
+              icon: Icons.send,
+              color: isDark ? const Color(0xFFBB86FC) : Colors.white,
+              size: 18,
               onPressed: _handleSend,
             ),
           ),

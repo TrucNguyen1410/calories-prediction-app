@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 /// Trang Quản trị — chỉ tài khoản role='admin' truy cập (đã chặn ở cả backend).
 class AdminScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _AdminScreenState extends State<AdminScreen> {
           title: const Text('Trang quản trị'),
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
-          actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _load)],
+          actions: [AnimatedIconButton(icon: Icons.refresh, onPressed: _load)],
           bottom: const TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
@@ -310,8 +311,10 @@ class _AdminScreenState extends State<AdminScreen> {
               isThreeLine: true,
               trailing: isAdmin
                   ? null
-                  : IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                  : AnimatedIconButton(
+                      icon: Icons.delete_outline,
+                      color: Colors.redAccent,
+                      size: 20,
                       onPressed: () => _confirmDelete(u),
                     ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../widgets/animated_icon_button.dart';
 
 class TermsPolicyScreen extends StatelessWidget {
   const TermsPolicyScreen({super.key});
@@ -19,8 +20,9 @@ class TermsPolicyScreen extends StatelessWidget {
         title: const Text('Điều khoản & Chính sách', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
+        leading: AnimatedIconButton(
+          icon: Icons.arrow_back,
+          color: textColor,
           onPressed: () => Navigator.pop(context),
         ),
       ),

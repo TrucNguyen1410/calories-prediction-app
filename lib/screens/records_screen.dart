@@ -7,6 +7,7 @@ import '../providers/health_provider.dart';
 import '../utils/health_calc.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 /// Màn hình "Hồ sơ Sức khỏe": theo dõi xu hướng cân nặng & BMI THẬT theo thời gian,
 /// cho phép người dùng ghi nhận số đo mới và xem lịch sử.
@@ -380,8 +381,10 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
           "$dateStr${bmi > 0 ? "  •  BMI ${bmi.toStringAsFixed(1)} (${_classifyBMI(bmi)})" : ""}",
           style: TextStyle(fontSize: 12, color: theme.hintColor),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+        trailing: AnimatedIconButton(
+          icon: Icons.delete_outline,
+          color: Colors.redAccent,
+          size: 20,
           onPressed: () => _confirmDelete(r['_id']?.toString()),
         ),
       ),

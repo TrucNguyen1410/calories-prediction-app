@@ -14,6 +14,7 @@ import 'profile_screen.dart';
 import '../theme.dart';
 import '../providers/tour_provider.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 final mainTabProvider = StateProvider<int>((ref) => 0);
 
@@ -271,13 +272,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const Spacer(),
-          IconButton(
-            icon: const Icon(LucideIcons.trash2, color: Colors.white70, size: 20),
+          AnimatedIconButton(
+            icon: LucideIcons.trash2,
+            color: Colors.white70,
+            size: 20,
             onPressed: () => ref.read(chatProvider.notifier).clearChat(),
             tooltip: 'Xóa hội thoại',
           ),
-          IconButton(
-            icon: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+          AnimatedIconButton(
+            icon: LucideIcons.x,
+            color: Colors.white,
+            size: 20,
             onPressed: () => ref.read(chatbotProvider.notifier).setChatOpen(false),
           ),
         ],
@@ -558,8 +563,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     ]
                   : null,
             ),
-            child: IconButton(
-              icon: Icon(LucideIcons.send, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 18),
+            child: AnimatedIconButton(
+              icon: LucideIcons.send,
+              color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary,
+              size: 18,
               onPressed: _handleChatSend,
             ),
           ),

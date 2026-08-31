@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 class MealHistoryScreen extends StatefulWidget {
   const MealHistoryScreen({Key? key}) : super(key: key);
@@ -227,11 +228,9 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                     ),
                     const SizedBox(width: 10),
                     // Button phễu lọc theo Ngày
-                    IconButton(
-                      icon: Icon(
-                        Icons.filter_alt_outlined,
-                        color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
-                      ),
+                    AnimatedIconButton(
+                      icon: Icons.filter_alt_outlined,
+                      color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
                       onPressed: _pickDate,
                       tooltip: 'Lọc theo ngày',
                     ),
@@ -389,12 +388,10 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                                                   ]
                                                 : null,
                                           ),
-                                          child: IconButton(
-                                            icon: Icon(
-                                              Icons.delete_outline,
-                                              color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
-                                              size: 20,
-                                            ),
+                                          child: AnimatedIconButton(
+                                            icon: Icons.delete_outline,
+                                            color: isDark ? const Color(0xFFBB86FC) : Colors.redAccent,
+                                            size: 20,
                                             onPressed: id.isEmpty ? null : () async {
                                               final confirm = await showDialog<bool>(
                                                 context: context,

@@ -9,6 +9,7 @@ import 'main_screen.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -241,8 +242,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         floatingLabelStyle: const TextStyle(color: AppTheme.primary),
         prefixIcon: Icon(icon, color: AppTheme.primary.withOpacity(0.7)),
         suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+            ? AnimatedIconButton(
+                icon: obscureText ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
                 onPressed: onTogglePassword,
               )
             : null,

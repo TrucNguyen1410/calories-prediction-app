@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/workout.dart';
 import '../services/api_service.dart';
 import '../theme.dart';
+import '../widgets/animated_icon_button.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -184,11 +185,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                     const SizedBox(width: 10),
                     // Button phễu lọc theo Ngày
-                    IconButton(
-                      icon: Icon(
-                        Icons.filter_alt_outlined,
-                        color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
-                      ),
+                    AnimatedIconButton(
+                      icon: Icons.filter_alt_outlined,
+                      color: _filterDate != null ? AppTheme.primary : (isDark ? const Color(0xFF949BA4) : Colors.grey[600]),
                       onPressed: _pickDate,
                       tooltip: 'Lọc theo ngày',
                     ),

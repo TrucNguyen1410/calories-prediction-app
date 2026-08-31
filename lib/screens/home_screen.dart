@@ -12,6 +12,7 @@ import '../utils/responsive.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/animated_icon_button.dart';
 import 'meal_history_screen.dart';
 import 'history_screen.dart';
 import 'package:image_picker/image_picker.dart';
@@ -201,8 +202,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
                             ),
                           )
-                        : IconButton(
-                            icon: Icon(LucideIcons.refreshCw, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 20),
+                        : AnimatedIconButton(
+                            icon: LucideIcons.refreshCw,
+                            color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary,
+                            size: 20,
                             tooltip: 'Đồng bộ dữ liệu',
                             onPressed: () async {
                               setState(() => _isSyncing = true);
@@ -244,8 +247,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildHeaderIconButton(
                     child: Stack(
                       children: [
-                        IconButton(
-                          icon: Icon(LucideIcons.bell, size: 20, color: isDark ? const Color(0xFFBB86FC) : Colors.black87),
+                        AnimatedIconButton(
+                          icon: LucideIcons.bell,
+                          size: 20,
+                          color: isDark ? const Color(0xFFBB86FC) : Colors.black87,
                           onPressed: _showNotificationsBottomSheet,
                         ),
                         if (_hasUnreadNotifications)
@@ -836,8 +841,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ]
                           : null,
                     ),
-                    child: IconButton(
-                      icon: Icon(LucideIcons.camera, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                    child: AnimatedIconButton(
+                      icon: LucideIcons.camera,
+                      color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent,
+                      size: 18,
                       onPressed: _handleImagePick,
                     ),
                   ),
@@ -856,8 +863,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ]
                           : null,
                     ),
-                    child: IconButton(
-                      icon: Icon(LucideIcons.sparkles, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                    child: AnimatedIconButton(
+                      icon: LucideIcons.sparkles,
+                      color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent,
+                      size: 18,
                       onPressed: () => _handleQuickLog(_quickLogController.text),
                     ),
                   ),
@@ -980,8 +989,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ]
                       : null,
                 ),
-                child: IconButton(
-                  icon: Icon(LucideIcons.sparkles, color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent, size: 18),
+                child: AnimatedIconButton(
+                  icon: LucideIcons.sparkles,
+                  color: isDark ? const Color(0xFFBB86FC) : Colors.purpleAccent,
+                  size: 18,
                   onPressed: () => _handleWorkoutQuickLog(_workoutInputController.text),
                 ),
               ),
