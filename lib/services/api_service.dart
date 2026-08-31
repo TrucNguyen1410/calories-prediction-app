@@ -506,6 +506,40 @@ class ApiService {
         }
     }
 
+    Future<Map<String, dynamic>> regenerateRemainingMeals({
+        required List<String> mealTypes,
+        required double remainingCalories,
+        List<Map<String, dynamic>>? eatenToday,
+        String? allergies,
+    }) async {
+        try {
+            final userData = await getUserData();
+            if (userData == null) {
+                throw Exception('Bạn cần đăng nhập');
+            }
+
+            final body = <String, dynamic>{
+                'userId': userData['id'] ?? userData['_id'],
+                'mealTypes': mealTypes,
+                'remainingCalories': remainingCalories,
+                if (eatenToday != null) 'eatenToday': eatenToday,
+                if (allergies != null && allergies.isNotEmpty) 'allergies': allergies,
+            };
+
+            final response = await _post('/ai/plan/regenerate-remaining', body);
+
+            if (response.statusCode == 200) {
+                final decoded = jsonDecode(response.body);
+                return decoded['data'] ?? {};
+            } else {
+                throw Exception('Lỗi khi tạo lại thực đơn: ${response.statusCode}');
+            }
+        } catch (e) {
+            print('Regenerate Remaining Meals Error: $e');
+            throw Exception('Không thể kết nối máy chủ: $e');
+        }
+    }
+
     // --- AI Vision & Text Analysis ---
     Future<Map<String, dynamic>> analyzeFood({
         String? text,

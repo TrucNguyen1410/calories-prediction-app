@@ -11,6 +11,7 @@ import '../models/workout.dart';
 import '../utils/responsive.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
+import '../utils/meal_time.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
 import 'meal_history_screen.dart';
@@ -1559,20 +1560,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         height: 52,
                         child: PurpleGradientButton(
                           onPressed: () async {
+                            final now = DateTime.now();
+                            final mealType = detectMealTypeByTime(now);
+                            final calories = (data['estimatedCalories'] as num).toDouble();
+                            final protein = (data['protein'] as num?)?.toDouble() ?? 0;
+                            final carbs = (data['carbs'] as num?)?.toDouble() ?? 0;
+                            final fat = (data['fat'] as num?)?.toDouble() ?? 0;
+                            final fiber = (data['fiber'] as num?)?.toDouble() ?? 0;
+                            final sugar = (data['sugar'] as num?)?.toDouble() ?? 0;
+                            final sodium = (data['sodium'] as num?)?.toDouble() ?? 0;
+
                             await _apiService.addMeal(
                               name: data['foodName'],
-                              calories: (data['estimatedCalories'] as num).toDouble(),
-                              mealType: 'AI Log',
-                              date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                              calories: calories,
+                              mealType: mealType,
+                              date: DateFormat('yyyy-MM-dd').format(now),
                               imageUrl: data['imageUrl'],
                               servingSize: data['servingSize'],
-                              protein: (data['protein'] as num?)?.toDouble(),
-                              carbs: (data['carbs'] as num?)?.toDouble(),
-                              fat: (data['fat'] as num?)?.toDouble(),
-                              fiber: (data['fiber'] as num?)?.toDouble(),
-                              sugar: (data['sugar'] as num?)?.toDouble(),
-                              sodium: (data['sodium'] as num?)?.toDouble(),
+                              protein: protein,
+                              carbs: carbs,
+                              fat: fat,
+                              fiber: fiber,
+                              sugar: sugar,
+                              sodium: sodium,
                             );
+
+                            // Món ăn thật vừa log khác với gợi ý ban đầu của Thực đơn AI
+                            // (nếu có) → ghi đè lại slot bữa tương ứng hôm nay cho khớp thực tế.
+                            await ref.read(healthProvider.notifier).updateMealInPlan(
+                              mealType: mealType,
+                              newName: data['foodName'],
+                              newCalories: calories,
+                              carbs: carbs,
+                              protein: protein,
+                              fat: fat,
+                              fiber: fiber,
+                              sugar: sugar,
+                              sodium: sodium,
+                              imageUrl: data['imageUrl'],
+                              servingSize: data['servingSize'],
+                            );
+
                             Navigator.pop(context);
                             ref.read(healthProvider.notifier).refreshAll();
                             AppToast.show(

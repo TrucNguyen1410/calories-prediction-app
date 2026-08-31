@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
+import '../utils/meal_time.dart';
 import '../widgets/app_toast.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
@@ -297,7 +298,20 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => _regenerateRemainingMeals(healthState),
+            icon: const Icon(LucideIcons.refreshCw, size: 15, color: AppTheme.primary),
+            label: const Text(
+              'Tạo lại thực đơn cho các bữa còn lại',
+              style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 12.5),
+            ),
+            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+          ),
+        ),
+        const SizedBox(height: 4),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -309,6 +323,57 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         ),
       ],
     );
+  }
+
+  // Chỉ tính là "đã ăn" các bữa hôm nay đã có trong nhật ký thật (Meal),
+  // không dựa vào Thực đơn AI — vì đó chỉ là gợi ý, chưa chắc đã ăn.
+  Future<void> _regenerateRemainingMeals(HealthState healthState) async {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    try {
+      final loggedToday = await _apiService.getMeals(todayStr);
+      final eatenTypes = loggedToday
+          .map((m) => normalizeMealTypeLabel(m['mealType']?.toString()))
+          .toSet();
+
+      const allTypes = ['Sáng', 'Trưa', 'Tối', 'Snack'];
+      final remainingTypes = allTypes.where((t) => !eatenTypes.contains(t)).toList();
+
+      if (remainingTypes.isEmpty) {
+        AppToast.show(
+          context,
+          message: 'Bạn đã ghi nhận đủ các bữa hôm nay, không còn bữa nào để tạo lại!',
+          type: AppToastType.warning,
+        );
+        return;
+      }
+
+      final targetDailyCalories = healthState.dailyCalorieTarget > 200 ? healthState.dailyCalorieTarget : 1200.0;
+      final remainingCalories = (targetDailyCalories - healthState.todayIntake).clamp(200.0, targetDailyCalories).toDouble();
+
+      AppToast.show(
+        context,
+        message: 'AI đang tạo lại thực đơn cho: ${remainingTypes.join(", ")}...',
+        type: AppToastType.info,
+      );
+
+      final eatenSummary = loggedToday
+          .map((m) => {'type': m['mealType'], 'name': m['name'], 'calories': m['calories']})
+          .toList();
+
+      await ref.read(healthProvider.notifier).regenerateRemainingMealsForToday(
+            mealTypes: remainingTypes,
+            remainingCalories: remainingCalories,
+            eatenToday: eatenSummary,
+          );
+
+      AppToast.show(
+        context,
+        message: 'Đã tạo lại thực đơn cho các bữa còn lại!',
+        type: AppToastType.success,
+      );
+    } catch (e) {
+      AppToast.show(context, message: 'Lỗi tạo lại thực đơn: $e', type: AppToastType.error);
+    }
   }
 
   Widget _buildWeeklyListSection(HealthState healthState) {

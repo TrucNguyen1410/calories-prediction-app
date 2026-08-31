@@ -317,6 +317,61 @@ export const generateHealthPlan = async (req, res) => {
     }
 };
 
+// --- 2b. TẠO LẠI CÁC BỮA CÒN LẠI TRONG NGÀY (sau khi người dùng ăn khác dự kiến) ---
+export const regenerateRemainingMeals = async (req, res) => {
+    try {
+        const userId = req.userId || req.body.userId;
+        const { mealTypes, remainingCalories, eatenToday, allergies } = req.body;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+        if (!Array.isArray(mealTypes) || mealTypes.length === 0) {
+            return res.status(400).json({ success: false, message: "Thiếu danh sách bữa ăn cần tạo lại" });
+        }
+
+        const { name, gender, height, weight, dob } = user;
+        let age = 25;
+        if (dob) age = new Date().getFullYear() - new Date(dob).getFullYear();
+        const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+
+        const eatenDesc = Array.isArray(eatenToday) && eatenToday.length > 0
+            ? `Hôm nay đã ăn: ${eatenToday.map((m) => `${m.type}: ${m.name} (${m.calories} kcal)`).join("; ")}. Tuyệt đối không gợi ý lại các món đã ăn này.`
+            : "Hôm nay chưa ăn món nào khác.";
+        const allergyDesc = allergies ? `Dị ứng/kiêng cữ: ${allergies}.` : "";
+        const cal = Number(remainingCalories) || 0;
+
+        const prompt = `
+            Dựa trên thông tin: Tên ${name || 'Khách'}, Giới tính ${gender || 'Nam'}, ${age} tuổi, BMI ${bmi}.
+            ${eatenDesc}
+            ${allergyDesc}
+            Hãy đề xuất lại CHỈ CÁC BỮA ĂN SAU trong ngày hôm nay: ${mealTypes.join(", ")}.
+            Tổng calo của các bữa này PHẢI cộng lại xấp xỉ ${cal} kcal (sai số cho phép ±10%) để phù hợp với phần calo còn lại trong mục tiêu ngày hôm nay.
+            TRẢ VỀ ĐỊNH DẠNG JSON CHUẨN XÁC (KHÔNG BỌC TRONG MARKDOWN CODEBLOCK):
+            {
+              "meals": [
+                {"type": "Bữa trưa", "name": "Tên món", "servingSize": "1 phần (300g)", "calories": 500, "carbs": 55, "protein": 25, "fat": 15, "fiber": 5, "sugar": 8, "sodium": 600}
+              ]
+            }
+            BẮT BUỘC: mảng "meals" phải có đúng ${mealTypes.length} phần tử, mỗi phần tử ứng với đúng 1 giá trị trong danh sách bữa ăn yêu cầu ở trên (giữ nguyên tên "type" như đã cho).
+            BẮT BUỘC: mỗi món ăn phải có đủ "servingSize", "fiber", "sugar", "sodium" ước tính hợp lý.
+            CHỈ TRẢ VỀ JSON. KHÔNG GIẢI THÍCH GÌ THÊM.
+        `;
+
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "openai/gpt-oss-120b",
+            temperature: 0.5,
+            response_format: { type: "json_object" },
+        });
+
+        const data = JSON.parse(extractJsonContent(completion.choices[0].message.content));
+        res.status(200).json({ success: true, data });
+    } catch (error) {
+        console.error("REGENERATE REMAINING MEALS ERROR:", error);
+        res.status(500).json({ success: false, message: "Lỗi khi tạo lại thực đơn còn lại" });
+    }
+};
+
 // --- 3. THUẬT TOÁN AHP ---
 export const getWorkoutIntensityAHP = async (req, res) => {
     try {

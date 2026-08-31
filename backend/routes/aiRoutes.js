@@ -2,6 +2,7 @@ import express from 'express';
 import {
     chatWithAI,
     generateHealthPlan,
+    regenerateRemainingMeals,
     getWorkoutIntensityAHP,
     analyzeFood,
     getUserSessions,
@@ -34,6 +35,9 @@ router.post('/chat', chatWithAI);
 
 // Route tạo thực đơn & bài tập AI
 router.post('/plan', generateHealthPlan);
+
+// Route tạo lại các bữa ăn còn lại trong ngày (khi người dùng ăn khác dự kiến)
+router.post('/plan/regenerate-remaining', regenerateRemainingMeals);
 
 // Route tính toán cường độ AHP
 router.post('/ahp-suggestion', getWorkoutIntensityAHP);
