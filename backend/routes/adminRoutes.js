@@ -7,6 +7,7 @@ import HealthMetric from "../models/HealthMetric.js";
 import WaterLog from "../models/WaterLog.js";
 import Feedback from "../models/Feedback.js";
 import { verifyToken, isAdmin } from "../middleware/authMiddleware.js";
+import { seedDemoUser } from "../utils/demoSeeder.js";
 
 const router = express.Router();
 
@@ -107,6 +108,20 @@ router.delete("/users/:id", async (req, res) => {
     } catch (err) {
         console.error("ADMIN DELETE USER ERROR:", err);
         return res.status(500).json({ success: false, message: "Lỗi xóa người dùng" });
+    }
+});
+
+// --- Nạp lại dữ liệu demo (tài khoản demo@healthai.app) từ xa ---
+// POST /api/admin/seed-demo
+// Cho phép nạp dữ liệu demo trực tiếp trên server (Render) mà không cần
+// mở terminal / cài Node cục bộ — chỉ cần gọi route này với JWT admin.
+router.post("/seed-demo", async (req, res) => {
+    try {
+        const summary = await seedDemoUser();
+        return res.status(200).json({ success: true, data: summary });
+    } catch (err) {
+        console.error("ADMIN SEED DEMO ERROR:", err);
+        return res.status(500).json({ success: false, message: "Lỗi nạp dữ liệu demo" });
     }
 });
 
