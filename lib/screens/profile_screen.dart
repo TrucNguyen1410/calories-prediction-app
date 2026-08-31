@@ -360,7 +360,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildBiometricRow(IconData icon, String label, String value, bool isDark, {Color? valueColor}) {
     return Row(
       children: [
-        Icon(icon, color: AppTheme.primary, size: 20),
+        Icon(icon, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], size: 20),
         const SizedBox(width: 14),
         Text(
           label,
@@ -424,7 +424,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        leading: Icon(icon, color: AppTheme.primary, size: 22),
+        leading: Icon(icon, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600], size: 22),
         title: Text(
           title,
           style: TextStyle(
