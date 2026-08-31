@@ -2,6 +2,27 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// Kết quả chẩn đoán chi tiết từng bước khi thử đọc Health Connect/HealthKit —
+/// dùng cho màn hình "Kiểm tra Health Connect" (Hồ sơ) để người dùng tự test
+/// xem thiết bị của họ có kết nối được không, thay vì chỉ nhận true/false.
+class HealthConnectDiagnostic {
+  final bool platformSupported; // false nếu đang chạy trên Web
+  final bool permissionGranted; // đã cấp quyền Activity Recognition + Health Connect/HealthKit chưa
+  final int? steps;
+  final double? caloriesBurned;
+  final String? errorMessage;
+
+  const HealthConnectDiagnostic({
+    required this.platformSupported,
+    required this.permissionGranted,
+    this.steps,
+    this.caloriesBurned,
+    this.errorMessage,
+  });
+
+  bool get success => platformSupported && permissionGranted && errorMessage == null;
+}
+
 /// Đọc số bước chân & calo tiêu hao hôm nay từ Health Connect (Android) /
 /// HealthKit (iOS) qua package `health`.
 ///
@@ -19,9 +40,26 @@ class HealthConnectService {
   ];
 
   /// Trả về null nếu không chạy trên thiết bị thật, người dùng từ chối quyền,
-  /// hoặc có lỗi khi đọc dữ liệu — để bên gọi tự quyết định fallback tiếp theo.
+  /// hoặc có lỗi khi đọc dữ liệu — để bên gọi (fallback tự động) tự quyết định
+  /// bước tiếp theo mà không cần biết lý do cụ thể.
   Future<({int steps, double caloriesBurned})?> fetchToday() async {
-    if (kIsWeb) return null;
+    final diag = await runDiagnostic();
+    if (!diag.success) return null;
+    return (steps: diag.steps ?? 0, caloriesBurned: diag.caloriesBurned ?? 0);
+  }
+
+  /// Giống [fetchToday] nhưng trả về đầy đủ chi tiết từng bước — dùng để TEST
+  /// thủ công (màn hình "Kiểm tra Health Connect" trong Hồ sơ), giúp biết chính
+  /// xác đang vướng ở đâu (không hỗ trợ Web / chưa cài Health Connect / từ chối
+  /// quyền / không có dữ liệu hôm nay...) thay vì chỉ nhận về null.
+  Future<HealthConnectDiagnostic> runDiagnostic() async {
+    if (kIsWeb) {
+      return const HealthConnectDiagnostic(
+        platformSupported: false,
+        permissionGranted: false,
+        errorMessage: 'Health Connect/HealthKit chỉ hoạt động trên app cài thật (Android/iOS), không chạy được trên bản Web.',
+      );
+    }
 
     try {
       await Permission.activityRecognition.request();
@@ -30,7 +68,13 @@ class HealthConnectService {
         _types,
         permissions: _types.map((_) => HealthDataAccess.READ).toList(),
       );
-      if (!authorized) return null;
+      if (!authorized) {
+        return const HealthConnectDiagnostic(
+          platformSupported: true,
+          permissionGranted: false,
+          errorMessage: 'Chưa cấp quyền truy cập Health Connect/HealthKit (hoặc chưa cài app Health Connect trên máy).',
+        );
+      }
 
       final now = DateTime.now();
       final midnight = DateTime(now.year, now.month, now.day);
@@ -50,11 +94,18 @@ class HealthConnectService {
         }
       }
 
-      return (steps: steps, caloriesBurned: caloriesBurned);
+      return HealthConnectDiagnostic(
+        platformSupported: true,
+        permissionGranted: true,
+        steps: steps,
+        caloriesBurned: caloriesBurned,
+      );
     } catch (e) {
-      // Máy không cài Health Connect, người dùng từ chối quyền, hoặc lỗi khác —
-      // coi như không có dữ liệu dự phòng, không chặn luồng chính của app.
-      return null;
+      return HealthConnectDiagnostic(
+        platformSupported: true,
+        permissionGranted: false,
+        errorMessage: 'Lỗi khi đọc dữ liệu: $e',
+      );
     }
   }
 }

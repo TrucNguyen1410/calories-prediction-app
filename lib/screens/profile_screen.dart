@@ -129,6 +129,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         theme: theme,
                         onTap: _handleGoogleFitSync,
                       ),
+                      _buildListTile(
+                        icon: Icons.health_and_safety_outlined,
+                        title: "Kiểm tra Health Connect (dự phòng)",
+                        isDark: isDark,
+                        theme: theme,
+                        onTap: _testHealthConnect,
+                      ),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Tùy chọn"),
                       _buildListTile(
@@ -732,6 +739,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         type: AppToastType.error,
       );
     }
+  }
+
+  // --- TEST: kiểm tra riêng đường Health Connect/HealthKit, không liên quan Google Fit ---
+  // Gọi thẳng runDiagnostic() (không đợi Google Fit thất bại trước) để bạn tự xác
+  // minh trên máy thật xem đường dự phòng có đọc được dữ liệu không, và nếu không
+  // thì biết chính xác đang vướng ở bước nào.
+  Future<void> _testHealthConnect() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final diag = await HealthConnectService().runDiagnostic();
+    if (!mounted) return;
+    Navigator.pop(context);
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              diag.success ? Icons.check_circle : Icons.error_outline,
+              color: diag.success ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(child: Text('Kiểm tra Health Connect')),
+          ],
+        ),
+        content: Text(
+          diag.success
+              ? 'Đọc thành công!\n\nBước chân hôm nay: ${diag.steps}\nCalo tiêu hao: ${diag.caloriesBurned?.toStringAsFixed(0)} kcal\n\n(Đây là dữ liệu thật lấy từ Health Connect/HealthKit trên máy bạn — không liên quan gì tới Google Fit.)'
+              : (diag.errorMessage ?? 'Không đọc được dữ liệu, không rõ lý do.'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+        ],
+      ),
+    );
   }
 
   // --- Đặt mục tiêu & mức vận động ---
