@@ -100,6 +100,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   static const List<String> _weekdayLabels = ['', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
+  /// Nhãn 7 ngày cho biểu đồ, tính đúng theo ngày thực tế (today-6 → today) thay
+  /// vì cố định "T2..CN" — vì dữ liệu weeklyIntake/weeklyBurned luôn là cửa sổ
+  /// trượt 7 ngày kết thúc ở HÔM NAY, không phải luôn kết thúc vào Chủ Nhật.
+  List<String> _weeklyChartDayLabels() {
+    final now = DateTime.now();
+    return List.generate(7, (i) {
+      final d = now.subtract(Duration(days: 6 - i));
+      return _weekdayLabels[d.weekday];
+    });
+  }
+
   Widget _buildHeaderIconButton({required Widget child}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -1228,7 +1239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   reservedSize: 30,
                   getTitlesWidget: (val, meta) {
                     if (val % 1 != 0 || val < 0 || val >= 7) return const SizedBox();
-                    final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                    final days = _weeklyChartDayLabels();
                     return SideTitleWidget(
                       axisSide: meta.axisSide,
                       child: Text(days[val.toInt()], style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontWeight: FontWeight.bold)),
@@ -1285,7 +1296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   reservedSize: 30,
                   getTitlesWidget: (val, meta) {
                     if (val % 1 != 0 || val < 0 || val >= 7) return const SizedBox();
-                    final days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                    final days = _weeklyChartDayLabels();
                     return SideTitleWidget(
                       axisSide: meta.axisSide,
                       child: Text(days[val.toInt()], style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF949BA4) : Colors.grey, fontWeight: FontWeight.bold)),
