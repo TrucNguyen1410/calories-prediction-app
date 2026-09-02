@@ -421,6 +421,8 @@ export const analyzeFood = async (req, res) => {
             - Calo đã nạp: ${todayIntake || 0} kcal
             - Calo còn lại: ${remainingCalories || 2000} kcal
 
+            BẮT BUỘC: Chỉ nhận diện món ăn/sản phẩm THỰC SỰ NHÌN THẤY RÕ trong ảnh, tuyệt đối KHÔNG được bịa ra một món ăn nấu chín (như cơm, phở, bún...) nếu ảnh không thực sự cho thấy món đó. Nếu ảnh chụp bao bì/gói sản phẩm đóng gói sẵn (snack, bánh kẹo, đồ uống đóng chai/lon...), hãy đọc tên thương hiệu/loại sản phẩm in trên bao bì để đặt "foodName" (ví dụ: "Snack khoai tây Lay's vị tự nhiên"), không được đoán thành một món ăn khác không liên quan. Nếu ảnh có nhiều gói/món chồng lên nhau, chọn sản phẩm nhìn thấy rõ nhất, lớn nhất trong khung hình để phân tích.
+
             Điều kiện bắt buộc: Nếu nội dung trong hình KHÔNG PHẢI là thực phẩm, thức ăn, hoặc đồ uống, bạn KHÔNG ĐƯỢC tính toán Calo. Hãy lập tức trả về cấu trúc JSON chính xác như sau:
             {
                 "isFood": false,
