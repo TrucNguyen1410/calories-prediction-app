@@ -153,70 +153,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // nghĩa là hôm đó không mở app / không ghi gì cả.
         final noActivity = hasData && dayIntake == 0 && dayBurned == 0;
 
-        // Chữ + nền phải LUÔN cùng một khối để không bao giờ bị chữ trắng
-        // chìm vào nền sáng (đây là lỗi bản trước) — cả nhãn thứ lẫn số ngày
-        // đều nằm trong CÙNG viên pill được tô nền khi là hôm nay.
-        final pillColor = isToday ? accent : Colors.white.withOpacity(isDark ? 0.06 : 0.55);
-        final textColor = isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87);
-        final labelColor = isToday ? Colors.white.withOpacity(0.85) : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]);
+        // Nhãn thứ luôn dùng 1 màu trung tính cố định (không đổi trắng khi là
+        // hôm nay) — vì nó nằm trên nền header, không nằm trong vòng tròn tô
+        // màu, đổi trắng sẽ bị chìm mất chữ (đây là lỗi bản trước).
+        final labelColor = isDark ? const Color(0xFF949BA4) : Colors.grey[500];
+        final circleColor = isToday ? accent : Colors.transparent;
+        final numberColor = isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87);
 
         return GestureDetector(
           onTap: hasData ? () => _showDaySummaryDialog(d, dayIntake, dayBurned, state.dailyCalorieTarget) : null,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.bottomCenter,
+          child: SizedBox(
+            width: 40,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 42,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: pillColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                Text(
+                  _weekdayLabels[d.weekday],
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: labelColor),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
-                      Text(
-                        _weekdayLabels[d.weekday],
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: labelColor),
+                      Container(
+                        width: 34,
+                        height: 34,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle),
+                        child: Text(
+                          '${d.day}',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: numberColor),
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${d.day}',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
-                      ),
+                      // Vòng nét đứt bám ngay theo viền vòng tròn chứa số ngày.
+                      if (noActivity)
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _DashedCirclePainter(
+                              color: isDark ? const Color(0xFF6B6E76) : Colors.grey[400]!,
+                            ),
+                          ),
+                        ),
+                      // Tích nhỏ đè lên góc dưới-phải vòng tròn khi đạt mục tiêu hôm đó.
+                      if (completed)
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3DBE7A),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: isDark ? const Color(0xFF1E1B2E) : const Color(0xFFF5F3FF), width: 2),
+                            ),
+                            child: const Icon(LucideIcons.checkCircle2, size: 8, color: Colors.white),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                if (completed)
-                  Positioned(
-                    bottom: -8,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3DBE7A),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: isDark ? const Color(0xFF1E1B2E) : const Color(0xFFF5F3FF), width: 2),
-                      ),
-                      child: const Icon(LucideIcons.checkCircle2, size: 10, color: Colors.white),
-                    ),
-                  )
-                else if (noActivity)
-                  Positioned(
-                    bottom: -8,
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CustomPaint(
-                        painter: _DashedCirclePainter(
-                          color: isDark ? const Color(0xFF6B6E76) : Colors.grey[400]!,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
