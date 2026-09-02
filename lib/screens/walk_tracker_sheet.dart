@@ -6,9 +6,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
 import '../services/api_service.dart';
-import '../services/motion_permission.dart';
 import '../utils/step_counter.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/walk_start_button.dart';
 
 /// "Bắt đầu đi bộ" — đếm bước chân bằng cảm biến gia tốc của trình duyệt/thiết bị,
 /// dành cho người dùng có tài khoản Google nhưng không dùng Google Fit/app đếm bước
@@ -50,13 +50,15 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
     super.dispose();
   }
 
-  Future<void> _start() async {
-    final granted = await requestMotionPermission();
+  void _onPermissionResult(bool granted) {
     if (!granted) {
       setState(() => _permissionDenied = true);
       return;
     }
+    _beginTracking();
+  }
 
+  void _beginTracking() {
     _stepCounter.reset();
     _startedAt = DateTime.now();
     setState(() {
@@ -218,10 +220,7 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
             width: double.infinity,
             height: 52,
             child: !_isRunning
-                ? PurpleGradientButton(
-                    onPressed: _start,
-                    child: const Text('Bắt đầu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                  )
+                ? WalkStartButton(label: 'Bắt đầu', onPermissionResult: _onPermissionResult)
                 : PurpleGradientButton(
                     onPressed: _isSaving ? null : _stopAndSave,
                     child: _isSaving
