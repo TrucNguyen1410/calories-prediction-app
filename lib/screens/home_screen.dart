@@ -1482,7 +1482,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     try {
       final data = await _apiService.analyzeFood(text: text, imageBytes: imageBytes, fileName: fileName);
-      Navigator.pop(context); 
+      Navigator.pop(context);
+
+      final bool isFood = data['isFood'] ?? true;
+      if (!isFood) {
+        AppToast.show(
+          context,
+          message: data['message'] ?? 'Không nhận diện được món ăn trong ảnh này. Vui lòng thử ảnh khác rõ hơn.',
+          type: AppToastType.warning,
+        );
+        return;
+      }
+
       _showConfirmationSheet(data);
     } catch (e) {
       Navigator.pop(context);
