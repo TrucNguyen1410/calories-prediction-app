@@ -148,7 +148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final dataIndex = hasData ? 6 - daysAgo : -1;
         final dayIntake = hasData ? state.weeklyIntake[dataIndex] : 0.0;
         final dayBurned = hasData ? state.weeklyBurned[dataIndex] : 0.0;
-        final completed = hasData && dayIntake > 0 && dayIntake >= state.dailyCalorieTarget;
+        // Có tập luyện hôm đó (đã đốt calo) — hiển thị tích xanh nhỏ.
+        final completed = hasData && dayBurned > 0;
         // Ngày có trong cửa sổ dữ liệu nhưng hoàn toàn không nạp/đốt calo nào —
         // nghĩa là hôm đó không mở app / không ghi gì cả.
         final noActivity = hasData && dayIntake == 0 && dayBurned == 0;
