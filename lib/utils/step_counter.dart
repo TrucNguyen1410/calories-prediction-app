@@ -8,8 +8,8 @@ import 'dart:math' as math;
 /// dụng, nhưng đủ dùng để demo tính năng đếm bước qua cảm biến trình duyệt.
 class StepCounter {
   StepCounter({
-    this.threshold = 1.5,
-    this.minStepInterval = const Duration(milliseconds: 300),
+    this.threshold = 2.3,
+    this.minStepInterval = const Duration(milliseconds: 350),
     this.emaAlpha = 0.1,
   });
 

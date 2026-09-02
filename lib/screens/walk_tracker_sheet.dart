@@ -195,15 +195,6 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
                   style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold, color: AppTheme.primary),
                 ),
                 Text('bước', style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : Colors.black54)),
-                if (_isRunning) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    _stepCounter.sampleCount == 0
-                        ? 'Đang chờ dữ liệu cảm biến...'
-                        : 'Đã nhận ${_stepCounter.sampleCount} mẫu cảm biến',
-                    style: TextStyle(fontSize: 11, color: isDark ? Colors.white38 : Colors.black38),
-                  ),
-                ],
               ],
             ),
           ),
