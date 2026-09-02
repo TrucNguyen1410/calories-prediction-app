@@ -262,10 +262,14 @@ export const generateHealthPlan = async (req, res) => {
         const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
         
         let specialRequest = userInput ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: "${userInput}". \nBẮT BUỘC: Bạn phải phân tích yêu cầu này (nếu họ muốn ăn món gì, hãy cố gắng sắp xếp hợp lý món đó vào thực đơn; nếu họ kiêng cữ/dị ứng, tuyệt đối loại bỏ).` : "";
+        const adviceInstruction = userInput
+            ? `Trường "advice" BẮT BUỘC phải MỞ ĐẦU bằng một câu ngắn xác nhận rõ đã điều chỉnh theo đúng yêu cầu của người dùng (VD: "Thực đơn đã điều chỉnh cho người dị ứng sữa bò, ..."), sau đó mới thêm lời khuyên dinh dưỡng ngắn gọn.`
+            : `Trường "advice" là một lời khuyên dinh dưỡng tổng quan ngắn gọn dựa trên BMI, KHÔNG cần nhắc tới yêu cầu đặc biệt vì người dùng không nhập gì.`;
 
         const prompt = `
             Dựa trên thông tin: Tên ${name || 'Khách'}, Giới tính ${gender || 'Nam'}, ${age} tuổi, BMI ${bmi}.
             ${specialRequest}
+            ${adviceInstruction}
             Hãy thiết kế một thực đơn dinh dưỡng đầy đủ 7 ngày trong tuần chuẩn khoa học.
             TRẢ VỀ ĐỊNH DẠNG JSON CHUẨN XÁC THEO CẤU TRÚC SAU (KHÔNG BỌC TRONG MARKDOWN CODEBLOCK):
             {

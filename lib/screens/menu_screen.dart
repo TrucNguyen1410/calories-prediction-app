@@ -1337,22 +1337,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(LucideIcons.sparkles, color: Colors.purpleAccent, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Trợ lý thiết lập Thực đơn AI',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ],
+              const Text(
+                'Trợ lý thiết lập Thực đơn AI',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 20),
               
