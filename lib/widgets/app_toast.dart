@@ -105,57 +105,66 @@ class _AppToastWidgetState extends State<_AppToastWidget> with SingleTickerProvi
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final (accent, icon) = _visualsFor(widget.type, isDark);
 
+    final bubble = Material(
+      color: Colors.transparent,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+        constraints: const BoxConstraints(maxWidth: 340),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.18), blurRadius: 30, offset: const Offset(0, 12)),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: accent.withOpacity(0.14), shape: BoxShape.circle),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  widget.message,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
     return Positioned.fill(
+      // Toàn bộ vùng nền trong suốt phải cho chạm xuyên qua (không được chặn
+      // các nút phía sau như X/Kết thúc) — chỉ riêng khung bubble nhỏ ở giữa
+      // mới thật sự nhận chạm (để bấm vào tắt sớm), nhờ IgnorePointer lồng
+      // nhau: cái ngoài ignoring:true, cái trong ignoring:false tự ghi đè lại.
       child: IgnorePointer(
-        ignoring: false,
-        child: Material(
-          color: Colors.transparent,
-          child: Align(
-            alignment: Alignment.center,
-            child: FadeTransition(
-              opacity: _opacity,
-              child: ScaleTransition(
-                scale: _scale,
+        ignoring: true,
+        child: Align(
+          alignment: Alignment.center,
+          child: FadeTransition(
+            opacity: _opacity,
+            child: ScaleTransition(
+              scale: _scale,
+              child: IgnorePointer(
+                ignoring: false,
                 child: GestureDetector(
                   onTap: () => _controller.reverse().whenComplete(widget.onDismissed),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-                    constraints: const BoxConstraints(maxWidth: 340),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2B2D31) : Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.18), blurRadius: 30, offset: const Offset(0, 12)),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: accent.withOpacity(0.14), shape: BoxShape.circle),
-                          child: Icon(icon, color: accent, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              widget.message,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
-                                height: 1.35,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: bubble,
                 ),
               ),
             ),
