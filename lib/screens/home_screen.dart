@@ -150,60 +150,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final dayBurned = hasData ? state.weeklyBurned[dataIndex] : 0.0;
         final completed = hasData && dayIntake > 0 && dayIntake >= state.dailyCalorieTarget;
 
+        // Chữ + nền phải LUÔN cùng một khối để không bao giờ bị chữ trắng
+        // chìm vào nền sáng (đây là lỗi bản trước) — cả nhãn thứ lẫn số ngày
+        // đều nằm trong CÙNG viên pill được tô nền khi là hôm nay.
+        final pillColor = isToday ? accent : Colors.white.withOpacity(isDark ? 0.06 : 0.55);
+        final textColor = isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87);
+        final labelColor = isToday ? Colors.white.withOpacity(0.85) : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]);
+
         return GestureDetector(
           onTap: hasData ? () => _showDaySummaryDialog(d, dayIntake, dayBurned, state.dailyCalorieTarget) : null,
-          child: SizedBox(
-            width: 40,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
               children: [
-                Text(
-                  _weekdayLabels[d.weekday],
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isToday ? Colors.white : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                Container(
+                  width: 42,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: pillColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _weekdayLabels[d.weekday],
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: labelColor),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${d.day}',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      alignment: Alignment.center,
+                if (completed)
+                  Positioned(
+                    bottom: -8,
+                    child: Container(
+                      width: 16,
+                      height: 16,
                       decoration: BoxDecoration(
-                        color: isToday ? accent : Colors.transparent,
+                        color: const Color(0xFF3DBE7A),
                         shape: BoxShape.circle,
+                        border: Border.all(color: isDark ? const Color(0xFF1E1B2E) : const Color(0xFFF5F3FF), width: 2),
                       ),
-                      child: Text(
-                        '${d.day}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
-                        ),
-                      ),
+                      child: const Icon(LucideIcons.checkCircle2, size: 10, color: Colors.white),
                     ),
-                    if (completed)
-                      Positioned(
-                        right: -2,
-                        bottom: -2,
-                        child: Container(
-                          width: 15,
-                          height: 15,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3DBE7A),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: isDark ? const Color(0xFF1E1E2E) : Colors.white, width: 1.5),
-                          ),
-                          child: const Icon(LucideIcons.checkCircle2, size: 9, color: Colors.white),
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
