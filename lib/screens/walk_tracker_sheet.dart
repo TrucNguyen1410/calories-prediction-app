@@ -77,10 +77,22 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
     });
   }
 
-  double _estimateCalories(HealthState healthState, double minutes) {
+  double _strideMeters(HealthState healthState) {
+    final height = (healthState.userData?['height'] ?? 165).toDouble();
+    return height * 0.414 / 100;
+  }
+
+  double _distanceKm(HealthState healthState) {
+    return (_stepCounter.steps * _strideMeters(healthState)) / 1000;
+  }
+
+  // Ước tính calo dựa trên QUÃNG ĐƯỜNG đã đi (suy ra từ số bước thật đo được),
+  // không dựa vào thời gian trôi qua — để 0 bước luôn ra 0 kcal, không bị "phi
+  // logic" như tính theo thời gian dù đứng yên không đi bước nào.
+  double _estimateCalories(HealthState healthState) {
     final weight = (healthState.userData?['weight'] ?? 60).toDouble();
-    const walkingMet = 3.5;
-    return walkingMet * weight * (minutes / 60.0) * 1.05;
+    const kcalPerKgPerKm = 0.9; // trung bình đi bộ tốc độ vừa
+    return _distanceKm(healthState) * weight * kcalPerKgPerKm;
   }
 
   Future<void> _stopAndSave() async {
@@ -96,7 +108,7 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
       return;
     }
 
-    final calories = _estimateCalories(ref.read(healthProvider), minutes);
+    final calories = _estimateCalories(ref.read(healthProvider));
 
     setState(() => _isSaving = true);
     try {
@@ -133,11 +145,8 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final healthState = ref.watch(healthProvider);
-    final height = (healthState.userData?['height'] ?? 165).toDouble();
-    final strideMeters = height * 0.414 / 100;
-    final distanceKm = (_stepCounter.steps * strideMeters) / 1000;
-    final minutes = _elapsed.inSeconds / 60.0;
-    final liveCalories = _estimateCalories(healthState, minutes);
+    final distanceKm = _distanceKm(healthState);
+    final liveCalories = _estimateCalories(healthState);
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
@@ -184,6 +193,15 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
                   style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold, color: AppTheme.primary),
                 ),
                 Text('bước', style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : Colors.black54)),
+                if (_isRunning) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _stepCounter.sampleCount == 0
+                        ? 'Đang chờ dữ liệu cảm biến...'
+                        : 'Đã nhận ${_stepCounter.sampleCount} mẫu cảm biến',
+                    style: TextStyle(fontSize: 11, color: isDark ? Colors.white38 : Colors.black38),
+                  ),
+                ],
               ],
             ),
           ),
