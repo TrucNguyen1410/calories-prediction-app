@@ -131,46 +131,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildDayStrip(bool isDark) {
+  Widget _buildDayStrip(bool isDark, HealthState state) {
     final now = DateTime.now();
-    final weekDays = List.generate(7, (i) => now.add(Duration(days: i - 3)));
+    final today = DateTime(now.year, now.month, now.day);
+    final weekDays = List.generate(7, (i) => today.add(Duration(days: i - 3)));
     final accent = AppTheme.heroAccent(isDark);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: weekDays.map((d) {
-        final isToday = d.year == now.year && d.month == now.month && d.day == now.day;
-        return Container(
-          width: 38,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isToday ? accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _weekdayLabels[d.weekday],
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isToday ? Colors.white : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+        final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
+        final daysAgo = today.difference(d).inDays;
+        // weeklyIntake/weeklyBurned là cửa sổ 7 ngày kết thúc HÔM NAY (index 6 =
+        // hôm nay, index 0 = 6 ngày trước) — chỉ những ngày này mới có dữ liệu thật.
+        final hasData = daysAgo >= 0 && daysAgo <= 6;
+        final dataIndex = hasData ? 6 - daysAgo : -1;
+        final dayIntake = hasData ? state.weeklyIntake[dataIndex] : 0.0;
+        final dayBurned = hasData ? state.weeklyBurned[dataIndex] : 0.0;
+        final completed = hasData && dayIntake > 0 && dayIntake >= state.dailyCalorieTarget;
+
+        return GestureDetector(
+          onTap: hasData ? () => _showDaySummaryDialog(d, dayIntake, dayBurned, state.dailyCalorieTarget) : null,
+          child: SizedBox(
+            width: 40,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _weekdayLabels[d.weekday],
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isToday ? Colors.white : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${d.day}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                const SizedBox(height: 6),
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isToday ? accent : Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${d.day}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isToday ? Colors.white : (isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                        ),
+                      ),
+                    ),
+                    if (completed)
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3DBE7A),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: isDark ? const Color(0xFF1E1E2E) : Colors.white, width: 1.5),
+                          ),
+                          child: const Icon(LucideIcons.checkCircle2, size: 9, color: Colors.white),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  static const List<String> _fullWeekdayLabels = ['', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+
+  void _showDaySummaryDialog(DateTime day, double intake, double burned, double target) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dateLabel = '${_fullWeekdayLabels[day.weekday]}, ${DateFormat('dd/MM/yyyy').format(day)}';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF2B2D31) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          dateLabel,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildNutrientRow('Calo đã nạp', '${intake.toStringAsFixed(0)} kcal'),
+            _buildNutrientRow('Calo đã đốt', '${burned.toStringAsFixed(0)} kcal'),
+            _buildNutrientRow('Mục tiêu hôm đó', '${target.toStringAsFixed(0)} kcal'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -284,7 +354,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          _buildDayStrip(isDark),
+          _buildDayStrip(isDark, state),
         ],
       ),
     );
