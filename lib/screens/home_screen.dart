@@ -149,6 +149,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final dayIntake = hasData ? state.weeklyIntake[dataIndex] : 0.0;
         final dayBurned = hasData ? state.weeklyBurned[dataIndex] : 0.0;
         final completed = hasData && dayIntake > 0 && dayIntake >= state.dailyCalorieTarget;
+        // Ngày có trong cửa sổ dữ liệu nhưng hoàn toàn không nạp/đốt calo nào —
+        // nghĩa là hôm đó không mở app / không ghi gì cả.
+        final noActivity = hasData && dayIntake == 0 && dayBurned == 0;
 
         // Chữ + nền phải LUÔN cùng một khối để không bao giờ bị chữ trắng
         // chìm vào nền sáng (đây là lỗi bản trước) — cả nhãn thứ lẫn số ngày
@@ -199,6 +202,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         border: Border.all(color: isDark ? const Color(0xFF1E1B2E) : const Color(0xFFF5F3FF), width: 2),
                       ),
                       child: const Icon(LucideIcons.checkCircle2, size: 10, color: Colors.white),
+                    ),
+                  )
+                else if (noActivity)
+                  Positioned(
+                    bottom: -8,
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CustomPaint(
+                        painter: _DashedCirclePainter(
+                          color: isDark ? const Color(0xFF6B6E76) : Colors.grey[400]!,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -2508,5 +2524,42 @@ class _WavePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WavePainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.animationValue != animationValue || oldDelegate.color != color;
+  }
+}
+
+/// Vòng tròn viền nét đứt — đánh dấu những ngày trong dải ngày ở Trang chủ mà
+/// người dùng hoàn toàn không dùng app (không nạp/đốt calo nào cả).
+class _DashedCirclePainter extends CustomPainter {
+  const _DashedCirclePainter({required this.color, this.strokeWidth = 1.5});
+
+  final Color color;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    final path = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+
+    const dashWidth = 2.5;
+    const dashSpace = 2.0;
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final next = (distance + dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance = next + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedCirclePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
   }
 }
