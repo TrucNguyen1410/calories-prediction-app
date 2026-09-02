@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
+import '../services/accel_stream.dart';
 import '../services/api_service.dart';
 import '../utils/step_counter.dart';
 import '../widgets/app_toast.dart';
@@ -35,7 +35,7 @@ class _WalkTrackerSheet extends ConsumerStatefulWidget {
 class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
   final ApiService _apiService = ApiService();
   final StepCounter _stepCounter = StepCounter();
-  StreamSubscription<AccelerometerEvent>? _sub;
+  StreamSubscription<AccelSample>? _sub;
   Timer? _ticker;
   DateTime? _startedAt;
   Duration _elapsed = Duration.zero;
@@ -67,8 +67,8 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
       _elapsed = Duration.zero;
     });
 
-    _sub = accelerometerEventStream().listen((event) {
-      _stepCounter.addSample(event.x, event.y, event.z);
+    _sub = accelerometerSampleStream().listen((sample) {
+      _stepCounter.addSample(sample.x, sample.y, sample.z);
       if (mounted) setState(() {});
     });
 
