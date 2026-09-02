@@ -1360,52 +1360,88 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _handleImagePick() async {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Tải ảnh phân tích dinh dưỡng',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Container(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tải ảnh phân tích dinh dưỡng',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Chọn cách bạn muốn thêm ảnh món ăn',
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+              ),
+              const SizedBox(height: 20),
+              _buildImageSourceOption(
+                icon: LucideIcons.camera,
+                label: 'Chụp ảnh mới',
+                isDark: isDark,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildImageSourceOption(
+                icon: LucideIcons.image,
+                label: 'Chọn ảnh từ thư viện',
+                isDark: isDark,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: isDark ? const Color(0xFF2B2D31) : Colors.grey[50],
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
+                  color: AppTheme.primary.withOpacity(isDark ? 0.18 : 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(LucideIcons.camera, color: AppTheme.primary),
+                child: Icon(icon, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 20),
               ),
-              title: const Text('Chụp ảnh mới', style: TextStyle(fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  shape: BoxShape.circle,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
                 ),
-                child: const Icon(LucideIcons.image, color: Colors.purple),
               ),
-              title: const Text('Chọn ảnh từ thư viện', style: TextStyle(fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
+              Icon(LucideIcons.chevronRight, size: 18, color: isDark ? const Color(0xFF949BA4) : Colors.grey[400]),
+            ],
+          ),
         ),
       ),
     );
