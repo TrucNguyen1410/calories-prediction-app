@@ -46,6 +46,19 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
   <link rel="manifest" href="manifest.json">
+  <script>
+    // iOS Safari 13+ chặn DeviceMotionEvent trừ khi được người dùng chủ động cấp quyền
+    // qua một cử chỉ chạm (tap). Các trình duyệt khác (Android Chrome, desktop...) không
+    // có hàm requestPermission này nên coi như luôn được phép đọc cảm biến.
+    window.requestMotionPermission = function () {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        return DeviceMotionEvent.requestPermission()
+          .then(function (state) { return state === 'granted'; })
+          .catch(function () { return false; });
+      }
+      return Promise.resolve(true);
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

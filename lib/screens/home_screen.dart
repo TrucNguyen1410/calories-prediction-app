@@ -16,6 +16,7 @@ import '../widgets/app_toast.dart';
 import '../widgets/animated_icon_button.dart';
 import 'meal_history_screen.dart';
 import 'history_screen.dart';
+import 'walk_tracker_sheet.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/tour_provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -744,6 +745,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       key: ref.read(tourKeysProvider).stepsKey,
       title: 'Bước chân hôm nay',
       color: Theme.of(context).cardColor,
+      action: TextButton(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: () => showWalkTrackerSheet(context),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Đi bộ', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            SizedBox(width: 4),
+            Icon(LucideIcons.footprints, size: 15, color: AppTheme.primary),
+          ],
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
