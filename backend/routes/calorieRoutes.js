@@ -1,8 +1,8 @@
 import express from "express";
-import { spawn } from "child_process";
 import CalorieRecord from "../models/CalorieRecord.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { validatePredictInput } from "../middleware/validate.js";
+import { predictCaloriesML } from "../utils/predictCalories.js";
 
 const router = express.Router();
 
@@ -22,69 +22,37 @@ router.post("/predict", verifyToken, validatePredictInput, async (req, res) => {
 
     console.log("📥 Nhận dữ liệu dự đoán:", req.body);
 
-    const py = spawn("python", [
-      "./ml/predict.py",
-      weight.toString(),
-      height.toString(),
-      age.toString(),
-      duration.toString(),
-      heartRate.toString(),
-      activityType.toString(),
-    ]);
+    const result = await predictCaloriesML({ weight, height, age, duration, heartRate, activityType });
 
-    let result = "";
+    if (!result) {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể dự đoán calo.",
+      });
+    }
 
-    py.stdout.on("data", (data) => {
-      result += data.toString();
+    const calories = result.calories;
+
+    // ✅ Lưu MongoDB với userId
+    const record = new CalorieRecord({
+      userId: req.userId,
+      activityType,
+      weight,
+      height,
+      age,
+      duration,
+      heartRate,
+      calories,
+      date: new Date().toISOString(),
     });
 
-    py.stderr.on("data", (data) => {
-      console.error("⚠️ Python stderr:", data.toString());
-    });
+    await record.save();
+    console.log("✅ Dự đoán thành công, lưu MongoDB:", calories, "kcal");
 
-    py.on("close", async () => {
-      try {
-        console.log("📤 Raw Python output:", result);
-        const output = JSON.parse(result);
-
-        if (output.success) {
-          const calories = parseFloat(output.calories);
-
-          // ✅ Lưu MongoDB với userId
-          const record = new CalorieRecord({
-            userId: req.userId,
-            activityType,
-            weight,
-            height,
-            age,
-            duration,
-            heartRate,
-            calories,
-            date: new Date().toISOString(),
-          });
-
-          await record.save();
-          console.log("✅ Dự đoán thành công, lưu MongoDB:", calories, "kcal");
-
-          return res.json({
-            success: true,
-            message: "Dự đoán thành công!",
-            calories,
-          });
-        } else {
-          console.error("❌ Python báo lỗi:", output.message);
-          return res.status(400).json({
-            success: false,
-            message: output.message || "Không thể dự đoán calo.",
-          });
-        }
-      } catch (err) {
-        console.error("❌ Parse lỗi:", err);
-        return res.status(500).json({
-          success: false,
-          message: "Lỗi xử lý dữ liệu đầu ra từ Python.",
-        });
-      }
+    return res.json({
+      success: true,
+      message: "Dự đoán thành công!",
+      calories,
     });
   } catch (err) {
     console.error("❌ Lỗi /predict:", err);

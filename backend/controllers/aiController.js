@@ -3,6 +3,7 @@ import ChatMessage from "../models/ChatMessage.js";
 import ChatSession from "../models/ChatSession.js";
 import User from "../models/User.js";
 import Meal from "../models/Meal.js";
+import { predictCaloriesML } from "../utils/predictCalories.js";
 import CalorieRecord from "../models/CalorieRecord.js";
 import HealthMetric from "../models/HealthMetric.js";
 import { computeDailyCalorieTarget } from "../utils/health.js";
@@ -82,13 +83,14 @@ Bạn CHỈ ĐƯỢC PHÉP trả lời các câu hỏi liên quan đến sức k
 Nếu người dùng hỏi bất kỳ chủ đề nào khác ngoài phạm vi trên (Ví dụ: lập trình, toán học, tin tức xã hội, v.v.), bạn KHÔNG ĐƯỢC TRẢ LỜI nội dung đó. Hãy từ chối một cách lịch sự bằng câu chính xác: "Tôi là trợ lý sức khỏe và thể thao, tôi không thể giúp bạn giải đáp các vấn đề ngoài phạm vi này." và dừng lại ngay lập tức.
 
 Nhiệm vụ đặc biệt:
-1. Nếu người dùng kể hoặc chia sẻ về việc họ vừa hoàn thành một hoạt động vận động, thể thao, tập luyện hoặc hoạt động thể chất (ví dụ: "Tôi vừa chạy bộ 30 phút", "Nay đá bóng 1 tiếng", "Tôi mới tập gym 45 phút"), bạn BẮT BUỘC phải tính toán gần đúng lượng calo tiêu thụ của họ dựa trên hồ sơ thể chất (nặng ${weight}kg, tuổi ${age}) và loại hoạt động đó. Bạn chỉ được phép trả về DUY NHẤT một chuỗi JSON có cấu trúc chính xác như sau, không được phép kèm bất kỳ lời giải thích, chào hỏi hay ký tự thừa nào ngoài JSON:
+1. Nếu người dùng kể hoặc chia sẻ về việc họ vừa hoàn thành một hoạt động vận động, thể thao, tập luyện hoặc hoạt động thể chất (ví dụ: "Tôi vừa chạy bộ 30 phút", "Nay đá bóng 1 tiếng", "Tôi mới tập gym 45 phút"), bạn chỉ cần TÁCH thông tin từ câu nói của họ, KHÔNG cần tự tính số calo chính xác (hệ thống sẽ dùng mô hình học máy đã huấn luyện để tính lại). Bạn chỉ được phép trả về DUY NHẤT một chuỗi JSON có cấu trúc chính xác như sau, không được phép kèm bất kỳ lời giải thích, chào hỏi hay ký tự thừa nào ngoài JSON:
 {
   "action": "LOG_WORKOUT",
   "activityName": "Tên môn thể thao/hoạt động bằng tiếng Việt (ví dụ: Chạy bộ, Đá bóng, Thể hình...)",
   "duration": số phút vận động (number, ví dụ: 30),
-  "caloriesBurned": số calo đốt cháy ước tính (number, ví dụ: 320),
-  "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt kèm con số calo vừa đốt cháy (ví dụ: Tuyệt vời! Bạn đã đốt cháy 320 kcal từ việc Chạy bộ.)"
+  "avgHeartRate": nhịp tim trung bình ước tính hợp lý cho cường độ hoạt động này, đơn vị bpm (number, ví dụ: 130),
+  "caloriesBurned": số calo đốt cháy ước tính ban đầu, chỉ để dự phòng (number, ví dụ: 320),
+  "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt, KHÔNG nêu con số calo cụ thể vì hệ thống sẽ tự hiển thị con số chính xác riêng (ví dụ: Tuyệt vời! Mình đã ghi nhận buổi Chạy bộ của bạn.)"
 }
 
 2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường trong phạm vi sức khỏe và thể chất (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng văn bản thông thường, ngắn gọn, thân thiện bằng tiếng Việt. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
@@ -127,6 +129,24 @@ Nhiệm vụ đặc biệt:
             if (parsedJson.action === "LOG_WORKOUT") {
                 isActionable = true;
                 actionType = "LOG_WORKOUT";
+
+                // Số calo THẬT SỰ do model học máy (Gradient Boosting, R² ≈ 0.99)
+                // tính toán từ hồ sơ thể chất + thời lượng — LLM chỉ tách dữ liệu
+                // (tên hoạt động, thời lượng, nhịp tim ước tính) từ câu nói tự
+                // nhiên, không tự đoán số calo cuối cùng nữa.
+                const estimatedBpm = Number(parsedJson.avgHeartRate) || 120;
+                const mlResult = await predictCaloriesML({
+                    weight, height, age,
+                    duration: parsedJson.duration,
+                    heartRate: estimatedBpm,
+                    activityType: parsedJson.activityName,
+                });
+                if (mlResult) {
+                    parsedJson.caloriesBurned = mlResult.calories;
+                    parsedJson.calorieSource = mlResult.source;
+                }
+
+                reply = JSON.stringify(parsedJson);
                 actionData = parsedJson;
             }
         } catch (e) {
