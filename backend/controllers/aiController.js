@@ -88,7 +88,6 @@ Nhiệm vụ đặc biệt:
   "action": "LOG_WORKOUT",
   "activityName": "Tên môn thể thao/hoạt động bằng tiếng Việt (ví dụ: Chạy bộ, Đá bóng, Thể hình...)",
   "duration": số phút vận động (number, ví dụ: 30),
-  "avgHeartRate": nhịp tim trung bình ước tính hợp lý cho cường độ hoạt động này, đơn vị bpm (number, ví dụ: 130),
   "caloriesBurned": số calo đốt cháy ước tính ban đầu, chỉ để dự phòng (number, ví dụ: 320),
   "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt, KHÔNG nêu con số calo cụ thể vì hệ thống sẽ tự hiển thị con số chính xác riêng (ví dụ: Tuyệt vời! Mình đã ghi nhận buổi Chạy bộ của bạn.)"
 }
@@ -131,10 +130,14 @@ Nhiệm vụ đặc biệt:
                 actionType = "LOG_WORKOUT";
 
                 // Số calo THẬT SỰ do model học máy (Gradient Boosting, R² ≈ 0.99)
-                // tính toán từ hồ sơ thể chất + thời lượng — LLM chỉ tách dữ liệu
-                // (tên hoạt động, thời lượng, nhịp tim ước tính) từ câu nói tự
-                // nhiên, không tự đoán số calo cuối cùng nữa.
-                const estimatedBpm = Number(parsedJson.avgHeartRate) || 120;
+                // tính toán từ hồ sơ thể chất + thời lượng — LLM chỉ tách tên
+                // hoạt động/thời lượng từ câu nói tự nhiên, không tự đoán số
+                // calo cuối cùng nữa. Nhịp tim dùng công thức 70% nhịp tim tối
+                // đa (220 - tuổi) — GIỐNG HỆT màn hình "Dự đoán Calo" thủ công
+                // (predict_screen.dart) — để cùng 1 hoạt động/thời lượng luôn
+                // ra cùng 1 kết quả dù nhập qua chat hay qua form, thay vì để
+                // LLM tự đoán nhịp tim mỗi lần một khác.
+                const estimatedBpm = Math.min(200, Math.max(60, Math.round((220 - age) * 0.7)));
                 const mlResult = await predictCaloriesML({
                     weight, height, age,
                     duration: parsedJson.duration,
