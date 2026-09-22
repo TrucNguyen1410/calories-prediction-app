@@ -42,7 +42,6 @@ class TermsPolicyScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Điều khoản & Chính sách', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -68,9 +67,7 @@ class TermsPolicyScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          // SafeArea bên ngoài đã tự chừa khoảng cho status bar rồi, chỉ cần
-          // cộng thêm chiều cao AppBar (tránh cộng 2 lần gây khoảng trắng dư).
-          padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 16, 20, 24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

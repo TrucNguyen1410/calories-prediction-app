@@ -21,7 +21,6 @@ class UserGuideScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Hướng dẫn sử dụng'),
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -42,7 +41,7 @@ class UserGuideScreen extends ConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, kToolbarHeight + MediaQuery.of(context).padding.top + 16, 20, 24),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
