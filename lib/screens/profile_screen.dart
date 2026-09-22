@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -1072,93 +1073,127 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Đóng góp ý kiến',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
-                ),
+        builder: (context, setDialogState) => ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          // Sheet "liquid glass": nền trong suốt + blur thay vì màu đục phẳng.
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                color: (isDark ? const Color(0xFF2B2D31) : Colors.white).withOpacity(0.82),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(color: (isDark ? Colors.white : Colors.black).withOpacity(0.08)),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Ý kiến đóng góp của bạn sẽ giúp chúng tôi cải thiện HealthAI tốt hơn mỗi ngày.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
-                ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: feedbackController,
-                maxLines: 4,
-                style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
-                decoration: const InputDecoration(
-                  labelText: 'Nội dung phản hồi',
-                  alignLabelWithHint: true,
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 50),
-                    child: Icon(LucideIcons.squarePen, color: AppTheme.primary),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 5,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(color: isDark ? Colors.grey[700] : Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              PurpleGradientButton(
-                height: 52,
-                onPressed: isSaving
-                    ? () {}
-                    : () async {
-                        final text = feedbackController.text.trim();
-                        if (text.isEmpty) {
-                          AppToast.show(
-                            context,
-                            message: 'Vui lòng nhập nội dung góp ý',
-                            type: AppToastType.warning,
-                          );
-                          return;
-                        }
+                  Row(
+                    children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(LucideIcons.squarePen, color: AppTheme.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Đóng góp ý kiến',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ý kiến đóng góp của bạn sẽ giúp chúng tôi cải thiện HealthAI tốt hơn mỗi ngày.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? const Color(0xFF949BA4) : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: feedbackController,
+                    maxLines: 4,
+                    style: TextStyle(color: isDark ? const Color(0xFFF2F3F5) : Colors.black87),
+                    decoration: InputDecoration(
+                      hintText: 'Nội dung phản hồi...',
+                      hintStyle: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500]),
+                      filled: true,
+                      fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                      contentPadding: const EdgeInsets.all(16),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  PurpleGradientButton(
+                    height: 52,
+                    onPressed: isSaving
+                        ? () {}
+                        : () async {
+                            final text = feedbackController.text.trim();
+                            if (text.isEmpty) {
+                              AppToast.show(
+                                context,
+                                message: 'Vui lòng nhập nội dung góp ý',
+                                type: AppToastType.warning,
+                              );
+                              return;
+                            }
 
-                        setDialogState(() => isSaving = true);
-                        final apiService = ApiService();
-                        final res = await apiService.submitFeedback(content: text);
-                        setDialogState(() => isSaving = false);
+                            setDialogState(() => isSaving = true);
+                            final apiService = ApiService();
+                            final res = await apiService.submitFeedback(content: text);
+                            setDialogState(() => isSaving = false);
 
-                        if (mounted) {
-                          Navigator.pop(context);
-                          if (res['success'] == true) {
-                            AppToast.show(
-                              context,
-                              message: res['message'] ?? 'Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.',
-                              type: AppToastType.success,
-                            );
-                          } else {
-                            AppToast.show(
-                              context,
-                              message: 'Gửi phản hồi thất bại: ${res['message'] ?? 'Không rõ lý do'}',
-                              type: AppToastType.error,
-                            );
-                          }
-                        }
-                      },
-                child: isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Gửi phản hồi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                            if (mounted) {
+                              Navigator.pop(context);
+                              if (res['success'] == true) {
+                                AppToast.show(
+                                  context,
+                                  message: res['message'] ?? 'Cảm ơn bạn đã đóng góp ý kiến! Phản hồi đã được ghi nhận.',
+                                  type: AppToastType.success,
+                                );
+                              } else {
+                                AppToast.show(
+                                  context,
+                                  message: 'Gửi phản hồi thất bại: ${res['message'] ?? 'Không rõ lý do'}',
+                                  type: AppToastType.error,
+                                );
+                              }
+                            }
+                          },
+                    child: isSaving
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Gửi phản hồi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

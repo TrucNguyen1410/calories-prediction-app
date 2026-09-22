@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme.dart';
@@ -20,62 +21,92 @@ class UserGuideScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Hướng dẫn sử dụng'),
-        backgroundColor: isDark ? const Color(0xFF2B2D31) : AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: isDark ? Colors.white : Colors.black87,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        // App bar "liquid glass": trong suốt + blur thay vì mảng màu tím đục
+        // phẳng như trước, lộ mờ nội dung cuộn phía sau.
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: (backgroundColor ?? Colors.white).withOpacity(0.7),
+                border: Border(bottom: BorderSide(color: (isDark ? Colors.white : Colors.black).withOpacity(0.06))),
+              ),
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.fromLTRB(20, kToolbarHeight + MediaQuery.of(context).padding.top + 16, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Nút Khám phá nhanh (Interactive Tour) ở trên cùng
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)], // Tím Gradient
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8A2BE2).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            // Nút Khám phá nhanh (Interactive Tour) ở trên cùng — thêm dải
+            // sáng chéo mờ phía trên để có cảm giác "glossy glass" thay vì
+            // mảng gradient phẳng.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                height: 58,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  // Kích hoạt trạng thái chạy tour ở trang chủ
-                  ref.read(tourStartProvider.notifier).state = true;
-                  // Chuyển tab về Trang chủ (index 0)
-                  ref.read(mainTabProvider.notifier).state = 0;
-                  // Quay lại màn hình chính
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF8A2BE2).withOpacity(0.3),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
                   children: [
-                    Icon(LucideIcons.compass, color: Colors.white, size: 22),
-                    SizedBox(width: 8),
-                    Text(
-                      '🚀 Khám phá nhanh (Interactive Tour)',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Positioned(
+                      top: -20, left: -20, right: -20, height: 50,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(40),
+                          color: Colors.white.withOpacity(0.12),
+                        ),
+                      ),
+                    ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          // Kích hoạt trạng thái chạy tour ở trang chủ
+                          ref.read(tourStartProvider.notifier).state = true;
+                          // Chuyển tab về Trang chủ (index 0)
+                          ref.read(mainTabProvider.notifier).state = 0;
+                          // Quay lại màn hình chính
+                          Navigator.pop(context);
+                        },
+                        child: const Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(LucideIcons.compass, color: Colors.white, size: 22),
+                              SizedBox(width: 8),
+                              Text(
+                                'Khám phá nhanh (Interactive Tour)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -256,24 +287,24 @@ class UserGuideScreen extends ConsumerWidget {
           ),
           const Divider(height: 24),
           Column(
-            children: steps.map((step) {
+            children: steps.asMap().entries.map((entry) {
+              final stepIndex = entry.key;
+              final step = entry.value;
               // Tách theo dấu ':' ĐẦU TIÊN để không cắt mất phần mô tả có nhiều dấu ':'
               final idx = step.indexOf(': ');
               final titleText = idx >= 0 ? step.substring(0, idx + 2) : '';
               final detailText = idx >= 0 ? step.substring(idx + 2) : step;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
+                padding: EdgeInsets.only(bottom: stepIndex == steps.length - 1 ? 0 : 12.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.purple,
-                        shape: BoxShape.circle,
-                      ),
+                      width: 18, height: 18,
+                      margin: const EdgeInsets.only(top: 1),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(color: iconColor.withOpacity(0.16), shape: BoxShape.circle),
+                      child: Text('${stepIndex + 1}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: iconColor)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
