@@ -100,7 +100,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           // Lớp dưới: Giao diện chính
           Scaffold(
             extendBody: true, // để nội dung cuộn lộ mờ sau thanh nav liquid glass
-            body: _screens[ref.watch(mainTabProvider)],
+            body: _buildAnimatedTabBody(),
             bottomNavigationBar: _buildBottomNav(isDark),
           ),
 
@@ -176,6 +176,31 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  // Chuyển tab bằng hiệu ứng "fade through" (mờ dần + trượt nhẹ lên) thay vì
+  // cắt cứng — key theo index để AnimatedSwitcher nhận biết đổi tab và chạy animation.
+  Widget _buildAnimatedTabBody() {
+    final index = ref.watch(mainTabProvider);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0, 0.03),
+          end: Offset.zero,
+        ).animate(animation);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(index),
+        child: _screens[index],
       ),
     );
   }
