@@ -227,7 +227,10 @@ class HealthNotifier extends StateNotifier<HealthState> {
       if (activeUser != null) {
         final userId = activeUser['id'] ?? activeUser['_id'] ?? '';
         if (userId.isNotEmpty) {
-          stepsFuture = () async {
+          // Hàm cục bộ có kiểu trả về Future<double> tường minh — closure ẩn
+          // danh `() async {...}` không khai báo kiểu khiến dart2js suy luận
+          // ra Future<dynamic>, gây lỗi biên dịch web dù chạy VM vẫn ổn.
+          Future<double> syncSteps() async {
             try {
               final res = await _apiService.syncGoogleFit(userId: userId);
               return ((res['data']?['steps']) ?? syncedSteps).toDouble();
@@ -249,7 +252,9 @@ class HealthNotifier extends StateNotifier<HealthState> {
               }
               return syncedSteps;
             }
-          }();
+          }
+
+          stepsFuture = syncSteps();
         }
       }
 
