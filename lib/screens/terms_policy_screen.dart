@@ -68,7 +68,9 @@ class TermsPolicyScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, kToolbarHeight + MediaQuery.of(context).padding.top + 16, 20, 24),
+          // SafeArea bên ngoài đã tự chừa khoảng cho status bar rồi, chỉ cần
+          // cộng thêm chiều cao AppBar (tránh cộng 2 lần gây khoảng trắng dư).
+          padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 16, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
