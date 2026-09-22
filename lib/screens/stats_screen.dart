@@ -52,7 +52,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         onRefresh: () => ref.read(healthProvider.notifier).refreshAll(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          // Đệm dưới thêm để không bị thanh nav kính mờ nổi che (MainScreen dùng extendBody).
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12 + 96),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -17,6 +17,27 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY || "dummy_key_to_prevent_startup_crash",
 });
 
+// Mô hình ML không có đặc trưng "loại hoạt động" (chỉ Age/Weight/Height/
+// Duration/Avg_BPM) nên % nhịp tim tối đa ước lượng theo cường độ hoạt động
+// là yếu tố DUY NHẤT giúp phân biệt calo giữa các môn khác nhau ở cùng thời
+// lượng — trước đây cố định 70% cho mọi hoạt động nên "Đạp xe 15 phút" và
+// "Cardio 15 phút" luôn ra đúng 1 con số giống hệt nhau. Vì activityName ở
+// đây do LLM tự trích xuất từ câu nói tự nhiên (không giới hạn 7 lựa chọn cố
+// định như màn hình Dự đoán Calo thủ công), dùng khớp từ khoá thay vì tra
+// bảng chính xác; 3 mức % này khớp với _intensityFactors trong
+// predict_screen.dart để 2 luồng ra kết quả nhất quán.
+const HIGH_INTENSITY_KEYWORDS = ["chạy", "gym", "cardio", "hiit", "bóng đá", "đá bóng", "bóng rổ", "leo núi", "nhảy dây", "aerobic", "thể hình", "võ", "boxing", "cử tạ", "tạ"];
+const MED_INTENSITY_KEYWORDS = ["đạp xe", "xe đạp", "bơi", "đi bộ nhanh", "cầu lông", "bóng bàn", "tennis", "quần vợt", "bóng chuyền", "nhảy"];
+const LOW_INTENSITY_KEYWORDS = ["yoga", "thiền", "đi bộ", "giãn cơ", "pilates", "dưỡng sinh"];
+
+function getIntensityFactor(activityName) {
+    const name = (activityName || "").toLowerCase();
+    if (HIGH_INTENSITY_KEYWORDS.some(k => name.includes(k))) return 0.85;
+    if (MED_INTENSITY_KEYWORDS.some(k => name.includes(k))) return 0.68;
+    if (LOW_INTENSITY_KEYWORDS.some(k => name.includes(k))) return 0.55;
+    return 0.70; // không nhận diện được -> giữ mức trung bình như trước đây
+}
+
 // Một số model thỉnh thoảng vẫn bọc JSON trong ```json``` dù đã yêu cầu response_format json_object
 function extractJsonContent(raw) {
     if (!raw) return raw;
@@ -132,12 +153,14 @@ Nhiệm vụ đặc biệt:
                 // Số calo THẬT SỰ do model học máy (Gradient Boosting, R² ≈ 0.99)
                 // tính toán từ hồ sơ thể chất + thời lượng — LLM chỉ tách tên
                 // hoạt động/thời lượng từ câu nói tự nhiên, không tự đoán số
-                // calo cuối cùng nữa. Nhịp tim dùng công thức 70% nhịp tim tối
-                // đa (220 - tuổi) — GIỐNG HỆT màn hình "Dự đoán Calo" thủ công
-                // (predict_screen.dart) — để cùng 1 hoạt động/thời lượng luôn
-                // ra cùng 1 kết quả dù nhập qua chat hay qua form, thay vì để
-                // LLM tự đoán nhịp tim mỗi lần một khác.
-                const estimatedBpm = Math.min(200, Math.max(60, Math.round((220 - age) * 0.7)));
+                // calo cuối cùng nữa. Nhịp tim ước lượng theo % nhịp tim tối đa
+                // (220 - tuổi), % thay đổi theo cường độ hoạt động (xem
+                // getIntensityFactor) — cùng công thức và cùng bảng % với màn
+                // hình "Dự đoán Calo" thủ công (predict_screen.dart) để 2 luồng
+                // luôn nhất quán, đồng thời phân biệt được calo giữa các môn
+                // khác nhau ở cùng thời lượng thay vì luôn ra 1 con số cố định.
+                const intensityFactor = getIntensityFactor(parsedJson.activityName);
+                const estimatedBpm = Math.min(200, Math.max(60, Math.round((220 - age) * intensityFactor)));
                 const mlResult = await predictCaloriesML({
                     weight, height, age,
                     duration: parsedJson.duration,

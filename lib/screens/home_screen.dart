@@ -78,9 +78,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onRefresh: () => ref.read(healthProvider.notifier).refreshAll(),
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: EdgeInsets.symmetric(
-            horizontal: Responsive.isMobile(context) ? 16 : 24,
-            vertical: 20,
+          padding: EdgeInsets.fromLTRB(
+            Responsive.isMobile(context) ? 16 : 24,
+            20,
+            Responsive.isMobile(context) ? 16 : 24,
+            // Thêm khoảng đệm dưới để nội dung không bị thanh nav kính mờ nổi
+            // (floating glass nav bar) che mất, do MainScreen dùng extendBody.
+            20 + 96,
           ),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(

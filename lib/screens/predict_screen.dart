@@ -26,6 +26,21 @@ class _PredictScreenState extends State<PredictScreen> {
 
   final List<String> _activities = ["Gym", "Chạy bộ", "Đạp xe", "Bơi lội", "Yoga", "Leo núi", "Đi bộ nhanh"];
   String? _selectedActivity;
+
+  // Mô hình ML không có đặc trưng "loại hoạt động" (chỉ có Age/Weight/Height/
+  // Duration/Avg_BPM) nên % nhịp tim tối đa ước lượng theo cường độ môn thể
+  // thao là yếu tố DUY NHẤT giúp phân biệt calo giữa các môn khác nhau ở cùng
+  // thời lượng — trước đây cố định 70% cho mọi hoạt động nên vd "Đạp xe 15
+  // phút" và "Gym 15 phút" luôn ra đúng 1 con số giống hệt nhau.
+  static const Map<String, double> _intensityFactors = {
+    "Gym": 0.85,
+    "Chạy bộ": 0.85,
+    "Leo núi": 0.85,
+    "Đạp xe": 0.68,
+    "Bơi lội": 0.68,
+    "Đi bộ nhanh": 0.68,
+    "Yoga": 0.55,
+  };
   double? _predictedCalories;
   bool _isLoading = false;
   bool _prefilledFromProfile = false;
@@ -58,9 +73,11 @@ class _PredictScreenState extends State<PredictScreen> {
     setState(() => _isLoading = true);
 
     final age = int.tryParse(_ageController.text) ?? 25;
-    // Ước lượng nhịp tim trung bình khi tập ~70% nhịp tim tối đa (220 - tuổi)
-    // để người dùng không phải tự nhập chỉ số khó biết này.
-    final estimatedHeartRate = ((220 - age) * 0.7).round().clamp(60, 200);
+    // Ước lượng nhịp tim trung bình khi tập theo % nhịp tim tối đa (220 - tuổi)
+    // để người dùng không phải tự nhập chỉ số khó biết này — % thay đổi theo
+    // cường độ môn thể thao đã chọn (xem _intensityFactors).
+    final intensityFactor = _intensityFactors[_selectedActivity] ?? 0.70;
+    final estimatedHeartRate = ((220 - age) * intensityFactor).round().clamp(60, 200);
 
     final workout = Workout(
       activityType: _selectedActivity ?? "Không xác định",

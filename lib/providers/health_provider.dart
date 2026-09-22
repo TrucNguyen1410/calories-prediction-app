@@ -218,39 +218,51 @@ class HealthNotifier extends StateNotifier<HealthState> {
 
     try {
       final activeUser = user ?? await _apiService.getUserData();
-      
-      // Tự động đồng bộ với Google Fit API trước khi tải danh sách bài tập!
+
+      // Đồng bộ Google Fit/Health Connect và tải workouts/meals/nước/cân nặng
+      // song song (Future.wait) thay vì tuần tự — các lệnh gọi này độc lập với
+      // nhau nên chạy cùng lúc giúp giảm đáng kể tổng thời gian chờ refreshAll.
       double syncedSteps = state.todaySteps; // giữ giá trị cũ nếu đồng bộ lỗi
+      Future<double> stepsFuture = Future.value(syncedSteps);
       if (activeUser != null) {
         final userId = activeUser['id'] ?? activeUser['_id'] ?? '';
         if (userId.isNotEmpty) {
-          try {
-            final res = await _apiService.syncGoogleFit(userId: userId);
-            syncedSteps = ((res['data']?['steps']) ?? syncedSteps).toDouble();
-          } catch (e) {
-            // Google Fit lỗi (token hết hạn / API ngừng hoạt động...) — thử nguồn dự
-            // phòng Health Connect/HealthKit trên thiết bị trước khi bỏ cuộc.
+          stepsFuture = () async {
             try {
-              final fallback = await _healthConnectService.fetchToday();
-              if (fallback != null) {
-                final res = await _apiService.syncHealthConnect(
-                  userId: userId,
-                  steps: fallback.steps,
-                  caloriesBurned: fallback.caloriesBurned,
-                );
-                syncedSteps = ((res['data']?['steps']) ?? syncedSteps).toDouble();
+              final res = await _apiService.syncGoogleFit(userId: userId);
+              return ((res['data']?['steps']) ?? syncedSteps).toDouble();
+            } catch (e) {
+              // Google Fit lỗi (token hết hạn / API ngừng hoạt động...) — thử nguồn dự
+              // phòng Health Connect/HealthKit trên thiết bị trước khi bỏ cuộc.
+              try {
+                final fallback = await _healthConnectService.fetchToday();
+                if (fallback != null) {
+                  final res = await _apiService.syncHealthConnect(
+                    userId: userId,
+                    steps: fallback.steps,
+                    caloriesBurned: fallback.caloriesBurned,
+                  );
+                  return ((res['data']?['steps']) ?? syncedSteps).toDouble();
+                }
+              } catch (_) {
+                // Không có Health Connect / bị từ chối quyền — giữ nguyên giá trị cũ
               }
-            } catch (_) {
-              // Không có Health Connect / bị từ chối quyền — giữ nguyên giá trị cũ
+              return syncedSteps;
             }
-          }
+          }();
         }
       }
 
-      final workouts = await _apiService.getWorkouts();
-      final allMeals = await _apiService.getMeals();
-      final waterToday = await _apiService.getWaterToday();
-      
+      final workoutsFuture = _apiService.getWorkouts();
+      final mealsFuture = _apiService.getMeals();
+      final waterFuture = _apiService.getWaterToday();
+      final weightRecordsFuture = _apiService.getWeightRecords();
+
+      syncedSteps = await stepsFuture;
+      final workouts = await workoutsFuture;
+      final allMeals = await mealsFuture;
+      final waterToday = await waterFuture;
+
       List<double> wIntake = [];
       List<double> wBurned = [];
       

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -98,20 +99,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         children: [
           // Lớp dưới: Giao diện chính
           Scaffold(
+            extendBody: true, // để nội dung cuộn lộ ra sau thanh nav kính mờ
             body: _screens[ref.watch(mainTabProvider)],
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: ref.watch(mainTabProvider),
-              onTap: _onItemTapped,
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.primary,
-              unselectedItemColor: Colors.grey,
-              items: [
-                const BottomNavigationBarItem(icon: Icon(LucideIcons.house), label: "Trang chủ"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.utensilsCrossed, key: ref.read(tourKeysProvider).menuTabKey), label: "Thực đơn"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.chartColumn, key: ref.read(tourKeysProvider).statsTabKey), label: "Thống kê"),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.user, key: ref.read(tourKeysProvider).profileTabKey), label: "Cá nhân"),
-              ],
-            ),
+            bottomNavigationBar: _buildGlassNavBar(isDark),
           ),
 
           // Lớp trên: Popup Chat AI (Cố định góc dưới bên phải như yêu cầu)
@@ -186,6 +176,79 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  // Thanh nav nổi kiểu "kính mờ" (glassmorphism): nền trong suốt + blur, bo
+  // tròn toàn bộ 4 góc, nổi cách mép màn hình một khoảng để lộ rõ góc bo tròn
+  // (thay vì dán sát đáy màn hình như BottomNavigationBar mặc định).
+  Widget _buildGlassNavBar(bool isDark) {
+    final currentIndex = ref.watch(mainTabProvider);
+    final tourKeys = ref.read(tourKeysProvider);
+    final items = <(IconData, String, Key?)>[
+      (LucideIcons.house, "Trang chủ", null),
+      (LucideIcons.utensilsCrossed, "Thực đơn", tourKeys.menuTabKey),
+      (LucideIcons.chartColumn, "Thống kê", tourKeys.statsTabKey),
+      (LucideIcons.user, "Cá nhân", tourKeys.profileTabKey),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: (isDark ? const Color(0xFF1E1F22) : Colors.white).withOpacity(0.65),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(items.length, (i) {
+                final (icon, label, key) = items[i];
+                final selected = currentIndex == i;
+                final color = selected
+                    ? AppTheme.primary
+                    : (isDark ? const Color(0xFF949BA4) : Colors.grey[500]);
+                return Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _onItemTapped(i),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, key: key, size: 22, color: color),
+                        const SizedBox(height: 3),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: color,
+                            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
       ),
     );
   }

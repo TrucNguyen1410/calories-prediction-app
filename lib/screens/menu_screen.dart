@@ -75,9 +75,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 24,
-          vertical: 20,
+        padding: EdgeInsets.fromLTRB(
+          MediaQuery.of(context).size.width < 600 ? 16 : 24,
+          20,
+          MediaQuery.of(context).size.width < 600 ? 16 : 24,
+          // Đệm dưới để không bị thanh nav kính mờ nổi che (MainScreen dùng extendBody).
+          20 + 96,
         ),
         child: Center(
           child: Container(
