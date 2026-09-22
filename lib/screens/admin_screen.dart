@@ -66,14 +66,22 @@ class _AdminScreenState extends State<AdminScreen> {
             ],
           ),
         ),
+        // Giới hạn chiều rộng tối đa trên web/màn hình rộng — nếu không, grid
+        // 2 cột ở _buildKpiGrid (childAspectRatio cố định) bị kéo giãn thành
+        // những ô khổng lồ rỗng, chữ/icon co cụm lệch góc trên-trái.
         body: _loading
             ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildStatsTab(theme),
-                  _buildUsersTab(theme),
-                  _buildFeedbackTab(theme),
-                ],
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: TabBarView(
+                    children: [
+                      _buildStatsTab(theme),
+                      _buildUsersTab(theme),
+                      _buildFeedbackTab(theme),
+                    ],
+                  ),
+                ),
               ),
       ),
     );
@@ -158,7 +166,9 @@ class _AdminScreenState extends State<AdminScreen> {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.7,
+      // 2.8 thay vì 1.7 — với max-width 800 mới thêm, mỗi cột rộng ~380px;
+      // giữ 1.7 sẽ ra card cao ~220px (quá trống so với 2 dòng chữ + icon).
+      childAspectRatio: 2.8,
       children: tiles.map((t) {
         final color = t[3] as Color;
         return Container(
