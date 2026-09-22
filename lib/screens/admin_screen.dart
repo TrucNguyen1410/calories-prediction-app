@@ -218,6 +218,11 @@ class _AdminScreenState extends State<AdminScreen> {
     final values = [_n('totalMeals'), _n('totalWorkouts'), _n('totalSessions'), _n('totalFeedback')];
     final maxV = (values.isEmpty ? 0 : values.reduce((a, b) => a > b ? a : b)).toDouble();
     final maxY = (maxV < 5 ? 5 : maxV) * 1.25;
+    // Ép đúng 4 mốc chia đều trên trục Y (0, 1/4, 2/4, 3/4, max) thay vì để
+    // fl_chart tự chọn interval — trước đây không set interval nên fl_chart
+    // tự sinh quá nhiều mốc, cộng với reservedSize hẹp khiến số 3 chữ số
+    // (vd "400") bị wrap xuống dòng và đè lên nhãn bên cạnh.
+    final yInterval = maxY / 4;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -253,7 +258,17 @@ class _AdminScreenState extends State<AdminScreen> {
                 titlesData: FlTitlesData(
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 32)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      interval: yInterval,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: TextStyle(fontSize: 10, color: theme.hintColor, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
