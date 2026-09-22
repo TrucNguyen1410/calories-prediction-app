@@ -43,14 +43,24 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
       _loading = true;
     });
 
-    // Gọi API getMeals không truyền tham số để lấy toàn bộ lịch sử
-    final data = await _apiService.getMeals();
-
-    setState(() {
-      _allMeals = data;
-      _applyFilterAndSearch();
-      _loading = false;
-    });
+    try {
+      // Gọi API getMeals không truyền tham số để lấy toàn bộ lịch sử
+      final data = await _apiService.getMeals();
+      setState(() {
+        _allMeals = data;
+        _applyFilterAndSearch();
+      });
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(
+          context,
+          message: 'Không tải được lịch sử — máy chủ có thể đang khởi động lại, vui lòng thử lại sau ít phút.',
+          type: AppToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _applyFilterAndSearch() {
