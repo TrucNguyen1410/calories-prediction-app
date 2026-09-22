@@ -693,20 +693,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (!mounted) return;
       Navigator.pop(context);
-      // Phiên hết hạn → cho nút đăng nhập lại Google ngay trên snackbar (có action, giữ nguyên SnackBar)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('⚠️ Phiên Google Fit đã hết hạn hoặc chưa cấp quyền.'),
-          backgroundColor: Colors.orangeAccent,
-          duration: const Duration(seconds: 8),
-          action: SnackBarAction(
-            label: 'ĐĂNG NHẬP LẠI',
-            textColor: Colors.white,
-            onPressed: _reloginGoogleFit,
-          ),
-        ),
-      );
+      // Phiên hết hạn → hỏi bằng popup thay vì SnackBar đè lên thanh nav dưới cùng.
+      _showGoogleFitExpiredDialog();
     }
+  }
+
+  void _showGoogleFitExpiredDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(color: Colors.orange.withOpacity(isDark ? 0.22 : 0.12), borderRadius: BorderRadius.circular(10)),
+              alignment: Alignment.center,
+              child: const Icon(LucideIcons.alertTriangle, color: Colors.orange, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Phiên Google Fit hết hạn', style: TextStyle(fontSize: 16))),
+          ],
+        ),
+        content: const Text('Phiên đăng nhập Google Fit đã hết hạn hoặc chưa được cấp quyền. Đăng nhập lại để tiếp tục đồng bộ bước chân & calo.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Để sau')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _reloginGoogleFit();
+            },
+            child: const Text('Đăng nhập lại'),
+          ),
+        ],
+      ),
+    );
   }
 
   // --- Đăng nhập lại Google để lấy token mới rồi đồng bộ lại ---
