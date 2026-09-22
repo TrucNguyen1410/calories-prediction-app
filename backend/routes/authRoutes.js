@@ -29,9 +29,11 @@ function buildUserResponse(user) {
         weight: user.weight,
         dob: user.dob,
         goal: user.goal,
+        goalWeight: user.goalWeight,
         activityLevel: user.activityLevel,
         onboarded: user.onboarded,
         role: user.role,
+        avatarUrl: user.avatarUrl || '',
     };
 }
 
@@ -187,12 +189,25 @@ router.post('/login', authLimiter, validateLogin, async (req, res) => {
 // --- API MỚI: CẬP NHẬT CHIỀU CAO/CÂN NẶNG ---
 // PUT /api/auth/profile/:id (Giả sử bạn gắn route này trong server.js)
 router.put('/profile/:id', async (req, res) => {
-    const { name, height, weight, gender, age, goal, activityLevel, onboarded, goalWeight } = req.body;
+    const { name, height, weight, gender, age, goal, activityLevel, onboarded, goalWeight, avatarUrl } = req.body;
 
     try {
         let user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+
+        // Ảnh đại diện: giới hạn ~1.5MB (base64) để tránh document MongoDB
+        // phình to quá mức — ảnh phía client đã được nén (maxWidth/maxHeight
+        // 512, quality 80) nên trong điều kiện bình thường không chạm ngưỡng này.
+        if (avatarUrl !== undefined) {
+            if (avatarUrl === '' || avatarUrl === null) {
+                user.avatarUrl = '';
+            } else if (typeof avatarUrl === 'string' && avatarUrl.startsWith('data:image/') && avatarUrl.length <= 2_000_000) {
+                user.avatarUrl = avatarUrl;
+            } else {
+                return res.status(400).json({ message: 'Ảnh đại diện không hợp lệ hoặc quá lớn' });
+            }
         }
 
         const weightChanged =

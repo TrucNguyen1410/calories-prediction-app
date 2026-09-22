@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../services/api_service.dart';
@@ -241,6 +243,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildProfileHeader(Map<String, dynamic>? userData, bool isDark) {
     final displayName = userData?['name'] ?? widget.name;
     final displayEmail = userData?['email'] ?? widget.email;
+    final avatarUrl = userData?['avatarUrl']?.toString() ?? '';
 
     return InkWell(
       onTap: () => _showEditProfileDialog(userData, isDark),
@@ -261,10 +264,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         child: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 32,
               backgroundColor: AppTheme.primary,
-              child: Icon(LucideIcons.user, color: Colors.white, size: 32),
+              backgroundImage: (avatarUrl.startsWith('data:image/'))
+                  ? MemoryImage(base64Decode(avatarUrl.split(',').last))
+                  : null,
+              child: avatarUrl.startsWith('data:image/')
+                  ? null
+                  : const Icon(LucideIcons.user, color: Colors.white, size: 32),
             ),
             const SizedBox(width: 20),
             Expanded(
@@ -462,11 +470,112 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  // Mở bottom sheet chọn nguồn ảnh (camera/thư viện), nén nhỏ rồi trả về
+  // chuỗi base64 data URL — cùng cách app đã xử lý ảnh món ăn, để lưu thẳng
+  // vào User.avatarUrl mà không cần thêm hạ tầng lưu file riêng.
+  Future<void> _pickAvatarImage(BuildContext sheetContext, void Function(String) onPicked) async {
+    final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+    await showModalBottomSheet(
+      context: sheetContext,
+      backgroundColor: Theme.of(sheetContext).cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (bottomSheetCtx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Ảnh đại diện',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+            const SizedBox(height: 6),
+            Text('Chọn cách bạn muốn thêm ảnh đại diện',
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF949BA4) : Colors.grey[500])),
+            const SizedBox(height: 20),
+            _buildAvatarSourceOption(
+              icon: LucideIcons.camera,
+              label: 'Chụp ảnh mới',
+              isDark: isDark,
+              onTap: () async {
+                Navigator.pop(bottomSheetCtx);
+                await _doPickAvatar(sheetContext, ImageSource.camera, onPicked);
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildAvatarSourceOption(
+              icon: LucideIcons.image,
+              label: 'Chọn ảnh từ thư viện',
+              isDark: isDark,
+              onTap: () async {
+                Navigator.pop(bottomSheetCtx);
+                await _doPickAvatar(sheetContext, ImageSource.gallery, onPicked);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _doPickAvatar(BuildContext ctx, ImageSource source, void Function(String) onPicked) async {
+    try {
+      final picker = ImagePicker();
+      final file = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      final mime = file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      onPicked('data:$mime;base64,${base64Encode(bytes)}');
+    } catch (e) {
+      if (mounted) {
+        AppToast.show(ctx, message: 'Lỗi chọn ảnh: $e', type: AppToastType.error);
+      }
+    }
+  }
+
+  Widget _buildAvatarSourceOption({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: isDark ? const Color(0xFF2B2D31) : Colors.grey[50],
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppTheme.primary.withOpacity(isDark ? 0.18 : 0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: isDark ? const Color(0xFFBB86FC) : AppTheme.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(label, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFF2F3F5) : Colors.black87)),
+              ),
+              Icon(LucideIcons.chevronRight, size: 18, color: isDark ? const Color(0xFF949BA4) : Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showEditProfileDialog(Map<String, dynamic>? userData, bool isDark) {
     final height = (userData?['height'] ?? 0.0).toDouble();
     final weight = (userData?['weight'] ?? 0.0).toDouble();
     final gender = userData?['gender'] ?? 'Nam';
-    
+    String? avatarBase64 = userData?['avatarUrl']?.toString();
+    if (avatarBase64 != null && avatarBase64.isEmpty) avatarBase64 = null;
+
     int age = 0;
     if (userData?['dob'] != null) {
       try {
@@ -514,6 +623,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: isDark ? const Color(0xFFF2F3F5) : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: GestureDetector(
+                  onTap: () => _pickAvatarImage(context, (dataUrl) {
+                    setDialogState(() => avatarBase64 = dataUrl);
+                  }),
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 44,
+                        backgroundColor: AppTheme.primary.withOpacity(0.15),
+                        backgroundImage: avatarBase64 != null
+                            ? MemoryImage(base64Decode(avatarBase64!.split(',').last))
+                            : null,
+                        child: avatarBase64 == null
+                            ? const Icon(LucideIcons.user, color: AppTheme.primary, size: 40)
+                            : null,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Theme.of(context).cardColor, width: 2),
+                          ),
+                          child: const Icon(LucideIcons.camera, color: Colors.white, size: 14),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -610,6 +754,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           'weight': w,
                           'gender': selectedGender,
                           'age': ageVal,
+                          'avatarUrl': avatarBase64 ?? '',
                         });
                         await ref.read(authProvider.notifier).refreshUserData();
                         // Refresh health state BMI/Weight trends reactively

@@ -11,6 +11,9 @@ const UserSchema = new mongoose.Schema({
     gender: { type: String, enum: ['Nam', 'Nữ', 'Khác'] },
     height: { type: Number, default: 0 },
     weight: { type: Number, default: 0 },
+    // Ảnh đại diện lưu trực tiếp dạng base64 data URL — cùng cách app đã
+    // lưu ảnh món ăn (imageUrl của Meal), không cần thêm hạ tầng lưu trữ file.
+    avatarUrl: { type: String, default: '' },
 
     // --- MỤC TIÊU & MỨC VẬN ĐỘNG (phục vụ tính TDEE cá nhân hóa) ---
     goal: { type: String, enum: ['lose', 'maintain', 'gain'], default: 'maintain' },
