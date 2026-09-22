@@ -79,7 +79,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           MediaQuery.of(context).size.width < 600 ? 16 : 24,
           20,
           MediaQuery.of(context).size.width < 600 ? 16 : 24,
-          // Đệm dưới để không bị thanh nav kính mờ nổi che (MainScreen dùng extendBody).
+          // Đệm dưới để không bị thanh nav liquid glass nổi che (MainScreen dùng extendBody).
           20 + 96,
         ),
         child: Center(

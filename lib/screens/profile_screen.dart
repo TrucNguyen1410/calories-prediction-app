@@ -59,7 +59,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  // Đệm dưới thêm để không bị thanh nav kính mờ nổi che (MainScreen dùng extendBody).
+                  // Đệm dưới thêm để không bị thanh nav liquid glass nổi che (MainScreen dùng extendBody).
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12 + 96),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

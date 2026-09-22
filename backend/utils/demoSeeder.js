@@ -12,8 +12,12 @@ import { computeBMI } from "./health.js";
 export const DEMO_EMAIL = "demo@healthai.app";
 export const DEMO_PASSWORD = "demo1234";
 
-// Lịch sử bắt đầu từ 01/07 năm nay tới hôm nay (mô phỏng dùng app liên tục ~8 tuần)
+// Lịch sử bắt đầu từ 01/07 năm nay, kéo dài tới hôm nay HOẶC 30/09 năm nay
+// (lấy mốc nào xa hơn) — để demo luôn có sẵn dữ liệu liền mạch tới hết tháng
+// 9 dù chạy seed trước ngày đó (tránh các ngày "trống" chưa tới lúc chạy).
 const HISTORY_START = new Date(new Date().getFullYear(), 6, 1); // 01/07
+const _sept30ThisYear = new Date(new Date().getFullYear(), 8, 30); // 30/09
+const RANGE_END = new Date() > _sept30ThisYear ? new Date() : _sept30ThisYear;
 
 const pad = (n) => String(n).padStart(2, "0");
 const dateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -22,7 +26,6 @@ const addDays = (d, n) => {
     copy.setDate(copy.getDate() + n);
     return copy;
 };
-const daysAgo = (n) => addDays(new Date(), -n);
 const rand = (min, max) => Math.random() * (max - min) + min;
 const randInt = (min, max) => Math.round(rand(min, max));
 const pick = (arr, i) => arr[i % arr.length];
@@ -49,7 +52,7 @@ function deriveNutrition(calories, category) {
 }
 
 function totalDaysInHistory() {
-    return Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(HISTORY_START).setHours(0, 0, 0, 0)) / 86400000) + 1;
+    return Math.floor((new Date(RANGE_END).setHours(0, 0, 0, 0) - new Date(HISTORY_START).setHours(0, 0, 0, 0)) / 86400000) + 1;
 }
 
 export async function seedDemoUser() {
@@ -101,7 +104,7 @@ export async function seedDemoUser() {
     // Đảm bảo mốc cuối cùng khớp cân nặng hiện tại của hồ sơ
     metrics.push({
         userId, weight: END_WEIGHT, height: 172, bmi: computeBMI(END_WEIGHT, 172),
-        source: "manual", date: new Date(),
+        source: "manual", date: RANGE_END,
     });
     await HealthMetric.insertMany(metrics);
 
@@ -247,7 +250,7 @@ export async function seedDemoUser() {
     ];
     for (let s = 0; s < chatSamples.length; s++) {
         const sample = chatSamples[s];
-        const ts = daysAgo(NUM_DAYS - Math.round(((s + 1) / (chatSamples.length + 1)) * NUM_DAYS));
+        const ts = addDays(HISTORY_START, Math.round(((s + 1) / (chatSamples.length + 1)) * (NUM_DAYS - 1)));
         await ChatSession.create({
             userId,
             sessionTitle: sample.title,
@@ -264,7 +267,7 @@ export async function seedDemoUser() {
         email: DEMO_EMAIL,
         password: DEMO_PASSWORD,
         rangeStart: dateStr(HISTORY_START),
-        rangeEnd: dateStr(new Date()),
+        rangeEnd: dateStr(RANGE_END),
         numDays: NUM_DAYS,
         meals: meals.length,
         weightMetrics: metrics.length,

@@ -82,8 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Responsive.isMobile(context) ? 16 : 24,
             20,
             Responsive.isMobile(context) ? 16 : 24,
-            // Thêm khoảng đệm dưới để nội dung không bị thanh nav kính mờ nổi
-            // (floating glass nav bar) che mất, do MainScreen dùng extendBody.
+            // Đệm dưới để không bị thanh nav liquid glass nổi che (MainScreen dùng extendBody).
             20 + 96,
           ),
           physics: const AlwaysScrollableScrollPhysics(),

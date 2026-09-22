@@ -99,9 +99,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         children: [
           // Lớp dưới: Giao diện chính
           Scaffold(
-            extendBody: true, // để nội dung cuộn lộ ra sau thanh nav kính mờ
+            extendBody: true, // để nội dung cuộn lộ mờ sau thanh nav liquid glass
             body: _screens[ref.watch(mainTabProvider)],
-            bottomNavigationBar: _buildGlassNavBar(isDark),
+            bottomNavigationBar: _buildBottomNav(isDark),
           ),
 
           // Lớp trên: Popup Chat AI (Cố định góc dưới bên phải như yêu cầu)
@@ -180,10 +180,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     );
   }
 
-  // Thanh nav nổi kiểu "kính mờ" (glassmorphism): nền trong suốt + blur, bo
-  // tròn toàn bộ 4 góc, nổi cách mép màn hình một khoảng để lộ rõ góc bo tròn
-  // (thay vì dán sát đáy màn hình như BottomNavigationBar mặc định).
-  Widget _buildGlassNavBar(bool isDark) {
+  // Thanh nav "liquid glass": nổi cách đáy màn hình, nền trong suốt + blur
+  // (lộ mờ nội dung cuộn phía sau), bo tròn 4 góc — layout icon/label và viên
+  // "pill" bo tròn sau icon đang chọn theo đúng mẫu ảnh, màu vẫn theo tông
+  // chính của app (AppTheme.primary) thay vì xanh dương như ảnh mẫu.
+  Widget _buildBottomNav(bool isDark) {
     final currentIndex = ref.watch(mainTabProvider);
     final tourKeys = ref.read(tourKeysProvider);
     final items = <(IconData, String, Key?)>[
@@ -200,7 +201,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            height: 64,
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
               color: (isDark ? const Color(0xFF1E1F22) : Colors.white).withOpacity(0.65),
               borderRadius: BorderRadius.circular(28),
@@ -229,10 +230,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     onTap: () => _onItemTapped(i),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(icon, key: key, size: 22, color: color),
-                        const SizedBox(height: 3),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selected ? AppTheme.primary.withOpacity(isDark ? 0.28 : 0.14) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(icon, key: key, size: 22, color: color),
+                        ),
+                        const SizedBox(height: 4),
                         Text(
                           label,
                           style: TextStyle(

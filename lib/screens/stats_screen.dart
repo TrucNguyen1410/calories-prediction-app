@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../theme.dart';
 import '../providers/health_provider.dart';
@@ -52,7 +53,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         onRefresh: () => ref.read(healthProvider.notifier).refreshAll(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          // Đệm dưới thêm để không bị thanh nav kính mờ nổi che (MainScreen dùng extendBody).
+          // Đệm dưới thêm để không bị thanh nav liquid glass nổi che (MainScreen dùng extendBody).
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12 + 96),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,42 +343,79 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[300], borderRadius: BorderRadius.circular(10)),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               children: [
-                const Icon(LucideIcons.sparkles, color: AppTheme.primary, size: 22),
-                const SizedBox(width: 8),
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(LucideIcons.sparkles, color: AppTheme.primary, size: 20),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(data['title']?.toString() ?? 'Phân tích tuần',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: -0.3, color: isDark ? Colors.white : Colors.black87)),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Điểm sức khỏe tuần
+            const SizedBox(height: 24),
+            // Điểm sức khỏe tuần — dùng chung kiểu vòng tròn tiến độ với card
+            // "Health Score" ở Lịch sử ăn để đồng bộ ngôn ngữ thiết kế toàn app.
             Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: scoreColor.withOpacity(0.12), shape: BoxShape.circle),
-                child: Column(
+              child: CircularPercentIndicator(
+                radius: 54,
+                lineWidth: 10,
+                percent: (score / 100).clamp(0.0, 1.0),
+                circularStrokeCap: CircularStrokeCap.round,
+                backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
+                progressColor: scoreColor,
+                animation: true,
+                animationDuration: 700,
+                center: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('$score', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: scoreColor)),
-                    Text('điểm', style: TextStyle(fontSize: 12, color: scoreColor)),
+                    Text('$score', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: scoreColor)),
+                    Text('/ 100 điểm', style: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF949BA4) : Colors.grey[600])),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(data['summary']?.toString() ?? '',
-                style: TextStyle(fontSize: 14, height: 1.5, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87)),
+            const SizedBox(height: 20),
+            // Tóm tắt — đặt trong khung callout thay vì đoạn văn trôi nổi, có
+            // dải màu nhấn bên trái để phân biệt rõ với phần dữ liệu bên dưới.
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2B2D31) : Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border(left: BorderSide(color: AppTheme.primary.withOpacity(0.6), width: 3)),
+              ),
+              child: Text(data['summary']?.toString() ?? '',
+                  style: TextStyle(fontSize: 13.5, height: 1.55, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87)),
+            ),
             if (highlights.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              _insightSection('📊 Điểm nổi bật', highlights, Colors.blueAccent, isDark),
+              const SizedBox(height: 18),
+              _insightSection(
+                icon: LucideIcons.chartColumn,
+                title: 'Điểm nổi bật',
+                items: highlights,
+                color: Colors.blueAccent,
+                isDark: isDark,
+              ),
             ],
             if (advice.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _insightSection('💡 Lời khuyên tuần tới', advice, Colors.green, isDark),
+              const SizedBox(height: 14),
+              _insightSection(
+                icon: LucideIcons.lightbulb,
+                title: 'Lời khuyên tuần tới',
+                items: advice,
+                color: Colors.green,
+                isDark: isDark,
+              ),
             ],
             const SizedBox(height: 20),
           ],
@@ -386,24 +424,59 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
-  Widget _insightSection(String title, List<String> items, Color color, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
-        const SizedBox(height: 8),
-        ...items.map((t) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(margin: const EdgeInsets.only(top: 6), width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(t, style: TextStyle(fontSize: 13, height: 1.4, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87))),
-                ],
+  Widget _insightSection({
+    required IconData icon,
+    required String title,
+    required List<String> items,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2B2D31) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(isDark ? 0.15 : 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 26, height: 26,
+                decoration: BoxDecoration(color: color.withOpacity(isDark ? 0.22 : 0.12), borderRadius: BorderRadius.circular(8)),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 14, color: color),
               ),
-            )),
-      ],
+              const SizedBox(width: 10),
+              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : Colors.black87)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(items.length, (i) => Padding(
+                padding: EdgeInsets.only(bottom: i == items.length - 1 ? 0 : 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 18, height: 18,
+                      margin: const EdgeInsets.only(top: 1),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(color: color.withOpacity(isDark ? 0.18 : 0.1), shape: BoxShape.circle),
+                      child: Text('${i + 1}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(items[i], style: TextStyle(fontSize: 13, height: 1.45, color: isDark ? const Color(0xFFDBDEE1) : Colors.black87))),
+                  ],
+                ),
+              )),
+        ],
+      ),
     );
   }
 
