@@ -100,30 +100,37 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           ),
         ),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          // Cùng cặp gradient tím chuẩn dùng xuyên suốt app (trước đây dùng
-          // 1 cặp tím khác 0xFFAB47BC/0xFF7B1FA2, lệch tông với các nút gradient khác).
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      // Vị trí mặc định (góc dưới-phải) trùng chỗ với bong bóng chat AI nổi
+      // (luôn hiện ở mọi màn hình, xem main_screen.dart) nên nút bị đè khuất —
+      // chuyển sang giữa-dưới và nâng lên khỏi thanh nav kính mờ nổi.
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 96),
+        child: Container(
+          decoration: BoxDecoration(
+            // Cùng cặp gradient tím chuẩn dùng xuyên suốt app (trước đây dùng
+            // 1 cặp tím khác 0xFFAB47BC/0xFF7B1FA2, lệch tông với các nút gradient khác).
+            gradient: const LinearGradient(
+              colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF8A2BE2).withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
           ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF8A2BE2).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: () => _showAIChatbotDialog(healthState),
-          icon: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
-          label: const Text('Tạo Thực Đơn AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+          child: FloatingActionButton.extended(
+            onPressed: () => _showAIChatbotDialog(healthState),
+            icon: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
+            label: const Text('Tạo Thực Đơn AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
         ),
       ),
     );
