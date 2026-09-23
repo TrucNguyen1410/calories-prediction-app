@@ -1773,8 +1773,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 servingSize: data['servingSize'],
                               );
 
+                              // Đợi refreshAll() xong TRƯỚC khi đóng sheet/báo thành công —
+                              // trước đây không await nên vòng tròn "Mục tiêu hôm nay" và
+                              // biểu đồ ở Trang chủ có thể vẫn hiện 0/rỗng ngay sau khi lưu,
+                              // do state chưa kịp cập nhật lúc người dùng thấy thông báo.
+                              await ref.read(healthProvider.notifier).refreshAll();
                               if (mounted) Navigator.pop(context);
-                              ref.read(healthProvider.notifier).refreshAll();
                               if (mounted) {
                                 AppToast.show(
                                   context,

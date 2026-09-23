@@ -267,6 +267,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
       final workouts = await workoutsFuture;
       final allMeals = await mealsFuture;
       final waterToday = await waterFuture;
+      // weightRecordsFuture được await bên dưới (không gọi lại getWeightRecords() lần 2).
 
       List<double> wIntake = [];
       List<double> wBurned = [];
@@ -298,7 +299,7 @@ class HealthNotifier extends StateNotifier<HealthState> {
         currentHeight = (activeUser['height'] ?? 0.0).toDouble();
       }
 
-      final weightRecords = await _apiService.getWeightRecords();
+      final weightRecords = await weightRecordsFuture;
       final hMeters = currentHeight > 0 ? currentHeight / 100.0 : 0.0;
 
       // Cân nặng đo được sớm nhất (records sắp xếp mới→cũ nên phần tử cuối là cũ
