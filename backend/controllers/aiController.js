@@ -344,22 +344,56 @@ export const generateHealthPlan = async (req, res) => {
             CHỈ TRẢ VỀ JSON. KHÔNG GIẢI THÍCH GÌ THÊM.
         `;
 
-        const completion = await groq.chat.completions.create({
+        // Sinh đủ 7 ngày x 4 bữa (kèm servingSize, fiber/sugar/sodium) là phần
+        // JSON khá dài — trước đây không set max_tokens rõ ràng (dùng mặc định
+        // của Groq) nên đôi khi bị cắt cụt giữa chừng hoặc model tự bỏ sót vài
+        // ngày cuối tuần dù prompt đã yêu cầu bắt buộc đủ 7 ngày. Giờ vừa tăng
+        // max_tokens vừa validate lại đủ 7 ngày sau khi parse, thử lại 1 lần
+        // nếu thiếu, thay vì âm thầm trả về thực đơn cụt cho client.
+        const callGroqForPlan = () => groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: "openai/gpt-oss-120b",
             temperature: 0.5,
+            max_tokens: 6000,
             response_format: { type: "json_object" }
         });
 
-        let content = completion.choices[0].message.content.trim();
-        
-        // Dùng Regex trích xuất chính xác khối JSON giữa {} để tránh lỗi parse khi AI trả về văn bản thừa
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            content = jsonMatch[0];
+        const REQUIRED_DAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+        const parsePlanContent = (raw) => {
+            let content = raw.trim();
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) content = jsonMatch[0];
+            return JSON.parse(content);
+        };
+        const hasAllDays = (data) =>
+            Array.isArray(data?.weeklyPlan) &&
+            REQUIRED_DAYS.every((d) => data.weeklyPlan.some((p) => p?.day === d));
+
+        let completion = await callGroqForPlan();
+        let data;
+        try {
+            data = parsePlanContent(completion.choices[0].message.content);
+        } catch (e) {
+            data = null; // JSON hỏng/bị cắt cụt -> coi như thiếu ngày, thử lại bên dưới
         }
 
-        const data = JSON.parse(content);
+        if (!hasAllDays(data)) {
+            console.warn("GENERATE PLAN: thieu ngay hoac JSON loi, thu lai 1 lan...");
+            completion = await callGroqForPlan();
+            try {
+                data = parsePlanContent(completion.choices[0].message.content);
+            } catch (e) {
+                data = null;
+            }
+        }
+
+        if (!hasAllDays(data)) {
+            return res.status(502).json({
+                success: false,
+                message: "AI tạo thực đơn chưa đủ 7 ngày, vui lòng bấm tạo lại.",
+            });
+        }
+
         res.status(200).json({ success: true, data });
     } catch (error) {
         console.error("GENERATE PLAN ERROR:", error);

@@ -89,6 +89,24 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildAISuggestionBanner(healthState),
+                const SizedBox(height: 12),
+                // Đặt ngay dưới banner cho dễ thấy — trước đây chỉ có nút nổi
+                // (FAB) góc dưới-phải, hay bị bong bóng chat AI nổi đè khuất.
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: PurpleGradientButton(
+                    onPressed: () => _showAIChatbotDialog(healthState),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.sparkles, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text('Tạo thực đơn 7 ngày bằng AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 _buildSegmentedControl(),
                 const SizedBox(height: 20),
@@ -100,39 +118,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           ),
         ),
       ),
-      // Vị trí mặc định (góc dưới-phải) trùng chỗ với bong bóng chat AI nổi
-      // (luôn hiện ở mọi màn hình, xem main_screen.dart) nên nút bị đè khuất —
-      // chuyển sang giữa-dưới và nâng lên khỏi thanh nav kính mờ nổi.
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 96),
-        child: Container(
-          decoration: BoxDecoration(
-            // Cùng cặp gradient tím chuẩn dùng xuyên suốt app (trước đây dùng
-            // 1 cặp tím khác 0xFFAB47BC/0xFF7B1FA2, lệch tông với các nút gradient khác).
-            gradient: const LinearGradient(
-              colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF8A2BE2).withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
-          ),
-          child: FloatingActionButton.extended(
-            onPressed: () => _showAIChatbotDialog(healthState),
-            icon: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
-            label: const Text('Tạo Thực Đơn AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
-        ),
-      ),
+      // Nút FAB nổi trước đây đã bỏ — thay bằng nút "Tạo thực đơn 7 ngày bằng
+      // AI" ngay dưới banner ở trên (dễ thấy hơn, tránh bị bong bóng chat AI
+      // nổi ở góc dưới-phải đè khuất).
     );
   }
 
@@ -1331,6 +1319,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         bmi = w / ((h / 100) * (h / 100));
       }
     }
+    final bmiText = bmi > 0 ? bmi.toStringAsFixed(1) : '--';
 
     final allergyController = TextEditingController();
     bool isGenerating = false;
@@ -1338,10 +1327,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E1E2E), // Futuristic Dark Theme
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Padding(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final textColor = isDark ? const Color(0xFFF2F3F5) : Colors.black87;
+          final mutedColor = isDark ? const Color(0xFF949BA4) : Colors.grey[600];
+          return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
             left: 24,
@@ -1352,38 +1345,70 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Trợ lý thiết lập Thực đơn AI',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              Row(
+                children: [
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(LucideIcons.sparkles, color: AppTheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Trợ lý thiết lập Thực đơn AI',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: -0.3, color: textColor),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
-              
+
+              // Thẻ phân tích hồ sơ — dạng nhãn/giá trị có cấu trúc thay vì
+              // đoạn văn dạng bong bóng chat kèm icon robot như trước.
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A40),
-                  borderRadius: BorderRadius.circular(18),
+                  color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: (isDark ? Colors.white : Colors.black).withOpacity(0.05)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '🤖 Chào bạn! Tôi đã phân tích chỉ số sinh thể của bạn:\n• BMI hiện tại: ${bmi > 0 ? bmi.toStringAsFixed(1) : '22.5'} (Trạng thái cân đối).\n• Mục tiêu: Duy trì & Tăng cơ giảm mỡ.\n\nBạn có bị dị ứng hay cần kiêng cữ món ăn nào không? Hãy cho tôi biết để tôi thiết kế Thực đơn 7 ngày phù hợp nhất nhé!',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
-                    ),
+                    Text('Phân tích hồ sơ của bạn', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: mutedColor)),
+                    const SizedBox(height: 10),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text('Chỉ số BMI hiện tại', style: TextStyle(fontSize: 13.5, color: textColor)),
+                      Text('$bmiText · Cân đối', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    ]),
+                    const SizedBox(height: 8),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text('Mục tiêu đề xuất', style: TextStyle(fontSize: 13.5, color: textColor)),
+                      Text('Duy trì & tăng cơ giảm mỡ', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: textColor)),
+                    ]),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              
+              const SizedBox(height: 16),
+              Text(
+                'Bạn có bị dị ứng hay cần kiêng cữ món ăn nào không? Cho AI biết để thiết kế thực đơn 7 ngày phù hợp nhất.',
+                style: TextStyle(fontSize: 13, height: 1.5, color: mutedColor),
+              ),
+              const SizedBox(height: 14),
+
               TextField(
                 controller: allergyController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   hintText: 'VD: "Tôi dị ứng hải sản", "Tôi ăn chay"...',
-                  hintStyle: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  hintStyle: TextStyle(fontSize: 12.5, color: mutedColor),
                   filled: true,
-                  fillColor: const Color(0xFF2A2A40),
+                  fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                  contentPadding: const EdgeInsets.all(16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -1391,16 +1416,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               if (isGenerating) ...[
-                const Center(
+                Center(
                   child: Column(
                     children: [
-                      CircularProgressIndicator(color: Colors.purpleAccent),
-                      SizedBox(height: 12),
+                      const CircularProgressIndicator(color: AppTheme.primary),
+                      const SizedBox(height: 12),
                       Text(
-                        '🤖 AI đang thiết kế thực đơn 7 ngày phù hợp với bạn...',
-                        style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold),
+                        'AI đang thiết kế thực đơn 7 ngày phù hợp với bạn...',
+                        style: TextStyle(color: mutedColor, fontSize: 11.5, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -1409,22 +1434,22 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               ],
 
                 PurpleGradientButton(
-                  onPressed: () async {
+                  onPressed: isGenerating ? null : () async {
                     setDialogState(() => isGenerating = true);
-                    
+
                     try {
                        await ref.read(healthProvider.notifier).loadPlan(
-                           allergies: allergyController.text, 
+                           allergies: allergyController.text,
                            forceRefresh: true
                        );
-                       
+
                        setDialogState(() => isGenerating = false);
                        Navigator.pop(context);
-                       
+
                        setState(() {
                           _activeSegment = 0; // Chuyển về tab Hôm nay để xem bữa ăn mới tạo
                        });
-                       
+
                        AppToast.show(
                          context,
                          message: 'Thực đơn 7 ngày của bạn đã được AI tạo thành công!',
@@ -1432,7 +1457,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                        );
                     } catch (e) {
                        setDialogState(() => isGenerating = false);
-                       AppToast.show(context, message: 'Lỗi tạo thực đơn: $e', type: AppToastType.error);
+                       AppToast.show(context, message: 'Lỗi tạo thực đơn: ${e.toString().replaceFirst('Exception: ', '')}', type: AppToastType.error);
                     }
                   },
                   child: const Text(
@@ -1442,7 +1467,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 ),
             ],
           ),
-        ),
+        );
+        },
       ),
     );
   }
