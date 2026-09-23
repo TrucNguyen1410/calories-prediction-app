@@ -633,7 +633,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             barRods: [
               BarChartRodData(
                 toY: val,
-                color: Colors.orangeAccent,
+                color: AppTheme.primary,
                 width: 14,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(4),

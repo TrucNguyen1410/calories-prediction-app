@@ -1361,14 +1361,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               LineChartBarData(
                 spots: state.weeklyIntake.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                 isCurved: true,
-                gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.deepOrange]),
+                // Dùng tông tím chủ đạo — trước đây cam/đỏ cam, lệch khỏi màu
+                // thương hiệu và khác cả biểu đồ xu hướng cân nặng ở Thống kê.
+                gradient: const LinearGradient(colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)]),
                 barWidth: 4,
                 isStrokeCapRound: true,
                 dotData: const FlDotData(show: false),
                 belowBarData: BarAreaData(
-                  show: true, 
+                  show: true,
                   gradient: LinearGradient(
-                    colors: [Colors.orangeAccent.withOpacity(0.2), Colors.deepOrange.withOpacity(0.01)],
+                    colors: [AppTheme.primary.withOpacity(0.2), AppTheme.primary.withOpacity(0.01)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -1417,16 +1419,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             barGroups: state.weeklyIntake.asMap().entries.map((e) {
               return BarChartGroupData(
                 x: e.key,
+                // 2 sắc độ trong cùng họ tím để vẫn phân biệt được Nạp/Đốt mà
+                // không lệch khỏi tông màu thương hiệu (trước đây cam + xanh dương).
                 barRods: [
                   BarChartRodData(
-                    toY: e.value, 
-                    color: Colors.orangeAccent, 
+                    toY: e.value,
+                    color: AppTheme.primary,
                     width: 6,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   BarChartRodData(
-                    toY: state.weeklyBurned[e.key], 
-                    color: Colors.blueAccent, 
+                    toY: state.weeklyBurned[e.key],
+                    color: const Color(0xFFBB86FC),
                     width: 6,
                     borderRadius: BorderRadius.circular(4),
                   ),
