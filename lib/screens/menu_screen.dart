@@ -18,6 +18,9 @@ class MenuScreen extends ConsumerStatefulWidget {
 class _MenuScreenState extends ConsumerState<MenuScreen> {
   int _activeSegment = 0; // 0: Hôm nay, 1: Tuần này
   final ApiService _apiService = ApiService();
+  // Tác vụ AI này thường mất vài giây; nút trước đây không khóa/không hiện
+  // trạng thái xuyên suốt nên trông như "bấm không ăn" trong lúc chờ.
+  bool _isRegeneratingMeals = false;
 
   @override
   void initState() {
@@ -305,11 +308,16 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => _regenerateRemainingMeals(healthState),
-            icon: const Icon(LucideIcons.refreshCw, size: 15, color: AppTheme.primary),
-            label: const Text(
-              'Tạo lại thực đơn cho các bữa còn lại',
-              style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 12.5),
+            onPressed: _isRegeneratingMeals ? null : () => _regenerateRemainingMeals(healthState),
+            icon: _isRegeneratingMeals
+                ? const SizedBox(
+                    width: 14, height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                  )
+                : const Icon(LucideIcons.refreshCw, size: 15, color: AppTheme.primary),
+            label: Text(
+              _isRegeneratingMeals ? 'AI đang tạo lại thực đơn...' : 'Tạo lại thực đơn cho các bữa còn lại',
+              style: TextStyle(color: AppTheme.primary.withOpacity(_isRegeneratingMeals ? 0.6 : 1), fontWeight: FontWeight.bold, fontSize: 12.5),
             ),
             style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
           ),
@@ -331,7 +339,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   // Chỉ tính là "đã ăn" các bữa hôm nay đã có trong nhật ký thật (Meal),
   // không dựa vào Thực đơn AI — vì đó chỉ là gợi ý, chưa chắc đã ăn.
   Future<void> _regenerateRemainingMeals(HealthState healthState) async {
+    if (_isRegeneratingMeals) return;
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    setState(() => _isRegeneratingMeals = true);
     try {
       final loggedToday = await _apiService.getMeals(todayStr);
       final eatenTypes = loggedToday
@@ -376,6 +386,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       );
     } catch (e) {
       AppToast.show(context, message: 'Lỗi tạo lại thực đơn: $e', type: AppToastType.error);
+    } finally {
+      if (mounted) setState(() => _isRegeneratingMeals = false);
     }
   }
 
