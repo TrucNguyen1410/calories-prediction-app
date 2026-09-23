@@ -341,7 +341,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+              color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
               blurRadius: 24,
               offset: const Offset(0, 10),
               spreadRadius: -6,
@@ -496,7 +496,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+              color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
               blurRadius: 24,
               offset: const Offset(0, 10),
               spreadRadius: -6,

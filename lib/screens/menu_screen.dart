@@ -102,15 +102,17 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
+          // Cùng cặp gradient tím chuẩn dùng xuyên suốt app (trước đây dùng
+          // 1 cặp tím khác 0xFFAB47BC/0xFF7B1FA2, lệch tông với các nút gradient khác).
           gradient: const LinearGradient(
-            colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+            colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7B1FA2).withOpacity(0.3),
+              color: const Color(0xFF8A2BE2).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -147,16 +149,19 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
+        // Dùng đúng gradient tím chủ đạo của app (giống nút "Tạo thực đơn AI",
+        // "Phân tích tuần bằng AI"...) thay vì nền xanh navy/đen riêng biệt
+        // trước đây, lệch hẳn khỏi tông trắng + tím xuyên suốt ứng dụng.
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E1E2E), Color(0xFF2A2A40)],
+          colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
+            color: const Color(0xFF8A2BE2).withOpacity(0.3),
+            blurRadius: 18,
             offset: const Offset(0, 8),
           ),
         ],
@@ -166,10 +171,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.15),
+              color: Colors.white.withOpacity(0.18),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.sparkles, color: Colors.purpleAccent, size: 28),
+            child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -439,7 +444,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+                    color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                     spreadRadius: -6,
@@ -692,7 +697,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
             spreadRadius: -6,

@@ -241,7 +241,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
             spreadRadius: -6,

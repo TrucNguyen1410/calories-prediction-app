@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF9C27B0); // Màu tím chủ đạo (Purple 500)
+  // Tím chủ đạo — khớp với cặp gradient 0xFF8A2BE2/0xFF4B0082 dùng ở hầu hết
+  // nút/banner/thanh nav trong app (trước đây lệch tông so với Material Purple
+  // 500 mặc định, khiến icon/viền và nút gradient trông như 2 màu tím khác nhau).
+  static const Color primary = Color(0xFF8A2BE2);
   static const Color secondary = Color(0xFFE1BEE7); // Màu tím nhạt
   static const Color background = Color(0xFFF8F9FA); // Nền xám nhạt sáng chuẩn Apple Health
   static const Color cardColor = Colors.white;

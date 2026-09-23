@@ -78,12 +78,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: Stack(
         children: [
           Container(
+            // Nền tím nhạt đồng bộ với hero gradient dùng ở Trang chủ (trước đây
+            // là gradient xanh ngọc/xanh dương không liên quan gì tới tông tím
+            // chủ đạo của app — có lẽ sót lại từ bản nháp trước).
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE0F2F1), Color(0xFFFFFFFF), Color(0xFFE1F5FE)],
-              ),
+              gradient: AppTheme.heroGradientLight,
             ),
           ),
           Center(

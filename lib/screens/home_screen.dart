@@ -1824,7 +1824,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
             spreadRadius: -6,
@@ -1902,7 +1902,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(isDark ? 0.22 : 0.055), blurRadius: 24, offset: const Offset(0, 10), spreadRadius: -6),
+            BoxShadow(color: Colors.black.withOpacity(isDark ? 0.30 : 0.10), blurRadius: 24, offset: const Offset(0, 10), spreadRadius: -6),
           ],
         ),
         child: const Center(
@@ -2267,7 +2267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             children: [
                               ShaderMask(
                                 shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+                                  colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ).createShader(bounds),

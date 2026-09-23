@@ -487,7 +487,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       borderRadius: BorderRadius.circular(20),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(isDark ? 0.22 : 0.055),
+          color: Colors.black.withOpacity(isDark ? 0.30 : 0.10),
           blurRadius: 24,
           offset: const Offset(0, 10),
           spreadRadius: -6,
@@ -788,7 +788,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               return FlSpot(index.toDouble(), dataList[index]);
             }),
             isCurved: true,
-            color: _showWeightTrend ? Colors.blueAccent : Colors.teal,
+            // Dùng thống nhất màu tím chủ đạo của app cho cả 2 chế độ (trước đây
+            // Cân nặng=xanh dương, BMI=xanh lá — lệch hẳn khỏi bộ nhận diện tím).
+            color: AppTheme.primary,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: true),
@@ -798,8 +800,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (_showWeightTrend ? Colors.blueAccent : Colors.teal).withOpacity(0.22),
-                  (_showWeightTrend ? Colors.blueAccent : Colors.teal).withOpacity(0.0),
+                  AppTheme.primary.withOpacity(0.22),
+                  AppTheme.primary.withOpacity(0.0),
                 ],
               ),
             ),
