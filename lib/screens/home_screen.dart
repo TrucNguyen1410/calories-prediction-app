@@ -461,7 +461,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final intake = state.todayIntake;
     final target = state.dailyCalorieTarget;
     final progress = target > 0 ? (intake / target).clamp(0.0, 1.0) : 0.0;
-    final gaugeColor = isDark ? AppTheme.gaugeNeutralDark : AppTheme.gaugeNeutralLight;
+    // Trước đây dùng màu "neutral" gần đen/trắng cho vòng tròn chính — đổi
+    // sang tím thương hiệu để đồng bộ với các vòng tròn/biểu đồ khác.
+    final gaugeColor = AppTheme.primary;
 
     return _buildBentoCard(
       title: 'Mục tiêu hôm nay',
@@ -559,7 +561,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Text(
                 bmi > 0 ? bmi.toStringAsFixed(1) : '--',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: -1),
+                // Số BMI chỉ là con số hiển thị — ý nghĩa phân loại (Gầy/Bình
+                // thường/...) đã có pill màu statusColor bên cạnh rồi, nên đổi
+                // sang tím thương hiệu thay vì xanh dương không liên quan.
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primary, letterSpacing: -1),
               ),
               const SizedBox(width: 10),
               if (bmi > 0)
@@ -679,7 +684,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             percent: progress,
             circularStrokeCap: CircularStrokeCap.round,
             backgroundColor: isDark ? const Color(0xFF35373C) : Colors.grey[200]!,
-            progressColor: Colors.redAccent,
+            // Trước đây đỏ (lửa/"đang cháy") — đổi tím để đồng bộ với các vòng
+            // tròn tiến độ khác trong app (Mục tiêu hôm nay, Health Score...).
+            progressColor: AppTheme.primary,
             animation: true,
             animationDuration: 600,
             center: Column(
@@ -693,7 +700,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Text(
                     '${burned.toInt()}',
                     key: ValueKey<int>(burned.toInt()),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent, letterSpacing: -0.5),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primary, letterSpacing: -0.5),
                   ),
                 ),
                 Text('kcal', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.black38, fontSize: 10, fontWeight: FontWeight.w500)),
@@ -715,7 +722,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.flame, color: Colors.redAccent, size: 14),
+                      const Icon(LucideIcons.flame, color: AppTheme.primary, size: 14),
                       const SizedBox(width: 4),
                       Text('Đang cháy!', style: TextStyle(color: isDark ? const Color(0xFF949BA4) : Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
@@ -1928,7 +1935,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -6),
+              BoxShadow(color: Colors.black.withOpacity(isDark ? 0.28 : 0.09), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -6),
             ],
           ),
           child: Row(
@@ -1936,10 +1943,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.1),
+                  color: AppTheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(LucideIcons.activity, color: Colors.blueAccent, size: 22),
+                child: const Icon(LucideIcons.activity, color: AppTheme.primary, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
