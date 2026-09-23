@@ -1600,12 +1600,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showConfirmationSheet(Map<String, dynamic> data) {
+    bool isSaving = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (context) {
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final calories = data['estimatedCalories'] ?? data['calories'] ?? 0;
         final isReasonable = data['isReasonable'] != false;
@@ -1721,57 +1723,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: SizedBox(
                         height: 52,
                         child: PurpleGradientButton(
-                          onPressed: () async {
-                            final now = DateTime.now();
-                            final mealType = detectMealTypeByTime(now);
-                            final calories = (data['estimatedCalories'] as num).toDouble();
-                            final protein = (data['protein'] as num?)?.toDouble() ?? 0;
-                            final carbs = (data['carbs'] as num?)?.toDouble() ?? 0;
-                            final fat = (data['fat'] as num?)?.toDouble() ?? 0;
-                            final fiber = (data['fiber'] as num?)?.toDouble() ?? 0;
-                            final sugar = (data['sugar'] as num?)?.toDouble() ?? 0;
-                            final sodium = (data['sodium'] as num?)?.toDouble() ?? 0;
+                          // Trước đây bấm xong không có phản hồi gì trong lúc chờ 2 lệnh gọi
+                          // mạng tuần tự (addMeal + updateMealInPlan), không bắt lỗi khi mạng
+                          // chậm/lỗi, và có thể bấm trùng nhiều lần — người dùng tưởng nút
+                          // "không ăn". Giờ khóa nút + hiện spinner khi đang lưu, bắt lỗi rõ ràng.
+                          onPressed: isSaving
+                              ? null
+                              : () async {
+                            setSheetState(() => isSaving = true);
+                            try {
+                              final now = DateTime.now();
+                              final mealType = detectMealTypeByTime(now);
+                              final calories = (data['estimatedCalories'] as num).toDouble();
+                              final protein = (data['protein'] as num?)?.toDouble() ?? 0;
+                              final carbs = (data['carbs'] as num?)?.toDouble() ?? 0;
+                              final fat = (data['fat'] as num?)?.toDouble() ?? 0;
+                              final fiber = (data['fiber'] as num?)?.toDouble() ?? 0;
+                              final sugar = (data['sugar'] as num?)?.toDouble() ?? 0;
+                              final sodium = (data['sodium'] as num?)?.toDouble() ?? 0;
 
-                            await _apiService.addMeal(
-                              name: data['foodName'],
-                              calories: calories,
-                              mealType: mealType,
-                              date: DateFormat('yyyy-MM-dd').format(now),
-                              imageUrl: data['imageUrl'],
-                              servingSize: data['servingSize'],
-                              protein: protein,
-                              carbs: carbs,
-                              fat: fat,
-                              fiber: fiber,
-                              sugar: sugar,
-                              sodium: sodium,
-                            );
+                              await _apiService.addMeal(
+                                name: data['foodName'],
+                                calories: calories,
+                                mealType: mealType,
+                                date: DateFormat('yyyy-MM-dd').format(now),
+                                imageUrl: data['imageUrl'],
+                                servingSize: data['servingSize'],
+                                protein: protein,
+                                carbs: carbs,
+                                fat: fat,
+                                fiber: fiber,
+                                sugar: sugar,
+                                sodium: sodium,
+                              );
 
-                            // Món ăn thật vừa log khác với gợi ý ban đầu của Thực đơn AI
-                            // (nếu có) → ghi đè lại slot bữa tương ứng hôm nay cho khớp thực tế.
-                            await ref.read(healthProvider.notifier).updateMealInPlan(
-                              mealType: mealType,
-                              newName: data['foodName'],
-                              newCalories: calories,
-                              carbs: carbs,
-                              protein: protein,
-                              fat: fat,
-                              fiber: fiber,
-                              sugar: sugar,
-                              sodium: sodium,
-                              imageUrl: data['imageUrl'],
-                              servingSize: data['servingSize'],
-                            );
+                              // Món ăn thật vừa log khác với gợi ý ban đầu của Thực đơn AI
+                              // (nếu có) → ghi đè lại slot bữa tương ứng hôm nay cho khớp thực tế.
+                              await ref.read(healthProvider.notifier).updateMealInPlan(
+                                mealType: mealType,
+                                newName: data['foodName'],
+                                newCalories: calories,
+                                carbs: carbs,
+                                protein: protein,
+                                fat: fat,
+                                fiber: fiber,
+                                sugar: sugar,
+                                sodium: sodium,
+                                imageUrl: data['imageUrl'],
+                                servingSize: data['servingSize'],
+                              );
 
-                            Navigator.pop(context);
-                            ref.read(healthProvider.notifier).refreshAll();
-                            AppToast.show(
-                              context,
-                              message: 'Đã lưu món ăn thành công!',
-                              type: AppToastType.success,
-                            );
+                              if (mounted) Navigator.pop(context);
+                              ref.read(healthProvider.notifier).refreshAll();
+                              if (mounted) {
+                                AppToast.show(
+                                  context,
+                                  message: 'Đã lưu món ăn thành công!',
+                                  type: AppToastType.success,
+                                );
+                              }
+                            } catch (e) {
+                              setSheetState(() => isSaving = false);
+                              if (mounted) {
+                                AppToast.show(
+                                  context,
+                                  message: 'Lưu thất bại, vui lòng thử lại: ${e.toString().replaceFirst('Exception: ', '')}',
+                                  type: AppToastType.error,
+                                );
+                              }
+                            }
                           },
-                          child: const Text('Lưu vào nhật ký', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                          child: isSaving
+                              ? const SizedBox(
+                                  width: 20, height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                                )
+                              : const Text('Lưu vào nhật ký', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                         ),
                       ),
                     ),
@@ -1781,7 +1808,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         );
-      },
+        },
+      ),
     );
   }
 
