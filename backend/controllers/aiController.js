@@ -457,8 +457,9 @@ export const analyzeFood = async (req, res) => {
         let nutritionData = null;
 
         if (imageFile) {
-            // Sử dụng Groq Vision (qwen/qwen3.6-27b) — model đa phương thức còn hoạt động,
-            // dùng chung GROQ_API_KEY sẵn có (model llama-4-scout cũ đã bị Groq gỡ bỏ).
+            // Sử dụng Groq Vision (qwen/qwen3.8-27b) — model đa phương thức còn hoạt động,
+            // dùng chung GROQ_API_KEY sẵn có (model llama-4-scout cũ và qwen3.6-27b cũ
+            // đều đã bị Groq gỡ bỏ/đổi tên — Groq deprecate model rất thường xuyên).
             const base64Image = imageFile.buffer.toString("base64");
             const prompt = `Nhiệm vụ của bạn là phân tích hình ảnh món ăn này.
             
@@ -511,7 +512,7 @@ export const analyzeFood = async (req, res) => {
                         ],
                     },
                 ],
-                model: "qwen/qwen3.6-27b",
+                model: "qwen/qwen3.8-27b",
                 response_format: { type: "json_object" }
             });
 
