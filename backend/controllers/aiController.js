@@ -17,6 +17,21 @@ const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY || "dummy_key_to_prevent_startup_crash",
 });
 
+// Lưới an toàn: xóa các ký hiệu Markdown/HTML mà model đôi khi vẫn chèn dù
+// đã được dặn trong prompt, vì UI chat hiện chỉ render Text() thuần, không
+// có markdown/HTML renderer.
+function stripMarkupForPlainText(text) {
+    return text
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/^#{1,6}\s*/gm, "")
+        .replace(/\|/g, "")
+        .replace(/^[-=]{3,}\s*$/gm, "")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+}
+
 // Mô hình ML không có đặc trưng "loại hoạt động" (chỉ Age/Weight/Height/
 // Duration/Avg_BPM) nên % nhịp tim tối đa ước lượng theo cường độ hoạt động
 // là yếu tố DUY NHẤT giúp phân biệt calo giữa các môn khác nhau ở cùng thời
@@ -113,7 +128,7 @@ Nhiệm vụ đặc biệt:
   "message": "Lời chúc mừng/động viên ngắn gọn, truyền năng lượng bằng tiếng Việt, KHÔNG nêu con số calo cụ thể vì hệ thống sẽ tự hiển thị con số chính xác riêng (ví dụ: Tuyệt vời! Mình đã ghi nhận buổi Chạy bộ của bạn.)"
 }
 
-2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường trong phạm vi sức khỏe và thể chất (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng văn bản thông thường, ngắn gọn, thân thiện bằng tiếng Việt. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
+2. Nếu người dùng chỉ nhắn tin hỏi đáp, tư vấn sức khỏe, dinh dưỡng hoặc trò chuyện bình thường trong phạm vi sức khỏe và thể chất (ví dụ: "Xin chào", "Làm sao để giảm cân?", "Tôi nên ăn gì?"), bạn hãy trả lời bằng VĂN BẢN THUẦN TÚY (plain text), ngắn gọn, thân thiện bằng tiếng Việt. TUYỆT ĐỐI KHÔNG dùng bất kỳ ký hiệu định dạng Markdown hoặc HTML nào (không dùng **, ##, ###, |, <br>, không tạo bảng biểu); nếu cần xuống dòng thì xuống dòng thật, nếu cần liệt kê thì dùng dấu gạch đầu dòng "-" đơn giản ở đầu dòng. Tuyệt đối không được trả về cấu trúc JSON này khi trò chuyện bình thường.`;
 
         // Gọi API Groq
         const completion = await groq.chat.completions.create({
@@ -177,6 +192,10 @@ Nhiệm vụ đặc biệt:
             }
         } catch (e) {
             // Không phải JSON, xử lý như tin nhắn thường
+        }
+
+        if (!isActionable) {
+            reply = stripMarkupForPlainText(reply);
         }
 
         // Tự động đặt tiêu đề cuộc hội thoại nếu đang ở trạng thái mặc định và là câu chat đầu tiên
