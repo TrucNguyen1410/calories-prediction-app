@@ -228,7 +228,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       _buildLogoutButton(theme),
                     ],
                   ),
@@ -452,21 +452,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildLogoutButton(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: ElevatedButton.icon(
-        onPressed: () async {
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withOpacity(isDark ? 0.12 : 0.07),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        leading: const Icon(LucideIcons.logOut, color: Colors.redAccent, size: 22),
+        title: const Text("Đăng xuất",
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: Colors.redAccent)),
+        trailing: const Icon(LucideIcons.chevronRight, size: 20, color: Colors.redAccent),
+        onTap: () async {
           await ref.read(authProvider.notifier).logout();
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red[50],
-          foregroundColor: Colors.red[700],
-          minimumSize: const Size(double.infinity, 52),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        icon: const Icon(LucideIcons.logOut, size: 20),
-        label: const Text('ĐĂNG XUẤT TÀI KHOẢN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
