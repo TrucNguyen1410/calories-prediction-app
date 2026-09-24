@@ -45,8 +45,14 @@ class ApiService {
         return response;
     }
 
+    // Render free-tier có thể "ngủ" và cold-start chậm; đặt timeout để mọi
+    // request luôn kết thúc (thành công hoặc lỗi) thay vì treo spinner vô hạn.
+    static const Duration _requestTimeout = Duration(seconds: 25);
+
     Future<http.Response> _get(String path) async {
-        final response = await http.get(Uri.parse('$_baseUrl$path'), headers: await _getHeaders());
+        final response = await http
+            .get(Uri.parse('$_baseUrl$path'), headers: await _getHeaders())
+            .timeout(_requestTimeout, onTimeout: () => throw Exception('Hết thời gian chờ phản hồi từ máy chủ, vui lòng thử lại.'));
         return _checkResponse(response);
     }
 
@@ -55,7 +61,7 @@ class ApiService {
             Uri.parse('$_baseUrl$path'),
             headers: await _getHeaders(),
             body: jsonEncode(body),
-        );
+        ).timeout(_requestTimeout, onTimeout: () => throw Exception('Hết thời gian chờ phản hồi từ máy chủ, vui lòng thử lại.'));
         return _checkResponse(response);
     }
 
@@ -64,12 +70,14 @@ class ApiService {
             Uri.parse('$_baseUrl$path'),
             headers: await _getHeaders(),
             body: jsonEncode(body),
-        );
+        ).timeout(_requestTimeout, onTimeout: () => throw Exception('Hết thời gian chờ phản hồi từ máy chủ, vui lòng thử lại.'));
         return _checkResponse(response);
     }
 
     Future<http.Response> _delete(String path) async {
-        final response = await http.delete(Uri.parse('$_baseUrl$path'), headers: await _getHeaders());
+        final response = await http
+            .delete(Uri.parse('$_baseUrl$path'), headers: await _getHeaders())
+            .timeout(_requestTimeout, onTimeout: () => throw Exception('Hết thời gian chờ phản hồi từ máy chủ, vui lòng thử lại.'));
         return _checkResponse(response);
     }
 
