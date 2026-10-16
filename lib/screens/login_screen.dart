@@ -41,7 +41,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     try {
       setState(() => _isLoading = true);
-      final dynamic googleUser = await _googleSignIn.signIn();
+      // Thử đăng nhập im lặng trước (dùng lại phiên Google đã cấp quyền
+      // trước đó) để không phải bắt người dùng xác thực lại/2FA mỗi lần;
+      // chỉ hiện popup chọn tài khoản đầy đủ khi chưa có phiên nào.
+      dynamic googleUser = await _googleSignIn.signInSilently().catchError((_) => null);
+      googleUser ??= await _googleSignIn.signIn();
       if (googleUser == null) {
         setState(() => _isLoading = false);
         return;
