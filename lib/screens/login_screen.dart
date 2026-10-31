@@ -56,10 +56,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         password: 'GOOGLE_AUTH_EXTERNAL', 
       );
       if (response["success"] == true) {
-        await _apiService.syncGoogleFit(
-          userId: response["user"]["id"] ?? response["user"]["_id"],
-          accessToken: googleAuth.accessToken ?? googleAuth.idToken,
-        );
+        // Đồng bộ Google Fit chỉ là bước tiện ích đi kèm — nếu nó lỗi (hết hạn
+        // quyền, token không đủ scope, Google Fit API tạm trục trặc...) thì
+        // KHÔNG được chặn việc đăng nhập; người dùng vẫn vào app bình thường
+        // và có thể đồng bộ lại thủ công sau trong mục Cá nhân.
+        try {
+          await _apiService.syncGoogleFit(
+            userId: response["user"]["id"] ?? response["user"]["_id"],
+            accessToken: googleAuth.accessToken ?? googleAuth.idToken,
+          );
+        } catch (syncError) {
+          print('Google Fit sync error (bo qua, khong chan dang nhap): $syncError');
+        }
         if (mounted) {
           await ref.read(authProvider.notifier).loginWithGoogle(response["user"], response["token"]);
         }
