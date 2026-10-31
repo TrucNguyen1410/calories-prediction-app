@@ -74,18 +74,14 @@ def met_fallback(weight, duration, activity_type):
 MIN_TRAINED_DURATION_MINUTES = 30
 
 
-def predict_calories(weight, height, age, duration, heart_rate, activity_type):
+def _predict_from_model(weight, height, age, duration, heart_rate, activity_type):
     """
-    Dự đoán calo tiêu hao.
-    Ưu tiên mô hình Gradient Boosting Regressor (model.pkl) đã huấn luyện trên bộ
-    dữ liệu gym_members_exercise_tracking với các đặc trưng:
-        [Age, Weight (kg), Height (m), Session_Duration (hours), Avg_BPM]
-    Dùng công thức MET khi: không nạp được mô hình (thiếu thư viện/file), hoặc
-    thời lượng nằm ngoài khoảng đã huấn luyện (< 30 phút).
+    Dự đoán calo bằng mô hình ML (Gradient Boosting Regressor huấn luyện trên bộ
+    dữ liệu gym_members_exercise_tracking, đặc trưng [Age, Weight (kg), Height (m),
+    Session_Duration (hours), Avg_BPM]).
+    Trả về (calo, "ml_model") nếu thành công, hoặc (None, None) nếu mô hình hoàn
+    toàn không dùng được (thiếu thư viện/file, hoặc kết quả vô lý).
     """
-    if duration < MIN_TRAINED_DURATION_MINUTES:
-        return met_fallback(weight, duration, activity_type), "met_fallback_short_duration"
-
     try:
         import warnings
         warnings.filterwarnings("ignore")
@@ -105,14 +101,41 @@ def predict_calories(weight, height, age, duration, heart_rate, activity_type):
         features = np.array([[age, weight, height_m, duration_hours, heart_rate]], dtype=float)
         pred = float(model.predict(features)[0])
 
-        # Chặn giá trị âm/bất thường; nếu vô lý thì fallback MET
         if pred <= 0 or pred > 5000:
-            return met_fallback(weight, duration, activity_type), "met_fallback"
+            return None, None
         return round(pred, 2), "ml_model"
     except Exception as e:
         # Ghi cảnh báo ra stderr (chỉ để log), giữ stdout sạch cho JSON
-        print(f"[predict] Model unavailable, using MET fallback: {e}", file=sys.stderr)
-        return met_fallback(weight, duration, activity_type), "met_fallback"
+        print(f"[predict] Model unavailable: {e}", file=sys.stderr)
+        return None, None
+
+
+def predict_calories(weight, height, age, duration, heart_rate, activity_type):
+    """
+    Dự đoán calo tiêu hao.
+    Với thời lượng dưới mốc đã huấn luyện (< 30 phút), KHÔNG dùng công thức MET
+    chung (hệ số cố định, không khớp "nhịp" calo/phút mà mô hình ML thực sự học
+    được) vì sẽ tạo ra một bước nhảy đột ngột tại đúng mốc 30 phút (vd. 29 phút
+    ra ~197 kcal nhưng 30 phút lại nhảy lên ~432 kcal cho cùng một người).
+    Thay vào đó, lấy chính kết quả mô hình ML dự đoán tại mốc 30 phút (với đúng
+    cân nặng/chiều cao/tuổi/nhịp tim của người dùng) rồi co giãn tuyến tính theo
+    tỉ lệ thời lượng thực tế/30 — đảm bảo đường cong calo liền mạch, không "cắt
+    khúc" tại điểm giao giữa 2 công thức. Chỉ dùng công thức MET khi bản thân mô
+    hình ML hoàn toàn không dùng được (lỗi thư viện/file).
+    """
+    if duration < MIN_TRAINED_DURATION_MINUTES:
+        floor_calories, floor_source = _predict_from_model(
+            weight, height, age, MIN_TRAINED_DURATION_MINUTES, heart_rate, activity_type
+        )
+        if floor_calories is not None:
+            scaled = round(floor_calories * duration / MIN_TRAINED_DURATION_MINUTES, 2)
+            return scaled, "ml_model_scaled_down"
+        return met_fallback(weight, duration, activity_type), "met_fallback_short_duration"
+
+    calories, source = _predict_from_model(weight, height, age, duration, heart_rate, activity_type)
+    if calories is not None:
+        return calories, source
+    return met_fallback(weight, duration, activity_type), "met_fallback"
 
 
 if __name__ == "__main__":
