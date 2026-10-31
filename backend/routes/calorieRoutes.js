@@ -83,7 +83,9 @@ router.post("/add", verifyToken, async (req, res) => {
   try {
     const { activityName, duration, caloriesBurned } = req.body;
 
-    if (!activityName || !duration || !caloriesBurned) {
+    // Dùng kiểm tra null/undefined thay vì falsy — một buổi tập rất ngắn hợp lệ
+    // vẫn có thể cho duration/caloriesBurned = 0, không nên bị từ chối vì điều đó.
+    if (!activityName || duration == null || caloriesBurned == null) {
       return res.status(400).json({
         success: false,
         message: "Thiếu thông tin hoạt động!",

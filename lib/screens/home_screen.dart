@@ -1778,6 +1778,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               // biểu đồ ở Trang chủ có thể vẫn hiện 0/rỗng ngay sau khi lưu,
                               // do state chưa kịp cập nhật lúc người dùng thấy thông báo.
                               await ref.read(healthProvider.notifier).refreshAll();
+                              // Xóa nội dung đã nhập sau khi lưu thành công — nhập xong, lưu
+                              // xong mà ô nhập vẫn còn chữ cũ thì sai luồng (dễ bị lưu trùng).
+                              _quickLogController.clear();
                               if (mounted) Navigator.pop(context);
                               if (mounted) {
                                 AppToast.show(

@@ -105,8 +105,8 @@ class _WalkTrackerSheetState extends ConsumerState<_WalkTrackerSheet> {
     final steps = _stepCounter.steps;
     final minutes = _elapsed.inSeconds / 60.0;
 
-    if (steps < 10 || minutes < 0.5) {
-      AppToast.show(context, message: 'Chưa đủ dữ liệu để lưu — hãy đi bộ thêm chút nữa rồi kết thúc.', type: AppToastType.warning);
+    if (steps <= 0) {
+      AppToast.show(context, message: 'Chưa ghi nhận được bước nào, hãy đi bộ rồi thử lại.', type: AppToastType.warning);
       return;
     }
 
