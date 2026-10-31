@@ -185,6 +185,14 @@ Nhiệm vụ đặc biệt:
                 if (mlResult) {
                     parsedJson.caloriesBurned = mlResult.calories;
                     parsedJson.calorieSource = mlResult.source;
+                } else {
+                    // predictCaloriesML thất bại hoàn toàn (tiến trình Python lỗi/không
+                    // spawn được) — KHÔNG được để nguyên con số LLM tự đoán (không đáng
+                    // tin, không tỉ lệ theo thời lượng thực). Dùng công thức ước lượng
+                    // dự phòng tỉ lệ thuận với thời lượng để con số ít nhất còn hợp lý.
+                    const fallbackCalories = Math.round(6.0 * weight * (parsedJson.duration || 0) / 60);
+                    parsedJson.caloriesBurned = fallbackCalories;
+                    parsedJson.calorieSource = "js_fallback";
                 }
 
                 reply = JSON.stringify(parsedJson);
